@@ -1,7 +1,7 @@
 name: Deploy Prod
 on:
   push:
-    branches: ["main"]
+    branches: ["cloudformation-reconfig"]
   workflow_dispatch:
 
 jobs:
