@@ -10,6 +10,11 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
+          default: Required Deployment Parameters
+        Parameters:
+          - DockerImage
+          - S3BUCKET
+      - Label:
           default: Network configuration
         Parameters:
           # - AvailabilityZones
@@ -71,6 +76,10 @@ Metadata:
       #     - QSS3BucketRegionBastion
       #     - QSS3KeyPrefixBastion
     ParameterLabels:
+      DockerImage:
+        default: Docker image name
+      S3BUCKET:
+        default: S3 bucket name with source code
       DBAllocatedStorage:
         default: Amount of storage (in gigabytes)
       DBMaxAllocatedStorage:
@@ -157,6 +166,14 @@ Metadata:
         default: Permitted IP range
 
 Parameters:
+  DockerImage:
+    Type: String
+    Description: The name of the Docker image to deploy. This should be in the format
+      <account-id>.dkr.ecr.<region>.amazonaws.com/<repository>:<tag>.
+  S3BUCKET:
+    Type: String
+    Description: The name of the S3 bucket that contains the source code for the
+      Docker image.
   BastionAMIOS:
     Type: String
     Description: The Linux distribution for the AMI to be used for the bastion host
@@ -506,7 +523,7 @@ Resources:
   VPC:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://easy-erp-code-repo.s3.us-east-1.amazonaws.com/Cloudformation/infrastructure/vpc.yaml
+      TemplateURL: !Sub 'https://${S3BUCKET}.s3.us-east-1.amazonaws.com/Cloudformation/infrastructure/vpc.yaml'
       Parameters:
         EnvironmentName: !Ref AWS::StackName
         VpcCIDR: !Ref VPCCIDR
@@ -518,7 +535,7 @@ Resources:
   SecurityGroups:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://easy-erp-code-repo.s3.us-east-1.amazonaws.com/Cloudformation/infrastructure/security-groups.yaml
+      TemplateURL: !Sub 'https://${S3BUCKET}.s3.us-east-1.amazonaws.com/Cloudformation/infrastructure/security-groups.yaml'
       Parameters:
         EnvironmentName: !Ref AWS::StackName
         VPC: !GetAtt VPC.Outputs.VPC
@@ -526,7 +543,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: EnableBastionAccess
     Properties:
-      TemplateURL: https://easy-erp-code-repo.s3.us-east-1.amazonaws.com/Cloudformation/infrastructure/bastion.yaml
+      TemplateURL: !Sub 'https://${S3BUCKET}.s3.us-east-1.amazonaws.com/Cloudformation/infrastructure/bastion.yaml'
       Parameters:
         KeyPairName: !Ref KeyPairName
         PublicSubnet1ID: !GetAtt VPC.Outputs.PublicSubnet1
@@ -540,14 +557,14 @@ Resources:
   S3:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://easy-erp-code-repo.s3.us-east-1.amazonaws.com/Cloudformation/infrastructure/s3.yaml
+      TemplateURL: !Sub 'https://${S3BUCKET}.s3.us-east-1.amazonaws.com/Cloudformation/infrastructure/s3.yaml'
       Parameters:
         EnvironmentName: !Ref AWS::StackName
 
   RDS:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://easy-erp-code-repo.s3.us-east-1.amazonaws.com/Cloudformation/infrastructure/rds.yaml
+      TemplateURL: !Sub 'https://${S3BUCKET}.s3.us-east-1.amazonaws.com/Cloudformation/infrastructure/rds.yaml'
       Parameters:
         Subnet1ID: !GetAtt VPC.Outputs.PrivateSubnet1
         Subnet2ID: !GetAtt VPC.Outputs.PrivateSubnet2
@@ -591,7 +608,7 @@ Resources:
   ALB:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://easy-erp-code-repo.s3.us-east-1.amazonaws.com/Cloudformation/infrastructure/load-balancers.yaml
+      TemplateURL: !Sub 'https://${S3BUCKET}.s3.us-east-1.amazonaws.com/Cloudformation/infrastructure/load-balancers.yaml'
       Parameters:
         EnvironmentName: !Ref AWS::StackName
         VPC: !GetAtt VPC.Outputs.VPC
@@ -601,14 +618,14 @@ Resources:
   ECS:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://easy-erp-code-repo.s3.us-east-1.amazonaws.com/Cloudformation/infrastructure/ecs-cluster.yaml
+      TemplateURL: !Sub 'https://${S3BUCKET}.s3.us-east-1.amazonaws.com/Cloudformation/infrastructure/ecs-cluster.yaml'
       Parameters:
         EnvironmentName: !Ref AWS::StackName
 
   Service:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://easy-erp-code-repo.s3.us-east-1.amazonaws.com/Cloudformation/services/website-service/service.yaml
+      TemplateURL: !Sub 'https://${S3BUCKET}.s3.us-east-1.amazonaws.com/Cloudformation/services/website-service/service.yaml'
       Parameters:
         EnvironmentName: !Ref AWS::StackName
         Cluster: !GetAtt ECS.Outputs.Cluster
@@ -625,6 +642,7 @@ Resources:
         S3BUCKET: !GetAtt S3.Outputs.S3Bucket
         SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
         Subnets: !GetAtt VPC.Outputs.PrivateSubnets
+        Image: !Ref DockerImage
 
 Outputs:
   WebsiteServiceUrl:

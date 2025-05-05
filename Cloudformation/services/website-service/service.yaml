@@ -10,6 +10,10 @@ Parameters:
     Description: The S3 bucket to store data
     Type: String
 
+  DockerImage:
+    Description: The Docker image to use for the service
+    Type: String
+
   Subnets:
     Type: 'List<AWS::EC2::Subnet::Id>'
     Description: List of public subnet ID's to put the load balancer in
