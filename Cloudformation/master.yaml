@@ -596,7 +596,7 @@ Resources:
   RDS:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub 'https://${S3BucketName}.amazonaws.com/Cloudformation/infrastructure/rds.yaml'
+      TemplateURL: !Sub 'https://${S3BucketName}.s3.amazonaws.com/Cloudformation/infrastructure/rds.yaml'
       Parameters:
         Subnet1ID: !GetAtt VPC.Outputs.PrivateSubnet1
         Subnet2ID: !GetAtt VPC.Outputs.PrivateSubnet2
