@@ -30,7 +30,7 @@ Metadata:
           - DBAutoMinorVersionUpgrade
           - DBAllowMajorVersionUpgrade
           - DBBackupRetentionPeriod
-          - DBEngineVersion
+          # - DBEngineVersion
           - DBInstanceClass
           - DBUsername
           - DBPassword
@@ -71,8 +71,8 @@ Metadata:
         default: IOPS
       DBName:
         default: Database name
-      DBEngineVersion:
-        default: Database engine version
+      # DBEngineVersion:
+      #   default: Database engine version
       DBAllocatedStorageEncrypted:
         default: Enable encryption
       DBExportLogToCloudwatch:
@@ -219,35 +219,10 @@ Parameters:
       Must be a value from 0 to 35. Can't be set to 0 if the database instance
       is a source to read replicas.
     Default: 35
-  DBEngineVersion:
-      Description: Select Database Engine Version
-      Type: String
-      Default: 15.4
-      AllowedValues:
-        - 11.16
-        - 11.17
-        - 11.18
-        - 11.19
-        - 11.2
-        - 12.11
-        - 12.12
-        - 12.13
-        - 12.14
-        - 12.15
-        - 13.7
-        - 13.8
-        - 13.9
-        - 13.1
-        - 13.11
-        - 14.3
-        - 14.4
-        - 14.5
-        - 14.6
-        - 14.7
-        - 14.8
-        - 15.2
-        - 15.3
-        - 15.4
+  # DBEngineVersion:
+  #     Description: Select Database Engine Version
+  #     Type: String
+  #     Default: 16.3
   DBInstanceClass:
     Type: String
     Description: >-
@@ -300,7 +275,7 @@ Parameters:
     Description: >-
       Choose 'true' to deploy a multi-AZ database instance.
     AllowedValues: ['true', 'false']
-    Default: 'true'
+    Default: 'false'
   DBName:
     Type: String
     Description: Name of the Amazon RDS (PostgreSQL) database.
@@ -456,59 +431,7 @@ Parameters:
       - other
       - ''
     Default: ''
-Mappings:
-  DBFamilyMap:
-    '11.16':
-      family: postgres11
-    '11.17':
-      family: postgres11
-    '11.18':
-      family: postgres11
-    '11.19':
-      family: postgres11
-    '11.20':
-      family: postgres11
-    '12.11':
-      family: postgres12
-    '12.12':
-      family: postgres12
-    '12.13':
-      family: postgres12
-    '12.14':
-      family: postgres12
-    '12.15':
-      family: postgres12
-    '13.7':
-      family: postgres13
-    '13.8':
-      family: postgres13
-    '13.9':
-      family: postgres13
-    '13.10':
-      family: postgres13
-    '13.11':
-      family: postgres13
-    '14.3':
-      family: postgres14
-    '14.4':
-      family: postgres14
-    '14.5':
-      family: postgres14
-    '14.6':
-      family: postgres14
-    '14.7':
-      family: postgres14
-    '14.8':
-      family: postgres14
-    '15.2':
-      family: postgres15
-    '15.3':
-      family: postgres15
-    '15.4':
-      family: postgres15
 Conditions:
-  EnableBastionAccess: !Equals [!Ref EnableBastion, 'true']
-  UsingDefaultBucket: !Equals [!Ref QSS3BucketName, aws-ia]
   EventSubscription: !Equals [!Ref EnableEventSubscription, 'true']
   DoCreateDatabase: !Not [!Equals [!Ref DBName, '']]
   DBProvisionedIops: !Equals [!Ref DBStorageType, io1]
@@ -516,6 +439,7 @@ Conditions:
   UseDatabaseEncryption: !Equals [!Ref DBAllocatedStorageEncrypted, 'true']
   EnableDBLogExport: !Equals [!Ref DBExportLogToCloudwatch, 'true']
   CreateSecurityGroup: !Equals [!Ref CustomDBSecurityGroup, '']
+  EnableMultiAZ:  !Equals [!Ref DBMultiAZ, 'true']
 Resources:
   MonitoringIAMRole:
     Type: AWS::IAM::Role
@@ -577,14 +501,14 @@ Resources:
     Properties:
       AliasName: !Sub alias/${AWS::StackName}
       TargetKeyId: !Ref EncryptionKey
-  DBParamGroup:
-    Type: AWS::RDS::DBParameterGroup
-    Properties:
-      Description: !Join ['- ', [RDS PostgreSQL Database Instance Parameter Group for Cloudformation Stack, !Ref DBName]]
-      Family: !FindInMap [DBFamilyMap, !Ref DBEngineVersion, family]
-      Parameters:
-        log_rotation_age: 1440
-        log_rotation_size: 102400
+  # DBParamGroup:
+  #   Type: AWS::RDS::DBParameterGroup
+  #   Properties:
+  #     Description: !Join ['- ', [RDS PostgreSQL Database Instance Parameter Group for Cloudformation Stack, !Ref DBName]]
+  #     # Family: !FindInMap [DBFamilyMap, !Ref DBEngineVersion, family]
+  #     Parameters:
+  #       log_rotation_age: 1440
+  #       log_rotation_size: 102400
   RDSDBInstance:
     Type: AWS::RDS::DBInstance
     Metadata:
@@ -597,14 +521,14 @@ Resources:
       AutoMinorVersionUpgrade: !Ref DBAutoMinorVersionUpgrade
       AllowMajorVersionUpgrade: !Ref DBAllowMajorVersionUpgrade
       BackupRetentionPeriod: !Ref DBBackupRetentionPeriod
-      DBParameterGroupName: !Ref DBParamGroup
+      # DBParameterGroupName: !Ref DBParamGroup
       DBInstanceClass: !Ref DBInstanceClass
       DBSubnetGroupName: !Ref RDSDBSubnetGroup
       EnableCloudwatchLogsExports:
         - !If [EnableDBLogExport, postgresql, !Ref AWS::NoValue]
       DBName: !If [DoCreateDatabase, !Ref DBName, !Ref AWS::NoValue]
       Engine: postgres
-      EngineVersion: !Ref DBEngineVersion
+      # EngineVersion: !Ref DBEngineVersion
       KmsKeyId: !If [UseDatabaseEncryption, !GetAtt EncryptionKey.Arn, !Ref AWS::NoValue]
       MasterUserPassword: !Ref DBPassword
       MasterUsername: !Ref DBUsername
@@ -616,7 +540,7 @@ Resources:
       StorageType: !Ref DBStorageType
       Iops: !If [DBProvisionedIops, !Ref DBIops, !Ref AWS::NoValue]
       StorageEncrypted: !If [UseDatabaseEncryption, !Ref DBAllocatedStorageEncrypted, !Ref AWS::NoValue]
-      MultiAZ: !Ref DBMultiAZ
+      MultiAZ: false
       Tags:
         - Key: Name
           Value: !Sub RDSDB-${AWS::StackName}
@@ -641,8 +565,9 @@ Resources:
       DBSubnetGroupDescription: >-
         Subnets available for the Amazon RDS (PostgreSQL) database instance.
       SubnetIds:
-       - !Ref Subnet1ID
        - !Ref Subnet2ID
+       - !Ref Subnet1ID
+       
   RDSSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Condition: CreateSecurityGroup
@@ -751,8 +676,8 @@ Resources:
       EventCategories:
         - configuration change
       SnsTopicArn: !Ref DBSNSTopic
-      SourceIds:
-        - !Ref DBParamGroup
+      # SourceIds:
+      #   - !Ref DBParamGroup
       SourceType: db-parameter-group
 Outputs:
   DBName:

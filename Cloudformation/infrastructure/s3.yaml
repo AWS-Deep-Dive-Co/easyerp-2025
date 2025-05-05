@@ -1,0 +1,29 @@
+Description: >
+  This template contains the security groups required by our entire stack.
+  We create them in a seperate nested template, so they can be referenced
+  by all of the other nested templates.
+
+Parameters:
+  EnvironmentName:
+    Description: An environment name that will be prefixed to resource names
+    Type: String
+
+Resources:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub s3-bucket-${EnvironmentName}-${AWS::AccountId}
+      PublicAccessBlockConfiguration:
+        RestrictPublicBuckets: false
+        IgnorePublicAcls: false
+        BlockPublicPolicy: false
+        BlockPublicAcls: false
+      OwnershipControls:
+        Rules:
+        - ObjectOwnership: BucketOwnerPreferred
+
+Outputs:
+  S3Bucket:
+    Description: A reference to the s3 bucket
+    Value: !Ref S3Bucket
+

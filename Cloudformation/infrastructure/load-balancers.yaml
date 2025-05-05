@@ -25,6 +25,9 @@ Resources:
     Properties:
       Name: !Ref EnvironmentName
       Subnets: !Ref Subnets
+      LoadBalancerAttributes:
+        - Key: idle_timeout.timeout_seconds
+          Value: '30'
       SecurityGroups:
         - !Ref SecurityGroup
       Tags:
@@ -39,7 +42,10 @@ Resources:
       Protocol: HTTP
       DefaultActions:
         - Type: forward
-          TargetGroupArn: !Ref DefaultTargetGroup
+          ForwardConfig:
+            TargetGroups:
+              - TargetGroupArn: !Ref DefaultTargetGroup
+                Weight: 100
 
   # We define a default target group here, as this is a mandatory Parameters
   # when creating an Application Load Balancer Listener. This is not used, instead
@@ -51,13 +57,16 @@ Resources:
       VpcId: !Ref VPC
       Port: 80
       Protocol: HTTP
-      Matcher:
-        HttpCode: 200-299
       HealthCheckIntervalSeconds: 10
-      HealthCheckPath: /health/
+      HealthCheckPath: /
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 2
+      TargetType: ip
+      UnhealthyThresholdCount: 10
+      TargetGroupAttributes:
+           - Key: deregistration_delay.timeout_seconds
+             Value: 0
 
 Outputs:
   LoadBalancer:
