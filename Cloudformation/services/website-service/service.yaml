@@ -82,7 +82,7 @@ Resources:
       TaskRoleArn: !Ref ECSTaskExecutionRoleArn
       ContainerDefinitions:
         - Name: !Ref EnvironmentName
-          Image: ${AWS::AccountId}.dkr.ecr.us-east-1.amazonaws.com/${DockerImage}
+          Image: ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${DockerImage}
           Memory: 1024
           Cpu: 1024
           Environment:

@@ -28,7 +28,7 @@ jobs:
         with:
           access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          region: us-east-1
+          region: us-east-2
           local-image: easyerp:prod-${{ github.sha }}
           image: easyerp:stage-${{ github.sha }}, easyerp:stage-latest
       
@@ -38,12 +38,12 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: us-east-1
+          AWS_DEFAULT_REGION: us-east-2
           ACTIONS_ALLOW_UNSECURE_COMMANDS: true
       - run: aws ecs update-service --cluster easyerp-stage --service easyerp-stage --force-new-deployment
         continue-on-error: true
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: us-east-1
+          AWS_DEFAULT_REGION: us-east-2
           ACTIONS_ALLOW_UNSECURE_COMMANDS: true

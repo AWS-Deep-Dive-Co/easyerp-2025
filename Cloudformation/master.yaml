@@ -262,7 +262,7 @@ Parameters:
       default Region unless you are customizing the template. Changing the
       Region updates code references to point to a new location. When using your
       own bucket, specify the Region.
-    Default: us-east-1
+    Default: us-east-2
   QSS3KeyPrefix:
     Type: String
     Description: S3 key prefix that is used to simulate a folder for your copy of
@@ -297,7 +297,7 @@ Parameters:
   #     default Region unless you are customizing the template. Changing the
   #     Region updates code references to point to a new location. When using your
   #     own bucket, specify the Region.
-  #   Default: us-east-1
+  #   Default: us-east-2
   # QSS3KeyPrefixBastion:
   #   Type: String
   #   Description: S3 key prefix that is used to simulate a folder for your copy of
@@ -523,7 +523,7 @@ Resources:
   VPC:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub 'https://${S3BUCKET}.s3.us-east-1.amazonaws.com/Cloudformation/infrastructure/vpc.yaml'
+      TemplateURL: !Sub 'https://${S3BUCKET}.s3.${AWS::Region}.amazonaws.com/Cloudformation/infrastructure/vpc.yaml'
       Parameters:
         EnvironmentName: !Ref AWS::StackName
         VpcCIDR: !Ref VPCCIDR
@@ -535,7 +535,7 @@ Resources:
   SecurityGroups:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub 'https://${S3BUCKET}.s3.us-east-1.amazonaws.com/Cloudformation/infrastructure/security-groups.yaml'
+      TemplateURL: !Sub 'https://${S3BUCKET}.s3.${AWS::Region}.amazonaws.com/Cloudformation/infrastructure/security-groups.yaml'
       Parameters:
         EnvironmentName: !Ref AWS::StackName
         VPC: !GetAtt VPC.Outputs.VPC
@@ -543,7 +543,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: EnableBastionAccess
     Properties:
-      TemplateURL: !Sub 'https://${S3BUCKET}.s3.us-east-1.amazonaws.com/Cloudformation/infrastructure/bastion.yaml'
+      TemplateURL: !Sub 'https://${S3BUCKET}.s3.${AWS::Region}.amazonaws.com/Cloudformation/infrastructure/bastion.yaml'
       Parameters:
         KeyPairName: !Ref KeyPairName
         PublicSubnet1ID: !GetAtt VPC.Outputs.PublicSubnet1
@@ -557,14 +557,14 @@ Resources:
   S3:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub 'https://${S3BUCKET}.s3.us-east-1.amazonaws.com/Cloudformation/infrastructure/s3.yaml'
+      TemplateURL: !Sub 'https://${S3BUCKET}.s3.${AWS::Region}.amazonaws.com/Cloudformation/infrastructure/s3.yaml'
       Parameters:
         EnvironmentName: !Ref AWS::StackName
 
   RDS:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub 'https://${S3BUCKET}.s3.us-east-1.amazonaws.com/Cloudformation/infrastructure/rds.yaml'
+      TemplateURL: !Sub 'https://${S3BUCKET}.s3.${AWS::Region}.amazonaws.com/Cloudformation/infrastructure/rds.yaml'
       Parameters:
         Subnet1ID: !GetAtt VPC.Outputs.PrivateSubnet1
         Subnet2ID: !GetAtt VPC.Outputs.PrivateSubnet2
@@ -608,7 +608,7 @@ Resources:
   ALB:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub 'https://${S3BUCKET}.s3.us-east-1.amazonaws.com/Cloudformation/infrastructure/load-balancers.yaml'
+      TemplateURL: !Sub 'https://${S3BUCKET}.s3.${AWS::Region}.amazonaws.com/Cloudformation/infrastructure/load-balancers.yaml'
       Parameters:
         EnvironmentName: !Ref AWS::StackName
         VPC: !GetAtt VPC.Outputs.VPC
@@ -618,14 +618,14 @@ Resources:
   ECS:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub 'https://${S3BUCKET}.s3.us-east-1.amazonaws.com/Cloudformation/infrastructure/ecs-cluster.yaml'
+      TemplateURL: !Sub 'https://${S3BUCKET}.s3.${AWS::Region}.amazonaws.com/Cloudformation/infrastructure/ecs-cluster.yaml'
       Parameters:
         EnvironmentName: !Ref AWS::StackName
 
   Service:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub 'https://${S3BUCKET}.s3.us-east-1.amazonaws.com/Cloudformation/services/website-service/service.yaml'
+      TemplateURL: !Sub 'https://${S3BUCKET}.s3.${AWS::Region}.amazonaws.com/Cloudformation/services/website-service/service.yaml'
       Parameters:
         EnvironmentName: !Ref AWS::StackName
         Cluster: !GetAtt ECS.Outputs.Cluster
