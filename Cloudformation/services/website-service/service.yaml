@@ -82,7 +82,7 @@ Resources:
       TaskRoleArn: !Ref ECSTaskExecutionRoleArn
       ContainerDefinitions:
         - Name: !Ref EnvironmentName
-          Image: 390403856977.dkr.ecr.us-east-1.amazonaws.com/easyerp:latest
+          Image: ${AWS::AccountId}.dkr.ecr.us-east-1.amazonaws.com/${DockerImage}
           Memory: 1024
           Cpu: 1024
           Environment:
