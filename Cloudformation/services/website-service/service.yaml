@@ -6,9 +6,9 @@ Parameters:
     Description: An environment name that will be prefixed to resource names
     Type: String
 
-  S3BUCKET:
-    Description: The S3 bucket to store data
-    Type: String
+  # S3BUCKET:
+  #   Description: The S3 bucket to store data
+  #   Type: String
 
   DockerImage:
     Description: The Docker image to use for the service
@@ -98,8 +98,8 @@ Resources:
               Value: !Ref DBPASSWORD
             - Name: DEVENV
               Value: 'no'
-            - Name: AWS_S3_BUCKET_NAME
-              Value: !Ref S3BUCKET
+            # - Name: AWS_S3_BUCKET_NAME
+            #   Value: !Ref S3BUCKET
           PortMappings:
             - ContainerPort: 80
               HostPort: 80
