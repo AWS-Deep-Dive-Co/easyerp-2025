@@ -1,31 +1,23 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: >
-
-  This template deploys a VPC, with a pair of public and private subnets spread 
-  across two Availabilty Zones. It deploys an Internet Gateway, with a default 
-  route on the public subnets. It deploys a pair of NAT Gateways (one in each AZ), 
-  and default routes for them in the private subnets.
-
-  It then deploys a highly available ECS cluster using an AutoScaling Group, with 
-  ECS hosts distributed across multiple Availability Zones. 
-
-  Finally, it deploys a pair of example ECS services from containers published in 
-  Amazon EC2 Container Registry (Amazon ECR).
-
-  Last Modified: 22nd September 2016
-  Author: Paul Maddox <pmaddox@amazon.com>
+Description: |
+  This template deploys a VPC, with a pair of public and private subnets spread  across two Availabilty Zones. It deploys an Internet Gateway, with a default  route on the public subnets. It deploys a pair of NAT Gateways (one in each AZ),  and default routes for them in the private subnets.
+  It then deploys a highly available ECS cluster using an AutoScaling Group, with  ECS hosts distributed across multiple Availability Zones.
+  Finally, it deploys a pair of example ECS services from containers published in  Amazon EC2 Container Registry (Amazon ECR).
+  Last Modified: 22nd September 2016 Author: Paul Maddox <pmaddox@amazon.com>
 
 Metadata:
   LICENSE: Apache License Version 2.0
   AWS::CloudFormation::Interface:
     ParameterGroups:
-      - Label: Source code
+      - Label:
+          default: Required Deployment Parameters
         Parameters:
-          - S3BucketName
+          - DockerImage
+          - S3BUCKET
       - Label:
           default: Network configuration
         Parameters:
-          - AvailabilityZones
+          # - AvailabilityZones
           - VPCCIDR
           - PrivateSubnet1CIDR
           - PrivateSubnet2CIDR
@@ -47,7 +39,7 @@ Metadata:
           - DBAutoMinorVersionUpgrade
           - DBAllowMajorVersionUpgrade
           - DBBackupRetentionPeriod
-          - DBEngineVersion
+          # - DBEngineVersion
           - DBInstanceClass
           - DBUsername
           - DBPassword
@@ -77,15 +69,17 @@ Metadata:
           - QSS3BucketName
           - QSS3BucketRegion
           - QSS3KeyPrefix
-      - Label:
-          default: AWS Partner Solution configuration - Bastion
-        Parameters:
-          - QSS3BucketNameBastion
-          - QSS3BucketRegionBastion
-          - QSS3KeyPrefixBastion
+      # - Label:
+      #     default: AWS Partner Solution configuration - Bastion
+      #   Parameters:
+      #     - QSS3BucketNameBastion
+      #     - QSS3BucketRegionBastion
+      #     - QSS3KeyPrefixBastion
     ParameterLabels:
-      S3BucketName:
-        default: S# Bucket Name
+      DockerImage:
+        default: Docker image name
+      S3BUCKET:
+        default: S3 bucket name with source code
       DBAllocatedStorage:
         default: Amount of storage (in gigabytes)
       DBMaxAllocatedStorage:
@@ -94,10 +88,10 @@ Metadata:
         default: Storage type
       DBIops:
         default: IOPS
-      AvailabilityZones:
-        default: Availability Zones
-      DBEngineVersion:
-        default: Engine version
+      # AvailabilityZones:
+      #   default: Availability Zones
+      # DBEngineVersion:
+      #   default: Engine version
       DBName:
         default: Name
       DBAllocatedStorageEncrypted:
@@ -130,24 +124,24 @@ Metadata:
         default: Enable TCP forwarding
       PrivateSubnet1CIDR:
         default: Private subnet 1 CIDR
-      PrivateSubnet2CIDR:
-        default: Private subnet 2 CIDR
+      # PrivateSubnet2CIDR:
+      #   default: Private subnet 2 CIDR
       PublicSubnet1CIDR:
         default: Public subnet 1 CIDR
-      PublicSubnet2CIDR:
-        default: Public subnet 2 CIDR
+      # PublicSubnet2CIDR:
+      #   default: Public subnet 2 CIDR
       QSS3BucketName:
         default: Partner Solution S3 bucket name - RDS
       QSS3BucketRegion:
         default: Partner Solution S3 bucket Region - RDS
       QSS3KeyPrefix:
         default: Partner Solution S3 key prefix - RDS
-      QSS3BucketNameBastion:
-        default: Partner Solution S3 bucket name - Bastion
-      QSS3BucketRegionBastion:
-        default: Partner Solution S3 bucket Region - Bastion
-      QSS3KeyPrefixBastion:
-        default: Partner Solution S3 key prefix - Bastion
+      # QSS3BucketNameBastion:
+      #   default: Partner Solution S3 bucket name - Bastion
+      # QSS3BucketRegionBastion:
+      #   default: Partner Solution S3 bucket Region - Bastion
+      # QSS3KeyPrefixBastion:
+      #   default: Partner Solution S3 key prefix - Bastion
       VPCCIDR:
         default: VPC CIDR
       EnableEventSubscription:
@@ -171,171 +165,158 @@ Metadata:
       RemoteAccessCIDR:
         default: Permitted IP range
 
-
-
-
 Parameters:
-  S3BucketName:
-      Type: String
-      Description: The name of the S3 bucket where the templates are stored.
+  DockerImage:
+    Type: String
+    Description: The name of the Docker image to deploy. This should be in the format
+      <account-id>.dkr.ecr.<region>.amazonaws.com/<repository>:<tag>.
+  S3BUCKET:
+    Type: String
+    Description: The name of the S3 bucket that contains the source code for the
+      Docker image.
   BastionAMIOS:
-      Type: String
-      Description: The Linux distribution for the AMI to be used for the bastion host instances.
-      AllowedValues:
-        - Amazon-Linux2-HVM
-        - Amazon-Linux2-HVM-ARM
-        - Amazon-Linux2022
-        - Amazon-Linux2022-ARM
-        - CentOS-7-HVM
-        - Ubuntu-Server-20.04-LTS-HVM
-        - Ubuntu-Server-22.04-LTS-HVM
-        - Ubuntu-Server-22.04-LTS-HVM-ARM
-        - SUSE-SLES-15-HVM
-      Default: Ubuntu-Server-20.04-LTS-HVM
-  AvailabilityZones:
-   Type: List<AWS::EC2::AvailabilityZone::Name>
-   Description: >-
-      List of Availability Zones to use for the subnets in the VPC. Only two
-      Availability Zones are used for this deployment, and the logical order of
-      your selections is preserved.
+    Type: String
+    Description: The Linux distribution for the AMI to be used for the bastion host
+      instances.
+    AllowedValues:
+      - Amazon-Linux2-HVM
+      - Amazon-Linux2-HVM-ARM
+      - Amazon-Linux2022
+      - Amazon-Linux2022-ARM
+      - CentOS-7-HVM
+      - Ubuntu-Server-20.04-LTS-HVM
+      - Ubuntu-Server-22.04-LTS-HVM
+      - Ubuntu-Server-22.04-LTS-HVM-ARM
+      - SUSE-SLES-15-HVM
+    Default: Ubuntu-Server-20.04-LTS-HVM
+  # AvailabilityZones:
+  #   Type: List<AWS::EC2::AvailabilityZone::Name>
+  #   Description: >-
+  #     List of Availability Zones to use for the subnets in the VPC. Only two
+  #     Availability Zones are used for this deployment, and the logical order of
+  #     your selections is preserved.
+  #   Default: !Join [",", [!Select [0, !GetAZs ''], !Select [1, !GetAZs '']]]
   KeyPairName:
     Type: String
-    Description: >-
-      Name of an existing key pair, which allows you to securely connect to
-      your instance after it launches. Leave empty to proceed without a key
-      pair. You would need to use AWS Systems Manager Session Manager to
-      connect to the provisioned EC2 instances.
-    Default: ''
+    Description: Name of an existing key pair, which allows you to securely connect
+      to your instance after it launches. Leave empty to proceed without a key
+      pair. You would need to use AWS Systems Manager Session Manager to connect
+      to the provisioned EC2 instances.
+    Default: 'easy-erp'
   VPCCIDR:
     Type: String
     Description: CIDR block for the VPC.
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
-    ConstraintDescription: >-
-      CIDR block parameter must be in the form x.x.x.x/16-28.
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28.
     Default: 10.180.0.0/16
 
   PrivateSubnet1CIDR:
     Type: String
-    Description: >-
-      CIDR block for private subnet 1 located in Availability Zone 1.
+    Description: CIDR block for private subnet 1 located in Availability Zone 1.
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
-    ConstraintDescription: >-
-      CIDR block parameter must be in the form x.x.x.x/16-28.
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28.
     Default: 10.180.24.0/21
   PrivateSubnet2CIDR:
     Type: String
-    Description: >-
-      CIDR block for private subnet 2 located in Availability Zone 2.
+    Description: CIDR block for private subnet 2 located in Availability Zone 2.
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
-    ConstraintDescription: >-
-      CIDR block parameter must be in the form x.x.x.x/16-28.
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28.
     Default: 10.180.32.0/21
   PublicSubnet1CIDR:
     Type: String
-    Description: >-
-      CIDR block for the public subnet 1 located in Availability Zone 1.
+    Description: CIDR block for the public subnet 1 located in Availability Zone 1.
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
-    ConstraintDescription: >-
-      CIDR block parameter must be in the form x.x.x.x/16-28.
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28.
     Default: 10.180.8.0/21
   PublicSubnet2CIDR:
     Type: String
-    Description: >-
-      CIDR block for the public subnet 2 located in Availability Zone 2.
+    Description: CIDR block for the public subnet 2 located in Availability Zone 2.
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
-    ConstraintDescription: >-
-      CIDR block parameter must be in the form x.x.x.x/16-28.
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28.
     Default: 10.180.16.0/21
   RemoteAccessCIDR:
     Type: String
     Description: Allowed CIDR block for external SSH access to the bastions.
     AllowedPattern: ^disabled-onlyssmaccess$|^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
-    ConstraintDescription: CIDR block parameter must be disabled-onlyssmaccess or in the format "x.x.x.x/x".
+    ConstraintDescription: CIDR block parameter must be disabled-onlyssmaccess or in
+      the format "x.x.x.x/x".
     Default: 0.0.0.0/0
   QSS3BucketName:
     Type: String
-    Description: >-
-      Name of the S3 bucket for your copy of the Quick Start assets.
-      Keep the default name unless you are customizing the template.
-      Changing the name updates code references to point to a new Quick
-      Start location. This name can include numbers, lowercase letters,
-      and hyphens, but do not start or end with a hyphen (-).
-      See https://aws-quickstart.github.io/option1.html.
+    Description: Name of the S3 bucket for your copy of the Quick Start assets. Keep
+      the default name unless you are customizing the template. Changing the
+      name updates code references to point to a new Quick Start location. This
+      name can include numbers, lowercase letters, and hyphens, but do not start
+      or end with a hyphen (-). See
+      https://aws-quickstart.github.io/option1.html.
     MinLength: 3
     MaxLength: 63
     AllowedPattern: ^[0-9a-z]+([0-9a-z-]*[0-9a-z])*$
-    ConstraintDescription:
-      The Quick Start bucket name can include numbers, lowercase
-      letters, uppercase letters, and hyphens (-). It cannot start or end with a
-      hyphen (-).
+    ConstraintDescription: The Quick Start bucket name can include numbers,
+      lowercase letters, uppercase letters, and hyphens (-). It cannot start or
+      end with a hyphen (-).
     Default: aws-ia
   QSS3BucketRegion:
     Type: String
-    Description: >-
-      AWS Region where the S3 bucket (QSS3BucketName) is hosted. Keep
-      the default Region unless you are customizing the template. Changing the Region
-      updates code references to point to a new location. When using your own bucket,
-      specify the Region.
-    Default: us-east-1
+    Description: AWS Region where the S3 bucket (QSS3BucketName) is hosted. Keep the
+      default Region unless you are customizing the template. Changing the
+      Region updates code references to point to a new location. When using your
+      own bucket, specify the Region.
+    Default: us-east-2
   QSS3KeyPrefix:
     Type: String
-    Description: >-
-      S3 key prefix that is used to simulate a folder for your copy of the
-      deployment assets. Keep the default prefix unless you are customizing
-      the template. Changing the prefix updates code references to point to
-      a new location.
+    Description: S3 key prefix that is used to simulate a folder for your copy of
+      the deployment assets. Keep the default prefix unless you are customizing
+      the template. Changing the prefix updates code references to point to a
+      new location.
     AllowedPattern: ^[0-9a-zA-Z-/]*$
-    ConstraintDescription: >-
-      The S3 key prefix can include numbers, lowercase letters, uppercase letters,
-      hyphens (-), underscores (_), periods (.), asterisks (*), single quotes ('),
-      open parenthesis ((), close parenthesis ()), and forward slashes (/). End the
-      prefix with a forward slash.
+    ConstraintDescription: The S3 key prefix can include numbers, lowercase letters,
+      uppercase letters, hyphens (-), underscores (_), periods (.), asterisks
+      (*), single quotes ('), open parenthesis ((), close parenthesis ()), and
+      forward slashes (/). End the prefix with a forward slash.
     Default: cfn-ps-amazon-rds/
 
-  QSS3BucketNameBastion:
-    Type: String
-    Description: >-
-      Name of the S3 bucket for your copy of the Quick Start assets.
-      Keep the default name unless you are customizing the template.
-      Changing the name updates code references to point to a new Quick
-      Start location. This name can include numbers, lowercase letters,
-      and hyphens, but do not start or end with a hyphen (-).
-      See https://aws-quickstart.github.io/option1.html.
-    MinLength: 3
-    MaxLength: 63
-    AllowedPattern: ^[0-9a-z]+([0-9a-z-]*[0-9a-z])*$
-    ConstraintDescription:
-      The Quick Start bucket name can include numbers, lowercase
-      letters, uppercase letters, and hyphens (-). It cannot start or end with a
-      hyphen (-).
-    Default: aws-ia
-  QSS3BucketRegionBastion:
-    Type: String
-    Description: >-
-      AWS Region where the S3 bucket (QSS3BucketName) is hosted. Keep
-      the default Region unless you are customizing the template. Changing the Region
-      updates code references to point to a new location. When using your own bucket,
-      specify the Region.
-    Default: us-east-1
-  QSS3KeyPrefixBastion:
-    Type: String
-    Description: >-
-      S3 key prefix that is used to simulate a folder for your copy of the
-      deployment assets. Keep the default prefix unless you are customizing
-      the template. Changing the prefix updates code references to point to
-      a new location.
-    AllowedPattern: ^[0-9a-zA-Z-/]*$
-    ConstraintDescription: >-
-      The S3 key prefix can include numbers, lowercase letters, uppercase letters,
-      hyphens (-), underscores (_), periods (.), asterisks (*), single quotes ('),
-      open parenthesis ((), close parenthesis ()), and forward slashes (/). End the
-      prefix with a forward slash.
-    Default: cfn-ps-linux-bastion/
+  # QSS3BucketNameBastion:
+  #   Type: String
+  #   Description: Name of the S3 bucket for your copy of the Quick Start assets. Keep
+  #     the default name unless you are customizing the template. Changing the
+  #     name updates code references to point to a new Quick Start location. This
+  #     name can include numbers, lowercase letters, and hyphens, but do not start
+  #     or end with a hyphen (-). See
+  #     https://aws-quickstart.github.io/option1.html.
+  #   MinLength: 3
+  #   MaxLength: 63
+  #   AllowedPattern: ^[0-9a-z]+([0-9a-z-]*[0-9a-z])*$
+  #   ConstraintDescription: The Quick Start bucket name can include numbers,
+  #     lowercase letters, uppercase letters, and hyphens (-). It cannot start or
+  #     end with a hyphen (-).
+  #   Default: aws-ia
+  # QSS3BucketRegionBastion:
+  #   Type: String
+  #   Description: AWS Region where the S3 bucket (QSS3BucketName) is hosted. Keep the
+  #     default Region unless you are customizing the template. Changing the
+  #     Region updates code references to point to a new location. When using your
+  #     own bucket, specify the Region.
+  #   Default: us-east-2
+  # QSS3KeyPrefixBastion:
+  #   Type: String
+  #   Description: S3 key prefix that is used to simulate a folder for your copy of
+  #     the deployment assets. Keep the default prefix unless you are customizing
+  #     the template. Changing the prefix updates code references to point to a
+  #     new location.
+  #   AllowedPattern: ^[0-9a-zA-Z-/]*$
+  #   ConstraintDescription: The S3 key prefix can include numbers, lowercase letters,
+  #     uppercase letters, hyphens (-), underscores (_), periods (.), asterisks
+  #     (*), single quotes ('), open parenthesis ((), close parenthesis ()), and
+  #     forward slashes (/). End the prefix with a forward slash.
+  #   Default: cfn-ps-linux-bastion/
 
   EnableBastion:
     Type: String
     Description: If true, creates a bastion stack.
-    AllowedValues: ['true', 'false']
+    AllowedValues:
+      - 'true'
+      - 'false'
     Default: 'true'
   DBAllocatedStorage:
     Type: Number
@@ -343,14 +324,15 @@ Parameters:
     Default: 20
   DBMaxAllocatedStorage:
     Type: Number
-    Description: >-
-      The upper limit in gigabytes to which Amazon RDS can automatically scale
-      the storage.
+    Description: The upper limit in gigabytes to which Amazon RDS can automatically
+      scale the storage.
     Default: 20
   DBAllocatedStorageEncrypted:
     Type: String
     Description: Choose 'true' to encrypt the database.
-    AllowedValues: ['true', 'false']
+    AllowedValues:
+      - 'true'
+      - 'false'
     Default: 'false'
   DBIops:
     Type: Number
@@ -362,67 +344,46 @@ Parameters:
   DBExportLogToCloudwatch:
     Type: String
     Description: Choose 'true' to export database logs to CloudWatch.
-    AllowedValues: ['true', 'false']
+    AllowedValues:
+      - 'true'
+      - 'false'
     Default: 'false'
   EnableTCPForwarding:
     Type: String
     Description: Choose 'true' to enable TCP forwarding.
-    AllowedValues: ['true', 'false']
+    AllowedValues:
+      - 'true'
+      - 'false'
     Default: 'true'
   DBAutoMinorVersionUpgrade:
     Type: String
     Description: Choose 'true' to set up auto minor version upgrade.
-    AllowedValues: ['true', 'false']
+    AllowedValues:
+      - 'true'
+      - 'false'
     Default: 'false'
   DBAllowMajorVersionUpgrade:
     Type: String
     Description: Choose 'true' to set up major version upgrade.
-    AllowedValues: ['true', 'false']
+    AllowedValues:
+      - 'true'
+      - 'false'
     Default: 'false'
   DBBackupRetentionPeriod:
     Type: Number
-    Description: >-
-      The number of days that automatic database snapshots are retained.
+    Description: The number of days that automatic database snapshots are retained.
     MinValue: 0
     MaxValue: 35
-    ConstraintDescription: >-
-      Must be a value from 0 to 35. Can't be set to 0 if the database instance
-      is a source to read replicas.
+    ConstraintDescription: Must be a value from 0 to 35. Can't be set to 0 if the
+      database instance is a source to read replicas.
     Default: 0
-  DBEngineVersion:
-      Description: Select Database Engine Version
-      Type: String
-      Default: 15.4
-      AllowedValues:
-        - 11.16
-        - 11.17
-        - 11.18
-        - 11.19
-        - 11.2
-        - 12.11
-        - 12.12
-        - 12.13
-        - 12.14
-        - 12.15
-        - 13.7
-        - 13.8
-        - 13.9
-        - 13.1
-        - 13.11
-        - 14.3
-        - 14.4
-        - 14.5
-        - 14.6
-        - 14.7
-        - 14.8
-        - 15.2
-        - 15.3
-        - 15.4
+  # DBEngineVersion:
+  #     Description: Select Database Engine Version
+  #     Type: String
+  #     Default: 16.3
   DBInstanceClass:
     Type: String
-    Description: >-
-      The name of the compute and memory capacity class of the database
-      instance.
+    Description: The name of the compute and memory capacity class of the database instance.
     AllowedPattern: ^db\.[a-z0-9]+\.[a-z0-9]+$
     ConstraintDescription: Must select a valid database instance type.
     Default: db.t3.micro
@@ -438,10 +399,11 @@ Parameters:
     MinLength: 8
     MaxLength: 128
     AllowedPattern: ^[^/'\"@]+$
-    ConstraintDescription: >-
-      Must be 8 to 128 printable ASCII characters. Can't contain any of the following:
-      slash (/), single quote (''), double quote ("), or at sign (@).
-    NoEcho: True
+    ConstraintDescription: 'Must be 8 to 128 printable ASCII characters. Can''t
+      contain any of the following: slash (/), single quote (''''), double quote
+      ("), or at sign (@).'
+    NoEcho: true
+    Default: Password123
   DBUsername:
     Type: String
     Description: The database administrator account user name.
@@ -452,9 +414,14 @@ Parameters:
     Default: postgres
   DBMonitoringInterval:
     Type: Number
-    AllowedValues: [0, 1, 5, 15, 30, 60]
-    Description: >-
-      Enhanced monitoring metrics interval in seconds. To disable
+    AllowedValues:
+      - 0
+      - 1
+      - 5
+      - 15
+      - 30
+      - 60
+    Description: Enhanced monitoring metrics interval in seconds. To disable
       enhanced monitoring metrics, specify 0.
     Default: 0
   DBPort:
@@ -466,42 +433,43 @@ Parameters:
     Default: 5432
   DBMultiAZ:
     Type: String
-    Description: >-
-      Choose 'true' to deploy a multi-AZ database instance.
-    AllowedValues: ['true', 'false']
-    Default: 'true'
+    Description: Choose 'true' to deploy a multi-AZ database instance.
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Default: 'false'
   DBName:
     Type: String
     Description: Name of the Amazon RDS (PostgreSQL) database.
     MinLength: 5
     MaxLength: 64
     AllowedPattern: ^[a-zA-Z][a-zA-Z0-9]*$
-    Default: easyerpdb
+    Default: easyerp
   DBStorageType:
     Type: String
-    Description: >-
-      Storage type. For additional information, refer to
+    Description: Storage type. For additional information, refer to
       https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_Storage.html.
-    AllowedValues: [io1, gp2]
+    AllowedValues:
+      - io1
+      - gp2
     Default: gp2
   EnableEventSubscription:
     Type: String
     Description: Enables event subscription to notification list.
-    AllowedValues: ['true', 'false']
+    AllowedValues:
+      - 'true'
+      - 'false'
     Default: 'false'
   NotificationList:
     Type: String
-    Description: >-
-      The email notification used to configure an Amazon SNS topic for sending
-      CloudWatch alarm and Amazon RDS event notifications.
+    Description: The email notification used to configure an Amazon SNS topic for
+      sending CloudWatch alarm and Amazon RDS event notifications.
     AllowedPattern: ^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$
     ConstraintDescription: Provide a valid email address.
     Default: erp.awsdd@gmail.com
   EnvironmentStage:
     Type: String
-    Description: >-
-      (Optional) Designates the environment stage of the associated AWS
-      resource.
+    Description: (Optional) Designates the environment stage of the associated AWS resource.
     AllowedValues:
       - dev
       - test
@@ -511,9 +479,8 @@ Parameters:
     Default: prod
   Application:
     Type: String
-    Description: >-
-      (Optional) Designates the application of the associated AWS resource.
-    Default: 'easyerp'
+    Description: (Optional) Designates the application of the associated AWS resource.
+    Default: easyerp
   ApplicationVersion:
     Type: String
     Description: (Optional) Designates the specific version of the application.
@@ -521,14 +488,12 @@ Parameters:
   ProjectCostCenter:
     Type: String
     Default: ''
-    Description: >-
-      (Optional) Designates the cost center associated with the project of the
-      given AWS resource.
+    Description: (Optional) Designates the cost center associated with the project
+      of the given AWS resource.
   Confidentiality:
     Type: String
-    Description: >-
-      (Optional) Designates the confidentiality classification of the data that
-      is associated with the resource.
+    Description: (Optional) Designates the confidentiality classification of the
+      data that is associated with the resource.
     AllowedValues:
       - public
       - private
@@ -539,8 +504,7 @@ Parameters:
     Default: ''
   Compliance:
     Type: String
-    Description: >-
-      (Optional) Designates the compliance level for the AWS resource.
+    Description: (Optional) Designates the compliance level for the AWS resource.
     AllowedValues:
       - hipaa
       - sox
@@ -549,9 +513,9 @@ Parameters:
       - ''
     Default: ''
 
-  LatestAmiId:
-    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
-    Default: '/aws/service/canonical/ubuntu/server/jammy/stable/current/amd64/hvm/ebs-gp2/ami-id'
+  # LatestAmiId:
+  #   Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+  #   Default: /aws/service/canonical/ubuntu/server/jammy/stable/current/amd64/hvm/ebs-gp2/ami-id
 Conditions:
   EnableBastionAccess: !Equals [!Ref EnableBastion, 'true']
 
@@ -559,7 +523,7 @@ Resources:
   VPC:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub 'https://${S3BucketName}.s3.amazonaws.com/Cloudformation/infrastructure/vpc.yaml'
+      TemplateURL: !Sub 'https://${S3BUCKET}.s3.${AWS::Region}.amazonaws.com/Cloudformation/infrastructure/vpc.yaml'
       Parameters:
         EnvironmentName: !Ref AWS::StackName
         VpcCIDR: !Ref VPCCIDR
@@ -567,12 +531,11 @@ Resources:
         PublicSubnet2CIDR: !Ref PublicSubnet2CIDR
         PrivateSubnet1CIDR: !Ref PrivateSubnet1CIDR
         PrivateSubnet2CIDR: !Ref PrivateSubnet2CIDR
-        
 
   SecurityGroups:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub 'https://${S3BucketName}.s3.amazonaws.com/Cloudformation/infrastructure/security-groups.yaml'
+      TemplateURL: !Sub 'https://${S3BUCKET}.s3.${AWS::Region}.amazonaws.com/Cloudformation/infrastructure/security-groups.yaml'
       Parameters:
         EnvironmentName: !Ref AWS::StackName
         VPC: !GetAtt VPC.Outputs.VPC
@@ -580,23 +543,28 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: EnableBastionAccess
     Properties:
-      TemplateURL: !Sub 'https://${S3BucketName}.s3.amazonaws.com/Cloudformation/infrastructure/bastion.yaml'
+      TemplateURL: !Sub 'https://${S3BUCKET}.s3.${AWS::Region}.amazonaws.com/Cloudformation/infrastructure/bastion.yaml'
       Parameters:
         KeyPairName: !Ref KeyPairName
         PublicSubnet1ID: !GetAtt VPC.Outputs.PublicSubnet1
-        PublicSubnet2ID: !GetAtt VPC.Outputs.PublicSubnet2
-        EnableTCPForwarding: !Ref EnableTCPForwarding
+        # PublicSubnet2ID: !GetAtt VPC.Outputs.PublicSubnet2
+        #EnableTCPForwarding: !Ref EnableTCPForwarding
         RemoteAccessCIDR: !Ref RemoteAccessCIDR
         VPCID: !GetAtt VPC.Outputs.VPC
-        QSS3BucketName: !Ref QSS3BucketNameBastion
-        QSS3BucketRegion: !Ref QSS3BucketRegionBastion
-        QSS3KeyPrefix: !Sub QSS3KeyPrefixBastion
-        BastionAMIOS: !Ref BastionAMIOS
-        RDSEndPointAddress: !GetAtt RDS.Outputs.RDSEndPointAddress
+        # BastionAMIOS: !Ref BastionAMIOS
+        # RDSEndPointAddress: !GetAtt RDS.Outputs.RDSEndPointAddress
+
+  # S3:
+  #   Type: AWS::CloudFormation::Stack
+  #   Properties:
+  #     TemplateURL: !Sub 'https://${S3BUCKET}.s3.${AWS::Region}.amazonaws.com/Cloudformation/infrastructure/s3.yaml'
+  #     Parameters:
+  #       EnvironmentName: !Ref AWS::StackName
+
   RDS:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub 'https://${S3BucketName}.s3.amazonaws.com/Cloudformation/infrastructure/rds.yaml'
+      TemplateURL: !Sub 'https://${S3BUCKET}.s3.${AWS::Region}.amazonaws.com/Cloudformation/infrastructure/rds.yaml'
       Parameters:
         Subnet1ID: !GetAtt VPC.Outputs.PrivateSubnet1
         Subnet2ID: !GetAtt VPC.Outputs.PrivateSubnet2
@@ -613,7 +581,6 @@ Resources:
         DBAllocatedStorageEncrypted: !Ref DBAllocatedStorageEncrypted
         DBExportLogToCloudwatch: !Ref DBExportLogToCloudwatch
         DBBackupRetentionPeriod: !Ref DBBackupRetentionPeriod
-        DBEngineVersion: !Ref DBEngineVersion
         DBInstanceClass: !Ref DBInstanceClass
         DBUsername: !Ref DBUsername
         DBPassword: !Ref DBPassword
@@ -638,31 +605,10 @@ Resources:
         QSS3KeyPrefix: !Ref QSS3KeyPrefix
         BastionAMIOS: !Ref BastionAMIOS
 
-  # BastionSecurityGroup:
-  #   Type: AWS::EC2::SecurityGroup
-  #   Properties:
-  #     GroupDescription: "Allow HTTP/HTTPS and SSH inbound and outbound traffic"
-  #     SecurityGroupIngress:
-  #       - IpProtocol: tcp
-  #         FromPort: 22
-  #         ToPort: 22
-  #         CidrIp: 0.0.0.0/0
-  #     VpcId: !GetAtt VPC.Outputs.VPC
-          
-  # BastionInstance:
-  #   Type: AWS::EC2::Instance
-  #   Properties:
-  #     ImageId: !Ref LatestAmiId
-  #     InstanceType: t2.micro
-  #     KeyName: easyerp
-  #     SubnetId: !GetAtt VPC.Outputs.PrivateSubnet1
-  #     SecurityGroupIds:
-  #       - !Ref BastionSecurityGroup
-
   ALB:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub 'https://${S3BucketName}.s3.amazonaws.com/Cloudformation/infrastructure/load-balancers.yaml'
+      TemplateURL: !Sub 'https://${S3BUCKET}.s3.${AWS::Region}.amazonaws.com/Cloudformation/infrastructure/load-balancers.yaml'
       Parameters:
         EnvironmentName: !Ref AWS::StackName
         VPC: !GetAtt VPC.Outputs.VPC
@@ -672,39 +618,36 @@ Resources:
   ECS:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub 'https://${S3BucketName}.s3.amazonaws.com/Cloudformation/infrastructure/ecs-cluster.yaml'
+      TemplateURL: !Sub 'https://${S3BUCKET}.s3.${AWS::Region}.amazonaws.com/Cloudformation/infrastructure/ecs-cluster.yaml'
       Parameters:
-        KeyPairName: !Ref KeyPairName
         EnvironmentName: !Ref AWS::StackName
-        InstanceType: t3.medium
-        ClusterSizeMin: 2
-        ClusterSizeMax: 4
-        VPC: !GetAtt VPC.Outputs.VPC
-        SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
-        Subnets: !GetAtt VPC.Outputs.PrivateSubnets
 
-  EasyerpService:
+  Service:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub 'https://${S3BucketName}.s3.amazonaws.com/Cloudformation/services/website-service/service.yaml'
+      TemplateURL: !Sub 'https://${S3BUCKET}.s3.${AWS::Region}.amazonaws.com/Cloudformation/services/website-service/service.yaml'
       Parameters:
         EnvironmentName: !Ref AWS::StackName
-        VPC: !GetAtt VPC.Outputs.VPC
         Cluster: !GetAtt ECS.Outputs.Cluster
-        DesiredCount: 2
-        # ProductServiceUrl:
-        #   !Join ["/", [!GetAtt ALB.Outputs.LoadBalancerUrl, "products"]]
+        DesiredCount: 1
         Listener: !GetAtt ALB.Outputs.Listener
         TargetGroup: !GetAtt ALB.Outputs.DefaultTargetGroup
         Path: /
-        ECSServiceAutoScalingRoleARN: !GetAtt ECS.Outputs.ECSServiceAutoScalingRole
+        ECSTaskExecutionRoleArn: !GetAtt ECS.Outputs.ECSTaskExecutionRoleArn
         DBNAME: !GetAtt RDS.Outputs.DBName
         DBHOST: !GetAtt RDS.Outputs.RDSEndPointAddress
         DBPORT: !GetAtt RDS.Outputs.RDSEndPointPort
         DBUSER: !GetAtt RDS.Outputs.DBUsername
         DBPASSWORD: !GetAtt RDS.Outputs.DBPassword
+        # S3BUCKET: !GetAtt S3.Outputs.S3Bucket
+        SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
+        Subnets: !GetAtt VPC.Outputs.PrivateSubnets
+        DockerImage: !Ref DockerImage
 
 Outputs:
   WebsiteServiceUrl:
     Description: The URL endpoint for the website service
-    Value: !Join ["", [!GetAtt ALB.Outputs.LoadBalancerUrl, "/"]]
+    Value: !Join
+      - ''
+      - - !GetAtt ALB.Outputs.LoadBalancerUrl
+        - /
