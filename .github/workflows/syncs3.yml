@@ -12,7 +12,7 @@ jobs:
     steps:
     - uses: actions/checkout@master
       with:
-          ref: cloudformation-reconfig
+          ref: main
     - uses: jakejarvis/s3-sync-action@master
       with:
         args: --delete
