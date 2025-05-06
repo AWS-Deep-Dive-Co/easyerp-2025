@@ -19,6 +19,10 @@ Parameters:
     Description: Select the Security Group to apply to the Application Load Balancer
     Type: AWS::EC2::SecurityGroup::Id
 
+  CertificateSecretName:
+    Description: The name of the secret in Secrets Manager that contains the certificate
+    Type: String
+
 Resources:
   LoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
@@ -62,9 +66,9 @@ Resources:
   ImportedCertificate:
     Type: AWS::CertificateManager::Certificate
     Properties:
-      Certificate: !Sub '{{resolve:secretsmanager:your-certificate-secret-name:SecretString:cert}}'
-      PrivateKey: !Sub '{{resolve:secretsmanager:your-certificate-secret-name:SecretString:privkey}}'
-      CertificateChain: !Sub '{{resolve:secretsmanager:your-certificate-secret-name:SecretString:chain}}'
+      Certificate: !Sub '{{resolve:secretsmanager:${CertificateSecretName}:SecretString:cert}}'
+      PrivateKey: !Sub '{{resolve:secretsmanager:${CertificateSecretName}:SecretString:privkey}}'
+      CertificateChain: !Sub '{{resolve:secretsmanager:${CertificateSecretName}:SecretString:chain}}'
 
   # We define a default target group here, as this is a mandatory Parameters
   # when creating an Application Load Balancer Listener. This is not used, instead
