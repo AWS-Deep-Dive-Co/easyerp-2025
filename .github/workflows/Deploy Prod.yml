@@ -32,6 +32,9 @@ jobs:
           tags: easyerp:prod-${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: List Docker images
+        run: docker images
         
       
       - name: Push to ECR
