@@ -22,7 +22,9 @@ jobs:
       #   # Ignore the failure of a step and avoid terminating the job.
       #   continue-on-error: true
       # - run: docker build --tag easyerp:prod-${{ github.sha }} .
-      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
       - name: Docker Build
         uses: docker/build-push-action@v6
         with:
