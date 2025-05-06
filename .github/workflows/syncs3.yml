@@ -1,9 +1,9 @@
-name: Sync S3
+name: Sync S3 - Feature Branch
 
 on:
   push:
     branches:
-    - main
+    - update_dns_a_record
   workflow_dispatch:
 
 jobs:
@@ -12,7 +12,7 @@ jobs:
     steps:
     - uses: actions/checkout@master
       with:
-          ref: main
+          ref: update_dns_a_record
     - uses: jakejarvis/s3-sync-action@master
       with:
         args: --delete
