@@ -17,11 +17,22 @@ jobs:
         with:
           fetch-depth: 0
           ref: main
-      - uses: satackey/action-docker-layer-caching@v0.0.11
-        # Ignore the failure of a step and avoid terminating the job.
-        continue-on-error: true
+          
+      # - uses: satackey/action-docker-layer-caching@v0.0.11
+      #   # Ignore the failure of a step and avoid terminating the job.
+      #   continue-on-error: true
+      # - run: docker build --tag easyerp:prod-${{ github.sha }} .
+      
+      - name: Docker Build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: "easyerp:prod-${{ github.sha }}"
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
         
-      - run: docker build --tag easyerp:prod-${{ github.sha }} .
+      
       - name: Push to ECR
         id: ecr
         uses: jwalton/gh-ecr-push@v1
