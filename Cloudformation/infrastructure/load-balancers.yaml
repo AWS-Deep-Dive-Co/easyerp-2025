@@ -45,30 +45,11 @@ Resources:
       Port: 80
       Protocol: HTTP
       DefaultActions:
-        - Type: redirect
-          RedirectConfig:
-            Protocol: HTTPS
-            Port: '443'
-            StatusCode: HTTP_301
-
-  LoadBalancerListenerHTTPS:
-    Type: AWS::ElasticLoadBalancingV2::Listener
-    Properties:
-      LoadBalancerArn: !Ref LoadBalancer
-      Port: 443
-      Protocol: HTTPS
-      Certificates:
-        - CertificateArn: !Ref ImportedCertificate
-      DefaultActions:
         - Type: forward
-          TargetGroupArn: !Ref DefaultTargetGroup
-
-  ImportedCertificate:
-    Type: AWS::CertificateManager::Certificate
-    Properties:
-      Certificate: !Sub '{{resolve:secretsmanager:${CertificateSecretName}:SecretString:cert}}'
-      PrivateKey: !Sub '{{resolve:secretsmanager:${CertificateSecretName}:SecretString:privkey}}'
-      CertificateChain: !Sub '{{resolve:secretsmanager:${CertificateSecretName}:SecretString:chain}}'
+          ForwardConfig:
+            TargetGroups:
+              - TargetGroupArn: !Ref DefaultTargetGroup
+                Weight: 100
 
   # We define a default target group here, as this is a mandatory Parameters
   # when creating an Application Load Balancer Listener. This is not used, instead
@@ -102,7 +83,7 @@ Outputs:
 
   Listener:
     Description: A reference to a port 443 listener
-    Value: !Ref LoadBalancerListenerHTTPS
+    Value: !Ref LoadBalancerListenerHTTP
 
   DefaultTargetGroup:
     Description: A reference to the default target group
