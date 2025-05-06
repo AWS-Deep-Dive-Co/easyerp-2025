@@ -3,7 +3,7 @@ name: Sync S3
 on:
   push:
     branches:
-    - cloudformation-reconfig
+    - main
   workflow_dispatch:
 
 jobs:
