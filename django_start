@@ -9,4 +9,4 @@ python3 manage.py collectstatic --noinput
 
 echo "from django.contrib.auth.models import User; User.objects.filter(username='admin').exists() or User.objects.create_superuser('admin', 'jkuhnsman@deloitte.com', 'password')" | python3 manage.py shell
 
-gunicorn --preload --worker-class=gevent --worker-connections=200 --workers=1 --bind 0.0.0.0:80 easyerp.wsgi:application
+gunicorn --reload --worker-class=gevent --worker-connections=200 --workers=1 --bind 0.0.0.0:80 easyerp.wsgi:application
