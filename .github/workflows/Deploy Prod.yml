@@ -28,13 +28,15 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         
-      - name: Docker Build
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          tags: easyerp:prod-${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      - run: docker build --tag easyerp:prod-${{ github.sha }} .
+      
+      # - name: Docker Build
+      #   uses: docker/build-push-action@v6
+      #   with:
+      #     context: .
+      #     tags: easyerp:prod-${{ github.sha }}
+      #     cache-from: type=gha
+      #     cache-to: type=gha,mode=max
 
       - name: List Docker images
         run: docker images
@@ -56,7 +58,7 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: us-east-2
+          AWS_DEFAULT_REGION: us-east-1
           ACTIONS_ALLOW_UNSECURE_COMMANDS: true
       - run: aws ecs update-service --cluster easyerp-prod --service easyerp-prod --force-new-deployment
         env:
