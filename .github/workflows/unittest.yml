@@ -1,5 +1,7 @@
 name: Unit Test
-on: [pull_request] # activates the workflow when there is a push or pull request in the repo
+on:
+  pull_request:
+    types: [opened, reopened, synchronize] # activates the workflow when there is a push or pull request in the repo
 jobs:
   test_project:
     runs-on: ubuntu-latest # operating system your code will run on
