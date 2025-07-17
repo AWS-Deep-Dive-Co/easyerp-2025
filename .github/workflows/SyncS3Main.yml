@@ -1,4 +1,4 @@
-name: Sync S3 - Main Branch
+name: Sync S3 - Prod
 
 on:
   push:
