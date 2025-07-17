@@ -9,6 +9,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: Staging
     steps:
     - uses: actions/checkout@master
       with:
