@@ -29,7 +29,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         
-      - run: docker build --tag easyerp:prod-${{ github.sha }} .
+      - run: docker build --tag easyerp:stage-${{ github.sha }} .
       
       # - name: Docker Build
       #   uses: docker/build-push-action@v6
@@ -53,7 +53,12 @@ jobs:
           local-image: easyerp:stage-${{ github.sha }}
           image: easyerp:stage-${{ github.sha }}, easyerp:stage-latest
       
-        
+  deploy:
+    name: Deploy to ECS
+    needs: build
+    environment: Staging
+    runs-on: ubuntu-latest
+    steps:
       - uses: chrislennon/action-aws-cli@v1.1
         # All commands after this point have access to the AWS CLI
         env:
