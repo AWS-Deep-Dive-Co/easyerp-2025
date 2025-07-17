@@ -1,19 +1,19 @@
-name: Sync S3 - Stage
+name: Sync S3 - Prod
 
 on:
   push:
     branches:
-    - stage
+    - main
   workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: Staging
+    environment: Production
     steps:
     - uses: actions/checkout@master
       with:
-          ref: stage
+          ref: main
     - uses: jakejarvis/s3-sync-action@master
       with:
         args: --delete
