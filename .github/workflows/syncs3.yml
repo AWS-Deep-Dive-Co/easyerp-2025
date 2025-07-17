@@ -1,4 +1,4 @@
-name: Sync S3 - Feature Branch
+name: Sync S3 - Stage
 
 on:
   push:
