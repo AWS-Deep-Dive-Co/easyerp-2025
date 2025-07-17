@@ -1,5 +1,4 @@
 # easyerp
-Welcome!
 
 Deployment notes:
 
