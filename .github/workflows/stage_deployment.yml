@@ -53,7 +53,11 @@ jobs:
           local-image: easyerp:stage-${{ github.sha }}
           image: easyerp:stage-${{ github.sha }}, easyerp:stage-latest
       
-        
+  deploy:
+    name: Deploy to ECS
+    environment: Staging
+    runs-on: ubuntu-latest
+    steps:
       - uses: chrislennon/action-aws-cli@v1.1
         # All commands after this point have access to the AWS CLI
         env:
