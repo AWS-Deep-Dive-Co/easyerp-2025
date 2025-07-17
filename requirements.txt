@@ -12,7 +12,7 @@ mixer==7.2.2
 #prometheus-client==0.14.1
 psycopg2-binary==2.9.5
 pyparsing==3.0.9
-pytest==7.2.2
+pytest==8.4.1
 pytest-django==4.5.2
 #python-redis-lock==3.7.0
 #redis==3.5.3
