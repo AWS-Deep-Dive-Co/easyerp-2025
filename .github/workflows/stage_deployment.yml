@@ -55,6 +55,7 @@ jobs:
       
   deploy:
     name: Deploy to ECS
+    needs: build
     environment: Staging
     runs-on: ubuntu-latest
     steps:
