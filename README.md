@@ -5,4 +5,4 @@ Deployment notes:
 Certificate generation:
 sudo certbot certonly --manual --preferred-challenges dns
 
-Modified by JK 2
+Modified by JK 3
