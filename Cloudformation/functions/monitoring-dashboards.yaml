@@ -440,7 +440,7 @@ Resources:
             Action: s3:ListBucket
             Resource: !Sub 'arn:aws:s3:::${AuditTrailBucket}'
 
-  # CloudTrail for API Call Auditing (moved after bucket policy)
+  # CloudTrail for API Call Auditing (simplified for training)
   SOXAuditTrail:
     Type: AWS::CloudTrail::Trail
     DependsOn: AuditTrailBucketPolicy
@@ -452,14 +452,6 @@ Resources:
       IncludeGlobalServiceEvents: true
       IsMultiRegionTrail: true
       EnableLogFileValidation: true
-      EventSelectors:
-        - ReadWriteType: All
-          IncludeManagementEvents: true
-          DataResources:
-            - Type: 'AWS::Lambda::Function'
-              Values: ['arn:aws:lambda:*']
-            - Type: 'AWS::S3::Object'
-              Values: ['arn:aws:s3:::*/*']
       Tags:
         - Key: Environment
           Value: !Ref EnvironmentName

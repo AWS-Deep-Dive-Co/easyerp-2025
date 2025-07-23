@@ -216,8 +216,10 @@ fields @timestamp, @message
 **Phase 1: Event Discovery**
 Teams should filter CloudTrail for:
 - Time Period: Previous weekend (Friday 6 PM - Monday 6 AM)
-- Event Names: InvokeFunction, StartExecution, ModifyFunctionConfiguration
+- Event Names: CreateFunction, UpdateFunctionConfiguration, StartExecution, ConsoleLogin, AssumeRole
 - Focus on unusual users, times, or source IPs
+
+**Note:** CloudTrail captures management events (API calls) but not detailed function invocation data. Students will see when functions were created/modified and workflows started, but not individual function executions.
 
 **Phase 2: Authorization Assessment**
 Compare discovered events against:
@@ -241,10 +243,12 @@ Document findings with appropriate severity:
 - Recommends specific improvements to access controls
 
 **Red Flag Scenarios to Plant:**
-1. Same user who processes transactions also approves them
-2. Non-finance personnel accessing financial calculation functions
+1. Same user who creates/modifies functions also starts critical workflows
+2. Non-finance personnel accessing financial system configuration  
 3. Administrative changes without corresponding change tickets
-4. Access from IP addresses outside corporate network range
+4. Console access from IP addresses outside corporate network range
+5. Weekend configuration changes without proper approval
+6. Role assumptions by users who shouldn't have elevated access
 
 ---
 

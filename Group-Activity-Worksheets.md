@@ -189,13 +189,13 @@ _______________________________________________________________________________
 
 ### Activity Overview
 **Duration:** 20 minutes  
-**Objective:** Investigate access controls using CloudTrail events
+**Objective:** Investigate access controls using CloudTrail management events
 
 ### Investigation Parameters
 **CloudTrail URL:** `https://us-east-1.console.aws.amazon.com/cloudtrail/home?region=us-east-1#/events`
 
 **Time Period:** Last Friday 6 PM - Monday 6 AM
-**Key Events to Search:** InvokeFunction, StartExecution, ModifyFunctionConfiguration, CreateUser, AttachUserPolicy
+**Key Events to Search:** CreateFunction, UpdateFunctionConfiguration, StartExecution, CreateUser, AttachUserPolicy, AssumeRole, ConsoleLogin
 
 ### Phase 1: Event Discovery (8 minutes)
 
@@ -454,10 +454,12 @@ _______________________________________________________________________________
 
 ### CloudTrail Red Flags:
 - Administrative actions by non-admin users
-- Financial processes executed outside business hours
+- Financial processes accessed outside business hours  
 - API calls from unusual geographic locations
 - Same user performing incompatible functions
 - Permission changes without documentation
+- Console logins at unusual times
+- Function configuration changes without approval
 
 ### Dashboard Thresholds:
 - **Compliance Score:** <85% requires investigation
