@@ -1,0 +1,282 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'SOX Auditor Training - AWS Glue Jobs for Financial Data Processing with Monitoring'
+
+Parameters:
+  EnvironmentName:
+    Description: An environment name that will be prefixed to resource names
+    Type: String
+    Default: 'sox-training'
+
+  S3BucketName:
+    Description: S3 bucket name where the repository is synced (contains Glue scripts)
+    Type: String
+
+Resources:
+  # IAM Role for Glue Jobs
+  GlueServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${EnvironmentName}-glue-service-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: glue.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole
+      Policies:
+        - PolicyName: S3AccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                  - s3:ListBucket
+                Resource:
+                  - !Sub '${S3BucketName}/*'
+                  - !Sub 'arn:aws:s3:::${S3BucketName}'
+        - PolicyName: CloudWatchLogsPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: '*'
+
+  # Glue Job 1: Financial Data ETL Pipeline
+  FinancialDataETLJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Sub '${EnvironmentName}-financial-data-etl'
+      Description: 'ETL job for processing financial transaction data'
+      Role: !GetAtt GlueServiceRole.Arn
+      Command:
+        Name: glueetl
+        ScriptLocation: !Sub 's3://${S3BucketName}/Cloudformation/functions/glue-scripts/financial-etl-script.py'
+        PythonVersion: '3'
+      DefaultArguments:
+        '--job-language': 'python'
+        '--job-bookmark-option': 'job-bookmark-enable'
+        '--enable-metrics': 'true'
+        '--enable-continuous-cloudwatch-log': 'true'
+        '--environment': !Ref EnvironmentName
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      GlueVersion: '3.0'
+      MaxRetries: 2
+      NumberOfWorkers: 2
+      WorkerType: 'G.1X'
+      Timeout: 60  # 1 hour timeout
+      Tags:
+        Environment: !Ref EnvironmentName
+        Purpose: SOX-Training
+        ProcessType: Financial-ETL
+
+  # Glue Job 2: Compliance Data Validation
+  ComplianceValidationJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Sub '${EnvironmentName}-compliance-validation'
+      Description: 'Data validation job for SOX compliance checks'
+      Role: !GetAtt GlueServiceRole.Arn
+      Command:
+        Name: glueetl
+        ScriptLocation: !Sub 's3://${S3BucketName}/Cloudformation/functions/glue-scripts/compliance-validation-script.py'
+        PythonVersion: '3'
+      DefaultArguments:
+        '--job-language': 'python'
+        '--job-bookmark-option': 'job-bookmark-enable'
+        '--enable-metrics': 'true'
+        '--enable-continuous-cloudwatch-log': 'true'
+        '--environment': !Ref EnvironmentName
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      GlueVersion: '3.0'
+      MaxRetries: 1  # Less retries for validation jobs
+      NumberOfWorkers: 2
+      WorkerType: 'G.1X'
+      Timeout: 30  # 30 minutes
+      Tags:
+        Environment: !Ref EnvironmentName
+        Purpose: SOX-Training
+        ProcessType: Compliance-Validation
+
+  # EventBridge Rules for Glue Job Scheduling
+  FinancialETLSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub '${EnvironmentName}-financial-etl-schedule'
+      Description: 'Runs financial ETL job daily at 3 AM'
+      ScheduleExpression: 'cron(0 3 * * ? *)'  # 3 AM UTC daily
+      State: ENABLED
+      Targets:
+        - Arn: !Sub 'arn:aws:glue:${AWS::Region}:${AWS::AccountId}:job/${FinancialDataETLJob}'
+          Id: FinancialETLTarget
+          RoleArn: !GetAtt EventBridgeGlueRole.Arn
+
+  ComplianceValidationSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub '${EnvironmentName}-compliance-validation-schedule'
+      Description: 'Runs compliance validation weekly on Mondays at 6 AM'
+      ScheduleExpression: 'cron(0 6 ? * MON *)'  # 6 AM UTC every Monday
+      State: ENABLED
+      Targets:
+        - Arn: !Sub 'arn:aws:glue:${AWS::Region}:${AWS::AccountId}:job/${ComplianceValidationJob}'
+          Id: ComplianceValidationTarget
+          RoleArn: !GetAtt EventBridgeGlueRole.Arn
+
+  # IAM Role for EventBridge to start Glue jobs
+  EventBridgeGlueRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: GlueJobStartPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - glue:StartJobRun
+                Resource:
+                  - !Sub 'arn:aws:glue:${AWS::Region}:${AWS::AccountId}:job/${FinancialDataETLJob}'
+                  - !Sub 'arn:aws:glue:${AWS::Region}:${AWS::AccountId}:job/${ComplianceValidationJob}'
+
+  # CloudWatch Alarms for Glue Job Monitoring
+  FinancialETLFailureAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${EnvironmentName}-financial-etl-failures'
+      AlarmDescription: 'Alert when financial ETL job fails'
+      MetricName: 'glue.driver.aggregate.numFailedTasks'
+      Namespace: Glue
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: JobName
+          Value: !Ref FinancialDataETLJob
+        - Name: JobRunId
+          Value: ALL
+      TreatMissingData: notBreaching
+
+  ComplianceValidationFailureAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${EnvironmentName}-compliance-validation-failures'
+      AlarmDescription: 'Critical alert for compliance validation failures'
+      MetricName: 'glue.driver.aggregate.numFailedTasks'
+      Namespace: Glue
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: JobName
+          Value: !Ref ComplianceValidationJob
+        - Name: JobRunId
+          Value: ALL
+      TreatMissingData: notBreaching
+
+  # Custom CloudWatch Dashboard for Glue Monitoring
+  GlueMonitoringDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub '${EnvironmentName}-glue-monitoring'
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "Glue", "glue.driver.aggregate.elapsedTime", "JobName", "${FinancialDataETLJob}", "JobRunId", "ALL" ],
+                  [ "...", "${ComplianceValidationJob}", ".", "." ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Glue Job Execution Times",
+                "period": 300,
+                "stat": "Average"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 0,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "Glue", "glue.driver.aggregate.numFailedTasks", "JobName", "${FinancialDataETLJob}", "JobRunId", "ALL" ],
+                  [ "...", "${ComplianceValidationJob}", ".", "." ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Glue Job Failures",
+                "period": 300,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "log",
+              "x": 0,
+              "y": 6,
+              "width": 24,
+              "height": 6,
+              "properties": {
+                "query": "SOURCE '/aws-glue/jobs/logs-v2'\n| fields @timestamp, @message\n| filter @message like /ERROR/\n| sort @timestamp desc\n| limit 20",
+                "region": "${AWS::Region}",
+                "title": "Recent Glue Job Errors",
+                "view": "table"
+              }
+            }
+          ]
+        }
+
+Outputs:
+  FinancialDataETLJobName:
+    Description: 'Name of the Financial Data ETL Glue Job'
+    Value: !Ref FinancialDataETLJob
+    Export:
+      Name: !Sub '${EnvironmentName}-financial-etl-job'
+
+  ComplianceValidationJobName:
+    Description: 'Name of the Compliance Validation Glue Job'
+    Value: !Ref ComplianceValidationJob
+    Export:
+      Name: !Sub '${EnvironmentName}-compliance-validation-job'
+
+  GlueScriptsBucketName:
+    Description: 'S3 Bucket for Glue Scripts'
+    Value: !Ref S3BucketName
+    Export:
+      Name: !Sub '${EnvironmentName}-glue-scripts-bucket'
+
+  GlueDashboardURL:
+    Description: 'CloudWatch Dashboard for Glue Monitoring'
+    Value: !Sub 'https://${AWS::Region}.console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=${EnvironmentName}-glue-monitoring'

@@ -1,0 +1,459 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'SOX Auditor Training - Step Functions for Complex Financial Workflows with Monitoring'
+
+Parameters:
+  EnvironmentName:
+    Description: An environment name that will be prefixed to resource names
+    Type: String
+    Default: 'sox-training'
+
+Resources:
+  # IAM Role for Step Functions
+  StepFunctionsExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${EnvironmentName}-stepfunctions-execution-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: states.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaRole
+      Policies:
+        - PolicyName: LambdaInvokePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource: '*'
+        - PolicyName: CloudWatchLogsPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogDelivery
+                  - logs:GetLogDelivery
+                  - logs:UpdateLogDelivery
+                  - logs:DeleteLogDelivery
+                  - logs:ListLogDeliveries
+                  - logs:PutLogEvents
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                Resource: '*'
+
+  # Lambda Functions for Step Functions workflow
+  DataValidationFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${EnvironmentName}-data-validation'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 180
+      Description: 'Validates financial data before processing'
+      Code:
+        ZipFile: |
+          import json
+          import random
+          import logging
+          import time
+          import boto3
+          
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+          cloudwatch = boto3.client('cloudwatch')
+          
+          def lambda_handler(event, context):
+              logger.info("Starting data validation process")
+              
+              # Simulate validation checks
+              validation_results = {
+                  'schema_validation': True,
+                  'business_rules': True,
+                  'data_quality': True,
+                  'record_count': random.randint(50000, 100000)
+              }
+              
+              # Random validation failures for training
+              failure_chance = random.random()
+              
+              if failure_chance < 0.20:  # 20% chance of validation failure
+                  if failure_chance < 0.07:
+                      validation_results['schema_validation'] = False
+                      logger.error("Schema validation failed: Missing required fields")
+                      raise Exception("Schema validation failure - missing required fields")
+                  elif failure_chance < 0.14:
+                      validation_results['business_rules'] = False
+                      logger.error("Business rule validation failed")
+                      raise Exception("Business rule validation failure")
+                  else:
+                      validation_results['data_quality'] = False
+                      logger.warning("Data quality issues detected but proceeding")
+              
+              logger.info(f"Validation completed: {validation_results}")
+              
+              # Send metrics
+              cloudwatch.put_metric_data(
+                  Namespace='FinancialProcessing/StepFunctions',
+                  MetricData=[
+                      {
+                          'MetricName': 'ValidationSuccess',
+                          'Value': 1 if all([validation_results['schema_validation'], 
+                                           validation_results['business_rules']]) else 0,
+                          'Unit': 'Count'
+                      }
+                  ]
+              )
+              
+              return {
+                  'statusCode': 200,
+                  'validation_results': validation_results
+              }
+
+  ProcessingFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${EnvironmentName}-processing'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 300
+      Description: 'Processes validated financial data'
+      Code:
+        ZipFile: |
+          import json
+          import random
+          import logging
+          import time
+          import boto3
+          
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+          cloudwatch = boto3.client('cloudwatch')
+          
+          def lambda_handler(event, context):
+              logger.info("Starting data processing")
+              
+              validation_results = event.get('validation_results', {})
+              record_count = validation_results.get('record_count', 0)
+              
+              # Simulate processing
+              processing_steps = [
+                  'Data transformation',
+                  'Aggregation calculations', 
+                  'Financial reporting updates',
+                  'Audit trail creation'
+              ]
+              
+              processed_records = 0
+              failed_records = 0
+              
+              for step in processing_steps:
+                  logger.info(f"Executing: {step}")
+                  
+                  # Simulate processing failures
+                  failure_chance = random.random()
+                  
+                  if failure_chance < 0.10:  # 10% chance of processing failure
+                      logger.error(f"Processing failed at step: {step}")
+                      raise Exception(f"Processing failure during {step}")
+                  
+                  time.sleep(1)  # Simulate processing time
+              
+              # Simulate some records failing during processing
+              failure_rate = random.uniform(0.0, 0.05)  # 0-5% failure rate
+              failed_records = int(record_count * failure_rate)
+              processed_records = record_count - failed_records
+              
+              logger.info(f"Processing completed: {processed_records} successful, {failed_records} failed")
+              
+              # Send metrics
+              cloudwatch.put_metric_data(
+                  Namespace='FinancialProcessing/StepFunctions',
+                  MetricData=[
+                      {
+                          'MetricName': 'ProcessedRecords',
+                          'Value': processed_records,
+                          'Unit': 'Count'
+                      },
+                      {
+                          'MetricName': 'FailedRecords', 
+                          'Value': failed_records,
+                          'Unit': 'Count'
+                      }
+                  ]
+              )
+              
+              return {
+                  'statusCode': 200,
+                  'processed_records': processed_records,
+                  'failed_records': failed_records,
+                  'processing_complete': True
+              }
+
+  NotificationFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${EnvironmentName}-notification'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 60
+      Description: 'Sends notifications about processing results'
+      Code:
+        ZipFile: |
+          import json
+          import logging
+          import boto3
+          
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+          
+          def lambda_handler(event, context):
+              logger.info("Sending processing notifications")
+              
+              processed_records = event.get('processed_records', 0)
+              failed_records = event.get('failed_records', 0)
+              
+              # Simulate notification logic
+              if failed_records > 0:
+                  logger.warning(f"Processing completed with {failed_records} failed records")
+                  notification_type = 'warning'
+              else:
+                  logger.info("Processing completed successfully")
+                  notification_type = 'success'
+              
+              # In real implementation, this would send emails/SMS/Slack notifications
+              logger.info(f"Notification sent: {notification_type}")
+              
+              return {
+                  'statusCode': 200,
+                  'notification_sent': True,
+                  'notification_type': notification_type
+              }
+
+  # Lambda execution role
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: CloudWatchMetricsPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudwatch:PutMetricData
+                Resource: '*'
+
+  # Step Functions State Machine
+  FinancialProcessingStateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: !Sub '${EnvironmentName}-financial-processing-workflow'
+      RoleArn: !GetAtt StepFunctionsExecutionRole.Arn
+      DefinitionString: !Sub |
+        {
+          "Comment": "Financial Data Processing Workflow for SOX Training",
+          "StartAt": "DataValidation",
+          "States": {
+            "DataValidation": {
+              "Type": "Task",
+              "Resource": "${DataValidationFunction.Arn}",
+              "Next": "CheckValidationResult",
+              "Retry": [
+                {
+                  "ErrorEquals": ["States.TaskFailed"],
+                  "IntervalSeconds": 30,
+                  "MaxAttempts": 2,
+                  "BackoffRate": 2.0
+                }
+              ],
+              "Catch": [
+                {
+                  "ErrorEquals": ["States.ALL"],
+                  "Next": "ValidationFailureNotification"
+                }
+              ]
+            },
+            "CheckValidationResult": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.validation_results.schema_validation",
+                  "BooleanEquals": false,
+                  "Next": "ValidationFailureNotification"
+                },
+                {
+                  "Variable": "$.validation_results.business_rules",
+                  "BooleanEquals": false,
+                  "Next": "ValidationFailureNotification"
+                }
+              ],
+              "Default": "DataProcessing"
+            },
+            "DataProcessing": {
+              "Type": "Task",
+              "Resource": "${ProcessingFunction.Arn}",
+              "Next": "CheckProcessingResult",
+              "Retry": [
+                {
+                  "ErrorEquals": ["States.TaskFailed"],
+                  "IntervalSeconds": 60,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2.0
+                }
+              ],
+              "Catch": [
+                {
+                  "ErrorEquals": ["States.ALL"],
+                  "Next": "ProcessingFailureNotification"
+                }
+              ]
+            },
+            "CheckProcessingResult": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.failed_records",
+                  "NumericGreaterThan": 1000,
+                  "Next": "HighFailureRateNotification"
+                }
+              ],
+              "Default": "SuccessNotification"
+            },
+            "SuccessNotification": {
+              "Type": "Task",
+              "Resource": "${NotificationFunction.Arn}",
+              "End": true
+            },
+            "ValidationFailureNotification": {
+              "Type": "Task",
+              "Resource": "${NotificationFunction.Arn}",
+              "End": true
+            },
+            "ProcessingFailureNotification": {
+              "Type": "Task", 
+              "Resource": "${NotificationFunction.Arn}",
+              "End": true
+            },
+            "HighFailureRateNotification": {
+              "Type": "Task",
+              "Resource": "${NotificationFunction.Arn}",
+              "End": true
+            }
+          }
+        }
+      LoggingConfiguration:
+        Level: ALL
+        IncludeExecutionData: true
+        Destinations:
+          - CloudWatchLogsLogGroup:
+              LogGroupArn: !GetAtt StepFunctionsLogGroup.Arn
+
+  # CloudWatch Log Group for Step Functions
+  StepFunctionsLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/stepfunctions/${EnvironmentName}-financial-processing'
+      RetentionInDays: 30
+
+  # EventBridge Rule to trigger Step Functions
+  FinancialProcessingSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub '${EnvironmentName}-financial-processing-schedule'
+      Description: 'Triggers financial processing workflow twice daily'
+      ScheduleExpression: 'cron(0 8,20 * * ? *)'  # 8 AM and 8 PM UTC
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt FinancialProcessingStateMachine.Arn
+          Id: FinancialProcessingTarget
+          RoleArn: !GetAtt EventBridgeStepFunctionsRole.Arn
+          Input: '{"source": "scheduled-execution"}'
+
+  # IAM Role for EventBridge to execute Step Functions
+  EventBridgeStepFunctionsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: StepFunctionsExecutePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - states:StartExecution
+                Resource: !GetAtt FinancialProcessingStateMachine.Arn
+
+  # CloudWatch Alarms for Step Functions
+  StepFunctionFailureAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${EnvironmentName}-stepfunctions-failures'
+      AlarmDescription: 'Alert when Step Functions workflow fails'
+      MetricName: ExecutionsFailed
+      Namespace: AWS/States
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: StateMachineArn
+          Value: !Ref FinancialProcessingStateMachine
+      TreatMissingData: notBreaching
+
+  StepFunctionDurationAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${EnvironmentName}-stepfunctions-duration'
+      AlarmDescription: 'Alert when Step Functions execution takes too long'
+      MetricName: ExecutionTime
+      Namespace: AWS/States
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 600000  # 10 minutes in milliseconds
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: StateMachineArn
+          Value: !Ref FinancialProcessingStateMachine
+      TreatMissingData: notBreaching
+
+Outputs:
+  StateMachineArn:
+    Description: 'ARN of the Financial Processing State Machine'
+    Value: !Ref FinancialProcessingStateMachine
+    Export:
+      Name: !Sub '${EnvironmentName}-financial-processing-state-machine'
+
+  StateMachineConsoleURL:
+    Description: 'Console URL for the Step Functions State Machine'
+    Value: !Sub 'https://${AWS::Region}.console.aws.amazon.com/states/home?region=${AWS::Region}#/statemachines/view/${FinancialProcessingStateMachine}'
+
+  StepFunctionsLogGroup:
+    Description: 'CloudWatch Log Group for Step Functions'
+    Value: !Ref StepFunctionsLogGroup
