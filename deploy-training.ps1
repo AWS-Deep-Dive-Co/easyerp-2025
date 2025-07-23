@@ -124,16 +124,26 @@ Write-Host "=== Step 3: Initial Test Runs ===" -ForegroundColor Blue
 
 # Trigger initial Lambda function runs to populate logs
 Write-Host "Running initial test of daily transaction processor..."
+
+# Create JSON payload file to avoid PowerShell encoding issues
+$payload = @'
+{
+  "test": true,
+  "source": "deployment-test"
+}
+'@
+$payload | Out-File -FilePath "payload.json" -Encoding UTF8
+
 aws lambda invoke `
     --function-name "$EnvironmentName-daily-transaction-processor" `
-    --payload '{"test": true}' `
+    --payload file://payload.json `
     --region $Region `
     response.json
 
 Write-Host "Running initial test of month-end processor..."
 aws lambda invoke `
     --function-name "$EnvironmentName-month-end-processor" `
-    --payload '{"test": true}' `
+    --payload file://payload.json `
     --region $Region `
     response2.json
 
@@ -145,14 +155,29 @@ $stateMachineArn = aws cloudformation describe-stacks `
     --output text `
     --region $Region
 
+# Create Step Functions input payload
+$stepFunctionsPayload = @'
+{
+  "source": "deployment-test",
+  "test_mode": true
+}
+'@
+$stepFunctionsPayload | Out-File -FilePath "stepfunctions-payload.json" -Encoding UTF8
+
 aws stepfunctions start-execution `
     --state-machine-arn $stateMachineArn `
     --name "initial-test-$(Get-Date -Format 'yyyyMMdd-HHmmss')" `
-    --input '{"source": "deployment-test"}' `
+    --input file://stepfunctions-payload.json `
     --region $Region
 
 Write-Host ""
 Write-Host "=== Step 4: Getting Access URLs ===" -ForegroundColor Blue
+
+# Clean up temporary payload files
+if (Test-Path "payload.json") { Remove-Item "payload.json" }
+if (Test-Path "stepfunctions-payload.json") { Remove-Item "stepfunctions-payload.json" }
+if (Test-Path "response.json") { Remove-Item "response.json" }
+if (Test-Path "response2.json") { Remove-Item "response2.json" }
 
 # Get dashboard URLs
 $dashboardUrl = "https://$Region.console.aws.amazon.com/cloudwatch/home?region=$Region#dashboards:name=$EnvironmentName-sox-compliance-monitoring"
