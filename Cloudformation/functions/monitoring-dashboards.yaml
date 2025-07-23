@@ -391,6 +391,7 @@ Resources:
       TrailName: !Sub '${EnvironmentName}-sox-audit-trail'
       S3BucketName: !Ref AuditTrailBucket
       S3KeyPrefix: 'sox-audit-logs'
+      IsLogging: true
       IncludeGlobalServiceEvents: true
       IsMultiRegionTrail: true
       EnableLogFileValidation: true
