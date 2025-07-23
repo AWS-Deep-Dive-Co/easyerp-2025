@@ -442,15 +442,18 @@ Resources:
       Bucket: !Ref AuditTrailBucket
       PolicyDocument:
         Statement:
-          - Effect: Allow
+          - Sid: AWSCloudTrailAclCheck
+            Effect: Allow
             Principal:
               Service: cloudtrail.amazonaws.com
-            Action:
-              - s3:PutObject
-              - s3:GetBucketAcl
-            Resource:
-              - !Sub '${AuditTrailBucket}/*'
-              - !GetAtt AuditTrailBucket.Arn
+            Action: s3:GetBucketAcl
+            Resource: !GetAtt AuditTrailBucket.Arn
+          - Sid: AWSCloudTrailWrite
+            Effect: Allow
+            Principal:
+              Service: cloudtrail.amazonaws.com
+            Action: s3:PutObject
+            Resource: !Sub '${AuditTrailBucket}/*'
             Condition:
               StringEquals:
                 's3:x-amz-acl': 'bucket-owner-full-control'
