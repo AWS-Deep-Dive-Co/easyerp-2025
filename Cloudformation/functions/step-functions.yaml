@@ -45,6 +45,10 @@ Resources:
                   - logs:PutLogEvents
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
+                  - logs:DescribeLogGroups
+                  - logs:DescribeResourcePolicies
+                  - logs:PutResourcePolicy
+                  - logs:DescribeLogStreams
                 Resource: '*'
 
   # Lambda Functions for Step Functions workflow
