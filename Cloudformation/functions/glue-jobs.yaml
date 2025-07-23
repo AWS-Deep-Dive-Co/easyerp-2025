@@ -112,7 +112,76 @@ Resources:
         Purpose: SOX-Training
         ProcessType: Compliance-Validation
 
-  # EventBridge Rules for Glue Job Scheduling
+  # Lambda Functions to trigger Glue Jobs (EventBridge can't directly target Glue)
+  TriggerFinancialETLFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${EnvironmentName}-trigger-financial-etl'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt GlueTriggerLambdaRole.Arn
+      Code:
+        ZipFile: !Sub |
+          import json
+          import boto3
+          
+          def lambda_handler(event, context):
+              glue_client = boto3.client('glue')
+              
+              try:
+                  response = glue_client.start_job_run(
+                      JobName='${FinancialDataETLJob}'
+                  )
+                  
+                  return {
+                      'statusCode': 200,
+                      'body': json.dumps({
+                          'message': 'Financial ETL job started successfully',
+                          'jobRunId': response['JobRunId']
+                      })
+                  }
+              except Exception as e:
+                  print(f'Error starting Glue job: {str(e)}')
+                  return {
+                      'statusCode': 500,
+                      'body': json.dumps({'error': str(e)})
+                  }
+
+  TriggerComplianceValidationFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${EnvironmentName}-trigger-compliance-validation'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt GlueTriggerLambdaRole.Arn
+      Code:
+        ZipFile: !Sub |
+          import json
+          import boto3
+          
+          def lambda_handler(event, context):
+              glue_client = boto3.client('glue')
+              
+              try:
+                  response = glue_client.start_job_run(
+                      JobName='${ComplianceValidationJob}'
+                  )
+                  
+                  return {
+                      'statusCode': 200,
+                      'body': json.dumps({
+                          'message': 'Compliance validation job started successfully',
+                          'jobRunId': response['JobRunId']
+                      })
+                  }
+              except Exception as e:
+                  print(f'Error starting Glue job: {str(e)}')
+                  return {
+                      'statusCode': 500,
+                      'body': json.dumps({'error': str(e)})
+                  }
+
+  # EventBridge Rules for Glue Job Scheduling via Lambda
   FinancialETLSchedule:
     Type: AWS::Events::Rule
     Properties:
@@ -121,9 +190,8 @@ Resources:
       ScheduleExpression: 'cron(0 3 * * ? *)'  # 3 AM UTC daily
       State: ENABLED
       Targets:
-        - Arn: !Sub 'arn:aws:glue:${AWS::Region}:${AWS::AccountId}:job/${FinancialDataETLJob}'
+        - Arn: !GetAtt TriggerFinancialETLFunction.Arn
           Id: FinancialETLTarget
-          RoleArn: !GetAtt EventBridgeGlueRole.Arn
 
   ComplianceValidationSchedule:
     Type: AWS::Events::Rule
@@ -133,12 +201,28 @@ Resources:
       ScheduleExpression: 'cron(0 6 ? * MON *)'  # 6 AM UTC every Monday
       State: ENABLED
       Targets:
-        - Arn: !Sub 'arn:aws:glue:${AWS::Region}:${AWS::AccountId}:job/${ComplianceValidationJob}'
+        - Arn: !GetAtt TriggerComplianceValidationFunction.Arn
           Id: ComplianceValidationTarget
-          RoleArn: !GetAtt EventBridgeGlueRole.Arn
 
-  # IAM Role for EventBridge to start Glue jobs
-  EventBridgeGlueRole:
+  # Lambda permissions for EventBridge to invoke functions
+  FinancialETLLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref TriggerFinancialETLFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt FinancialETLSchedule.Arn
+
+  ComplianceValidationLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref TriggerComplianceValidationFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt ComplianceValidationSchedule.Arn
+
+  # IAM Role for Lambda functions to start Glue jobs
+  GlueTriggerLambdaRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -146,8 +230,10 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              Service: events.amazonaws.com
+              Service: lambda.amazonaws.com
             Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
         - PolicyName: GlueJobStartPolicy
           PolicyDocument:
@@ -156,6 +242,8 @@ Resources:
               - Effect: Allow
                 Action:
                   - glue:StartJobRun
+                  - glue:GetJobRun
+                  - glue:GetJobRuns
                 Resource:
                   - !Sub 'arn:aws:glue:${AWS::Region}:${AWS::AccountId}:job/${FinancialDataETLJob}'
                   - !Sub 'arn:aws:glue:${AWS::Region}:${AWS::AccountId}:job/${ComplianceValidationJob}'
