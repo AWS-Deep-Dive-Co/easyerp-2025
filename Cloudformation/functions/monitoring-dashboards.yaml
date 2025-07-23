@@ -458,8 +458,8 @@ Resources:
           DataResources:
             - Type: 'AWS::Lambda::Function'
               Values: ['arn:aws:lambda:*']
-            - Type: 'AWS::StepFunctions::StateMachine'
-              Values: ['arn:aws:states:*']
+            - Type: 'AWS::S3::Object'
+              Values: ['arn:aws:s3:::*/*']
       Tags:
         - Key: Environment
           Value: !Ref EnvironmentName
