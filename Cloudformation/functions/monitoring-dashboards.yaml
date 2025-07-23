@@ -376,13 +376,13 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub '/sox-compliance/${EnvironmentName}/audit-trail'
-      RetentionInDays: 2555  # 7 years for SOX compliance
+      RetentionInDays: 30  # 30 days for training environment
       
   FinancialProcessingLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub '/financial-processing/${EnvironmentName}/transactions'
-      RetentionInDays: 365  # 1 year for operational data
+      RetentionInDays: 30  # 30 days for training environment
 
   # CloudTrail for API Call Auditing
   SOXAuditTrail:
@@ -424,20 +424,15 @@ Resources:
         Rules:
           - Id: AuditLogRetention
             Status: Enabled
-            ExpirationInDays: 2555  # 7 years
+            ExpirationInDays: 3653  # 10 years - matches CloudTrail log retention
             NoncurrentVersionExpirationInDays: 365
-      NotificationConfiguration:
-        CloudWatchConfigurations:
-          - Event: s3:ObjectCreated:*
-            CloudWatchConfiguration:
-              LogGroupName: !Ref CloudTrailLogGroup
 
   # CloudWatch Log Group for CloudTrail
   CloudTrailLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub '/aws/cloudtrail/${EnvironmentName}-sox-audit'
-      RetentionInDays: 2555
+      RetentionInDays: 30  # 30 days for training environment
 
   # Bucket policy for CloudTrail
   AuditTrailBucketPolicy:
