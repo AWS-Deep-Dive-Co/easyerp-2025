@@ -183,11 +183,11 @@ For SOX auditors, CloudTrail is your best friend for testing access controls and
 **Voiceover Script:**
 "Let me show you the events you should focus on as a SOX auditor. 
 
-InvokeFunction events tell you when someone manually triggered a financial process. Was it authorized? Was it during business hours? 
+CreateFunction and UpdateFunctionConfiguration events tell you when someone modified financial processing logic. Was it authorized? Was proper change management followed?
 
 CreateUser and AttachPolicy events reveal changes to access rights. These are critical for testing your client's user access reviews and segregation of duties controls.
 
-ModifyFunction and UpdateStateMachine events show changes to the actual processing logic. Without proper change management controls, these could represent significant risks to financial reporting."
+StartExecution events show when workflows were manually initiated. ConsoleLogin events reveal who accessed the AWS console and when - perfect for testing access controls during off-hours."
 
 ### GROUP ACTIVITY 3: Access Control Investigation (20 minutes)
 

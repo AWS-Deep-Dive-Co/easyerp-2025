@@ -44,9 +44,9 @@ Deploy `sox-training-master.yaml` with these parameters:
 ✅ **Step Functions**: Complex workflow with error handling  
 ✅ **Glue Jobs**: ETL and compliance validation with financial scenarios
 ✅ **CloudWatch Dashboards**: SOX compliance and operational monitoring
-✅ **CloudTrail**: API call auditing
+✅ **CloudTrail**: Management event auditing (API calls, logins, configuration changes)
 ✅ **Scheduled Events**: All processes run on realistic schedules
-✅ **Training Activities**: Complete hands-on exercises
+✅ **Training Activities**: Complete hands-on exercises focused on management event investigation
 
 ## Post-Deployment Steps:
 
