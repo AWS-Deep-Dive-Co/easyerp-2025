@@ -578,6 +578,9 @@ Resources:
       Description: 'Triggers daily transaction processing every 5 minutes for training'
       ScheduleExpression: 'rate(5 minutes)'
       State: ENABLED
+      Targets:
+        - Arn: !GetAtt DailyTransactionProcessor.Arn
+          Id: DailyTransactionTarget
 
   # Month-End Schedule - Every 15 minutes  
   MonthEndSchedule:
@@ -587,6 +590,9 @@ Resources:
       Description: 'Triggers month-end processing every 15 minutes for training'
       ScheduleExpression: 'rate(15 minutes)'
       State: ENABLED
+      Targets:
+        - Arn: !GetAtt MonthEndProcessor.Arn
+          Id: MonthEndTarget
 
   # Failure Simulator - Every 30 minutes
   FailureSimulatorSchedule:
@@ -613,21 +619,6 @@ Resources:
       Action: lambda:InvokeFunction
       Principal: events.amazonaws.com
       SourceArn: !GetAtt MonthEndSchedule.Arn
-
-  # EventBridge Targets
-  DailyTransactionTarget:
-    Type: AWS::Events::Target
-    Properties:
-      Rule: !Ref DailyTransactionSchedule
-      Arn: !GetAtt DailyTransactionProcessor.Arn
-      Id: DailyTransactionTarget
-
-  MonthEndTarget:
-    Type: AWS::Events::Target  
-    Properties:
-      Rule: !Ref MonthEndSchedule
-      Arn: !GetAtt MonthEndProcessor.Arn
-      Id: MonthEndTarget
 
   # ===========================================
   # GLUE JOBS - UPDATED WITH FASTER SCHEDULING  
@@ -683,6 +674,10 @@ Resources:
       Description: 'Triggers financial ETL job every 10 minutes for training'
       ScheduleExpression: 'rate(10 minutes)'
       State: ENABLED
+      Targets:
+        - Arn: !Sub 'arn:aws:glue:${AWS::Region}:${AWS::AccountId}:job/${FinancialETLJob}'
+          Id: FinancialETLTarget
+          RoleArn: !GetAtt GlueJobExecutionRole.Arn
 
   ComplianceValidationSchedule:
     Type: AWS::Events::Rule
@@ -691,23 +686,10 @@ Resources:
       Description: 'Triggers compliance validation every 20 minutes for training'
       ScheduleExpression: 'rate(20 minutes)'
       State: ENABLED
-
-  # Glue Job Targets
-  FinancialETLTarget:
-    Type: AWS::Events::Target
-    Properties:
-      Rule: !Ref FinancialETLSchedule
-      Arn: !Sub 'arn:aws:glue:${AWS::Region}:${AWS::AccountId}:job/${FinancialETLJob}'
-      Id: FinancialETLTarget
-      RoleArn: !GetAtt GlueJobExecutionRole.Arn
-
-  ComplianceValidationTarget:
-    Type: AWS::Events::Target
-    Properties:
-      Rule: !Ref ComplianceValidationSchedule
-      Arn: !Sub 'arn:aws:glue:${AWS::Region}:${AWS::AccountId}:job/${ComplianceValidationJob}'
-      Id: ComplianceValidationTarget
-      RoleArn: !GetAtt GlueJobExecutionRole.Arn
+      Targets:
+        - Arn: !Sub 'arn:aws:glue:${AWS::Region}:${AWS::AccountId}:job/${ComplianceValidationJob}'
+          Id: ComplianceValidationTarget
+          RoleArn: !GetAtt GlueJobExecutionRole.Arn
 
   # Role for EventBridge to invoke Glue jobs
   GlueJobExecutionRole:
@@ -844,15 +826,10 @@ Resources:
       Description: 'Triggers Step Functions workflow every 30 minutes for training'
       ScheduleExpression: 'rate(30 minutes)'
       State: ENABLED
-
-  # Step Functions Target
-  StepFunctionsTarget:
-    Type: AWS::Events::Target
-    Properties:
-      Rule: !Ref StepFunctionsSchedule
-      Arn: !GetAtt FinancialProcessingWorkflow.Arn
-      Id: StepFunctionsTarget
-      RoleArn: !GetAtt StepFunctionsEventRole.Arn
+      Targets:
+        - Arn: !GetAtt FinancialProcessingWorkflow.Arn
+          Id: StepFunctionsTarget
+          RoleArn: !GetAtt StepFunctionsEventRole.Arn
 
   # Role for EventBridge to invoke Step Functions
   StepFunctionsEventRole:
