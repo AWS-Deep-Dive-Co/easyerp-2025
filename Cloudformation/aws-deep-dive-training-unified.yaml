@@ -666,6 +666,85 @@ Resources:
       MaxCapacity: 2
       Description: 'SOX compliance validation processing - runs every 20 minutes for training'
 
+  # Glue Job Trigger Lambda Functions
+  GlueJobTriggerFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${EnvironmentName}-glue-job-trigger'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt GlueJobTriggerRole.Arn
+      Timeout: 60
+      Description: 'Triggers Glue jobs from EventBridge schedules'
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import logging
+
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+          
+          glue = boto3.client('glue')
+
+          def lambda_handler(event, context):
+              try:
+                  job_name = event.get('jobName')
+                  if not job_name:
+                      raise ValueError("jobName is required in event")
+                  
+                  logger.info(f"Starting Glue job: {job_name}")
+                  
+                  response = glue.start_job_run(
+                      JobName=job_name
+                  )
+                  
+                  job_run_id = response['JobRunId']
+                  logger.info(f"Glue job {job_name} started with JobRunId: {job_run_id}")
+                  
+                  return {
+                      'statusCode': 200,
+                      'body': json.dumps({
+                          'message': f'Glue job {job_name} started successfully',
+                          'jobRunId': job_run_id
+                      })
+                  }
+                  
+              except Exception as e:
+                  logger.error(f"Failed to start Glue job: {str(e)}")
+                  return {
+                      'statusCode': 500,
+                      'body': json.dumps({'error': str(e)})
+                  }
+
+  # IAM Role for Glue Job Trigger Lambda
+  GlueJobTriggerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${EnvironmentName}-glue-job-trigger-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: GlueJobStartPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - glue:StartJobRun
+                  - glue:GetJobRun
+                  - glue:GetJob
+                Resource:
+                  - !Sub 'arn:aws:glue:${AWS::Region}:${AWS::AccountId}:job/${FinancialETLJob}'
+                  - !Sub 'arn:aws:glue:${AWS::Region}:${AWS::AccountId}:job/${ComplianceValidationJob}'
+
   # Glue Job Schedules - Updated for training frequency
   FinancialETLSchedule:
     Type: AWS::Events::Rule
@@ -675,9 +754,12 @@ Resources:
       ScheduleExpression: 'rate(10 minutes)'
       State: ENABLED
       Targets:
-        - Arn: !Sub 'arn:aws:glue:${AWS::Region}:${AWS::AccountId}:job/${FinancialETLJob}'
+        - Arn: !GetAtt GlueJobTriggerFunction.Arn
           Id: FinancialETLTarget
-          RoleArn: !GetAtt GlueJobExecutionRole.Arn
+          Input: !Sub |
+            {
+              "jobName": "${FinancialETLJob}"
+            }
 
   ComplianceValidationSchedule:
     Type: AWS::Events::Rule
@@ -687,32 +769,29 @@ Resources:
       ScheduleExpression: 'rate(20 minutes)'
       State: ENABLED
       Targets:
-        - Arn: !Sub 'arn:aws:glue:${AWS::Region}:${AWS::AccountId}:job/${ComplianceValidationJob}'
+        - Arn: !GetAtt GlueJobTriggerFunction.Arn
           Id: ComplianceValidationTarget
-          RoleArn: !GetAtt GlueJobExecutionRole.Arn
+          Input: !Sub |
+            {
+              "jobName": "${ComplianceValidationJob}"
+            }
 
-  # Role for EventBridge to invoke Glue jobs
-  GlueJobExecutionRole:
-    Type: AWS::IAM::Role
+  # Lambda Permissions for Glue Job Triggers
+  FinancialETLSchedulePermission:
+    Type: AWS::Lambda::Permission
     Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: events.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - PolicyName: GlueJobExecutionPolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - glue:StartJobRun
-                Resource:
-                  - !Sub 'arn:aws:glue:${AWS::Region}:${AWS::AccountId}:job/${FinancialETLJob}'
-                  - !Sub 'arn:aws:glue:${AWS::Region}:${AWS::AccountId}:job/${ComplianceValidationJob}'
+      FunctionName: !Ref GlueJobTriggerFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt FinancialETLSchedule.Arn
+
+  ComplianceValidationSchedulePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref GlueJobTriggerFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt ComplianceValidationSchedule.Arn
 
   # ===========================================
   # STEP FUNCTIONS WORKFLOW
