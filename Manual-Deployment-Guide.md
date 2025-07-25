@@ -1,16 +1,22 @@
-# Manual Deployment Guide for SOX Auditor Training
+# Manual Deployment Guide for AWS Deep Dive Training
 
-## Option 1: Using Master Template (Recommended)
+## Single Unified Deployment (Recommended)
 
-Deploy `sox-training-master.yaml` with these parameters:
+Deploy the unified template `aws-deep-dive-training-unified.yaml` with these parameters:
 - **EnvironmentName**: `aws-deep-dive`
 - **S3BucketName**: `your-github-sync-bucket-name`
-- **DeployLambdaExamples**: `Yes`
-- **DeployGlueExamples**: `Yes` (now works with your S3 bucket!)
-- **DeployStepFunctionsExamples**: `Yes`
-- **DeployMonitoringDashboards**: `Yes`
 
-## Option 2: Individual Stack Deployment
+This single template deploys everything you need:
+✅ **Lambda Functions**: 2 financial processes (every 5 & 15 minutes)
+✅ **Step Functions**: Complex workflow (every 30 minutes)  
+✅ **Glue Jobs**: ETL and compliance validation (every 10 & 20 minutes)
+✅ **CloudWatch Dashboards**: Fixed SOX compliance and operational monitoring
+✅ **CloudTrail**: Management event auditing
+✅ **Optimized Scheduling**: All processes run frequently for training
+
+## Alternative: Individual Stack Deployment
+
+If you prefer to deploy components separately:
 
 ### Deploy Individual Stacks in Order:
 
@@ -43,10 +49,19 @@ Deploy `sox-training-master.yaml` with these parameters:
 ✅ **Lambda Functions**: 2 scheduled financial processes with realistic failures
 ✅ **Step Functions**: Complex workflow with error handling  
 ✅ **Glue Jobs**: ETL and compliance validation with financial scenarios
-✅ **CloudWatch Dashboards**: SOX compliance and operational monitoring
+✅ **CloudWatch Dashboards**: Fixed SOX compliance and operational monitoring (no missing data!)
 ✅ **CloudTrail**: Management event auditing (API calls, logins, configuration changes)
-✅ **Scheduled Events**: All processes run on realistic schedules
-✅ **Training Activities**: Complete hands-on exercises focused on management event investigation
+✅ **Training-Optimized Scheduling**: 
+   - Transaction Processing: Every 5 minutes
+   - Month-End Processing: Every 15 minutes
+   - Glue ETL Jobs: Every 10 minutes
+   - Compliance Validation: Every 20 minutes
+   - Step Functions Workflow: Every 30 minutes
+✅ **Fixed Dashboard Issues**: 
+   - Critical compliance violations now populate properly
+   - Step Functions execution time removed for better visibility
+   - Glue job metrics display correctly
+✅ **Training Activities**: Complete hands-on exercises with frequent data population
 
 ## Post-Deployment Steps:
 
@@ -88,6 +103,18 @@ Deploy `sox-training-master.yaml` with these parameters:
       ```
    5. Click **"Start execution"** and watch the visual workflow
 
+   **Glue Jobs:**
+   1. Go to AWS Glue Console: `https://console.aws.amazon.com/glue/home#/jobs`
+   2. Find and run these jobs:
+      - `aws-deep-dive-financial-etl-job`
+      - `aws-deep-dive-compliance-validation-job`
+   3. For each job:
+      - Click the job name
+      - Click **"Run job"** button
+      - Monitor progress in "History" tab
+      - View logs by clicking on the run and selecting "Logs"
+   4. **Expected behavior**: Jobs process sample financial data and create compliance reports
+
    ### Option B: AWS CLI
    
    **For Linux/Mac:**
@@ -95,6 +122,11 @@ Deploy `sox-training-master.yaml` with these parameters:
    echo '{"test":true,"source":"manual-test"}' > payload.json
    aws lambda invoke --function-name aws-deep-dive-daily-transaction-processor --payload file://payload.json response.json
    aws lambda invoke --function-name aws-deep-dive-month-end-processor --payload file://payload.json response2.json
+   
+   # Start Glue jobs
+   aws glue start-job-run --job-name aws-deep-dive-financial-etl-job
+   aws glue start-job-run --job-name aws-deep-dive-compliance-validation-job
+   
    rm payload.json
    ```
    
@@ -110,6 +142,10 @@ Deploy `sox-training-master.yaml` with these parameters:
    aws lambda invoke --function-name aws-deep-dive-daily-transaction-processor --payload file://payload.json response.json
    aws lambda invoke --function-name aws-deep-dive-month-end-processor --payload file://payload.json response2.json
    
+   # Start Glue jobs
+   aws glue start-job-run --job-name aws-deep-dive-financial-etl-job
+   aws glue start-job-run --job-name aws-deep-dive-compliance-validation-job
+   
    Remove-Item "payload.json"
    ```
 
@@ -121,6 +157,7 @@ Deploy `sox-training-master.yaml` with these parameters:
    - **CloudWatch Logs**: Check function logs at CloudWatch > Log groups > `/aws/lambda/aws-deep-dive-*`
    - **CloudWatch Metrics**: Go to CloudWatch > Metrics > Custom Namespaces > `FinancialProcessing`
    - **Step Functions History**: View execution details in Step Functions console
+   - **Glue Job Runs**: Check job status and logs at AWS Glue > Jobs > [job-name] > History tab
    - **CloudTrail Events**: Your console actions appear as API calls in CloudTrail
 
 4. **Enable Failure Simulation** (during training):
@@ -132,6 +169,8 @@ Deploy `sox-training-master.yaml` with these parameters:
    - Functions have built-in 15% failure rate for realistic scenarios
    - Run functions multiple times to see different failure patterns
    - Each execution populates different metrics in the dashboards
+   - **OPTIMIZED FOR TRAINING**: All processes run every 5-30 minutes, so you'll see fresh data quickly!
+   - Critical compliance violations will appear in the dashboard as functions run
    - Web console method is perfect for hands-on training activities
 
 ## Training URLs You'll Need:
@@ -140,12 +179,14 @@ Deploy `sox-training-master.yaml` with these parameters:
 - **CloudWatch Logs**: `https://console.aws.amazon.com/cloudwatch/home#logsV2:logs-insights`
 - **CloudTrail Events**: `https://console.aws.amazon.com/cloudtrail/home#/events`
 - **Step Functions**: `https://console.aws.amazon.com/states/home#/statemachines`
+- **Glue Jobs**: `https://console.aws.amazon.com/glue/home#/jobs`
 
 ## Manual Cleanup After Training:
 
 Delete stacks in this order:
 1. `aws-deep-dive-monitoring-stack`
-2. `aws-deep-dive-stepfunctions-stack`  
-3. `aws-deep-dive-lambda-stack`
+2. `aws-deep-dive-stepfunctions-stack`
+3. `aws-deep-dive-glue-stack`
+4. `aws-deep-dive-lambda-stack`
 
 That's it! The manual deployment is actually simpler since you avoid the S3 upload complexity.
