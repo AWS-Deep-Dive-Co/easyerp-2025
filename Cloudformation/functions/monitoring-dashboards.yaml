@@ -1,0 +1,480 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'SOX Auditor Training - CloudWatch Dashboards and Monitoring Setup'
+
+Parameters:
+  EnvironmentName:
+    Description: An environment name that will be prefixed to resource names
+    Type: String
+    Default: 'sox-training'
+
+Resources:
+  # Main SOX Compliance Monitoring Dashboard
+  SOXComplianceDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub '${EnvironmentName}-sox-compliance-monitoring'
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "text",
+              "x": 0,
+              "y": 0,
+              "width": 24,
+              "height": 2,
+              "properties": {
+                "markdown": "# SOX Compliance Monitoring Dashboard\n**Environment:** ${EnvironmentName} | **Last Updated:** Auto-refreshing every 5 minutes\n\n🔴 **Red = Critical Issues** | 🟡 **Yellow = Warnings** | 🟢 **Green = Normal**"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 2,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "FinancialProcessing/DailyTransactions", "ProcessedTransactions" ],
+                  [ ".", "FailedTransactions" ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Daily Transaction Processing",
+                "period": 300,
+                "stat": "Sum",
+                "yAxis": {
+                  "left": {
+                    "min": 0
+                  }
+                }
+              }
+            },
+            {
+              "type": "metric",
+              "x": 8,
+              "y": 2,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "FinancialProcessing/MonthEnd", "SuccessfulCloses" ],
+                  [ ".", "CloseFailures" ],
+                  [ ".", "ReconciliationFailures" ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Month-End Close Status",
+                "period": 3600,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 16,
+              "y": 2,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/Lambda", "Errors", "FunctionName", "${EnvironmentName}-daily-transaction-processor" ],
+                  [ ".", "Duration", ".", "." ],
+                  [ ".", "Invocations", ".", "." ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Lambda Function Health",
+                "period": 300,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 8,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "ComplianceValidation/SOX", "ComplianceScore" ],
+                  [ ".", "CompletenessRate" ],
+                  [ ".", "AccuracyRate" ],
+                  [ ".", "ControlEffectiveness" ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "SOX Compliance Metrics (%)",
+                "period": 3600,
+                "stat": "Average",
+                "yAxis": {
+                  "left": {
+                    "min": 0,
+                    "max": 100
+                  }
+                }
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 8,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/States", "ExecutionsFailed", "StateMachineArn", "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${EnvironmentName}-financial-processing-workflow" ],
+                  [ ".", "ExecutionsSucceeded", ".", "." ],
+                  [ ".", "ExecutionTime", ".", "." ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Step Functions Workflow Status",
+                "period": 300,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "log",
+              "x": 0,
+              "y": 14,
+              "width": 24,
+              "height": 6,
+              "properties": {
+                "query": "SOURCE '/aws/lambda/${EnvironmentName}-daily-transaction-processor'\n| SOURCE '/aws/lambda/${EnvironmentName}-month-end-processor'\n| fields @timestamp, @message, @logStream\n| filter @message like /ERROR/\n| sort @timestamp desc\n| limit 20",
+                "region": "${AWS::Region}",
+                "title": "Recent Critical Errors - Lambda Functions",
+                "view": "table"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 20,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "FinancialProcessing/GlueETL", "ExtractedRecords" ],
+                  [ ".", "ProcessedRecords" ],
+                  [ ".", "ValidationErrors" ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "ETL Job Processing Volume",
+                "period": 3600,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 8,
+              "y": 20,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "ComplianceValidation/SOX", "SODViolations" ],
+                  [ ".", "PrivilegedAccessViolations" ],
+                  [ ".", "AccessControlViolations" ],
+                  [ ".", "MaterialVariances" ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Critical Compliance Violations",
+                "period": 3600,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 16,
+              "y": 20,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "FinancialProcessing/StepFunctions", "ValidationSuccess" ],
+                  [ ".", "ProcessedRecords" ],
+                  [ ".", "FailedRecords" ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Workflow Processing Results",
+                "period": 300,
+                "stat": "Sum"
+              }
+            }
+          ]
+        }
+
+  # Operational Dashboard for System Health
+  OperationalDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub '${EnvironmentName}-operational-monitoring'
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "text",
+              "x": 0,
+              "y": 0,
+              "width": 24,
+              "height": 2,
+              "properties": {
+                "markdown": "# Operational Monitoring Dashboard\n**System Health and Performance Metrics** | **Environment:** ${EnvironmentName}\n\n📊 **Performance** | ⚠️ **Alerts** | 🔧 **System Health**"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 2,
+              "width": 6,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/Lambda", "Duration", "FunctionName", "${EnvironmentName}-daily-transaction-processor" ],
+                  [ "...", "${EnvironmentName}-month-end-processor" ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Lambda Execution Times (ms)",
+                "period": 300,
+                "stat": "Average"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 6,
+              "y": 2,
+              "width": 6,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/Lambda", "Throttles", "FunctionName", "${EnvironmentName}-daily-transaction-processor" ],
+                  [ "...", "${EnvironmentName}-month-end-processor" ],
+                  [ ".", "ConcurrentExecutions", ".", "${EnvironmentName}-daily-transaction-processor" ],
+                  [ "...", "${EnvironmentName}-month-end-processor" ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Lambda Concurrency & Throttles",
+                "period": 300,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 2,
+              "width": 6,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "Glue", "glue.driver.aggregate.elapsedTime", "JobName", "${EnvironmentName}-financial-data-etl" ],
+                  [ "...", "${EnvironmentName}-compliance-validation" ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Glue Job Execution Times",
+                "period": 3600,
+                "stat": "Average"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 18,
+              "y": 2,
+              "width": 6,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/Events", "SuccessfulInvocations", "RuleName", "${EnvironmentName}-daily-transaction-schedule" ],
+                  [ ".", "FailedInvocations", ".", "." ],
+                  [ "...", "${EnvironmentName}-month-end-schedule" ],
+                  [ ".", "SuccessfulInvocations", ".", "." ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "EventBridge Rule Invocations",
+                "period": 3600,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "log",
+              "x": 0,
+              "y": 8,
+              "width": 24,
+              "height": 8,
+              "properties": {
+                "query": "SOURCE '/aws/stepfunctions/${EnvironmentName}-financial-processing'\n| fields @timestamp, type, details.input, details.output\n| filter type = \"ExecutionStarted\" or type = \"ExecutionSucceeded\" or type = \"ExecutionFailed\"\n| sort @timestamp desc\n| limit 20",
+                "region": "${AWS::Region}",
+                "title": "Step Functions Execution History",
+                "view": "table"
+              }
+            }
+          ]
+        }
+
+  # Custom Metrics for Training Scenarios
+  TrainingMetricsAlarm1:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${EnvironmentName}-high-transaction-failure-rate'
+      AlarmDescription: 'SOX Training: Alert when transaction failure rate exceeds 5%'
+      MetricName: FailedTransactions
+      Namespace: FinancialProcessing/DailyTransactions
+      Statistic: Sum
+      Period: 3600
+      EvaluationPeriods: 1
+      Threshold: 100
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+
+  TrainingMetricsAlarm2:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${EnvironmentName}-compliance-score-below-threshold'
+      AlarmDescription: 'SOX Training: Alert when compliance score drops below 85%'
+      MetricName: ComplianceScore
+      Namespace: ComplianceValidation/SOX
+      Statistic: Average
+      Period: 3600
+      EvaluationPeriods: 1
+      Threshold: 85
+      ComparisonOperator: LessThanThreshold
+      TreatMissingData: breaching
+
+  TrainingMetricsAlarm3:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${EnvironmentName}-material-variance-detected'
+      AlarmDescription: 'SOX Training: Critical alert for material variances'
+      MetricName: MaterialVariances
+      Namespace: ComplianceValidation/SOX
+      Statistic: Sum
+      Period: 3600
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+
+  # Log Groups with appropriate retention for compliance
+  ComplianceLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/sox-compliance/${EnvironmentName}/audit-trail'
+      RetentionInDays: 30  # 30 days for training environment
+      
+  FinancialProcessingLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/financial-processing/${EnvironmentName}/transactions'
+      RetentionInDays: 30  # 30 days for training environment
+
+  # S3 Bucket for CloudTrail logs
+  AuditTrailBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${EnvironmentName}-sox-audit-trail-${AWS::AccountId}'
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: AuditLogRetention
+            Status: Enabled
+            ExpirationInDays: 3653  # 10 years - matches CloudTrail log retention
+            NoncurrentVersionExpirationInDays: 365
+
+  # CloudWatch Log Group for CloudTrail
+  CloudTrailLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/cloudtrail/${EnvironmentName}-sox-audit'
+      RetentionInDays: 30  # 30 days for training environment
+
+  # Bucket policy for CloudTrail (simplified and permissive)
+  AuditTrailBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref AuditTrailBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AWSCloudTrailAclCheck
+            Effect: Allow
+            Principal:
+              Service: cloudtrail.amazonaws.com
+            Action: s3:GetBucketAcl
+            Resource: !Sub 'arn:aws:s3:::${AuditTrailBucket}'
+          - Sid: AWSCloudTrailWrite
+            Effect: Allow
+            Principal:
+              Service: cloudtrail.amazonaws.com
+            Action: s3:PutObject
+            Resource: !Sub 'arn:aws:s3:::${AuditTrailBucket}/*'
+            Condition:
+              StringEquals:
+                's3:x-amz-acl': 'bucket-owner-full-control'
+          - Sid: AWSCloudTrailBucketExistenceCheck
+            Effect: Allow
+            Principal:
+              Service: cloudtrail.amazonaws.com
+            Action: s3:ListBucket
+            Resource: !Sub 'arn:aws:s3:::${AuditTrailBucket}'
+
+  # CloudTrail for API Call Auditing (simplified for training)
+  SOXAuditTrail:
+    Type: AWS::CloudTrail::Trail
+    DependsOn: AuditTrailBucketPolicy
+    Properties:
+      TrailName: !Sub '${EnvironmentName}-sox-audit-trail'
+      S3BucketName: !Ref AuditTrailBucket
+      S3KeyPrefix: 'sox-audit-logs'
+      IsLogging: true
+      IncludeGlobalServiceEvents: true
+      IsMultiRegionTrail: true
+      EnableLogFileValidation: true
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Purpose
+          Value: SOX-Compliance-Auditing
+
+Outputs:
+  SOXDashboardURL:
+    Description: 'URL to SOX Compliance Dashboard'
+    Value: !Sub 'https://${AWS::Region}.console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=${EnvironmentName}-sox-compliance-monitoring'
+
+  OperationalDashboardURL:
+    Description: 'URL to Operational Monitoring Dashboard'
+    Value: !Sub 'https://${AWS::Region}.console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=${EnvironmentName}-operational-monitoring'
+
+  CloudTrailArn:
+    Description: 'ARN of the SOX Audit CloudTrail'
+    Value: !GetAtt SOXAuditTrail.Arn
+    Export:
+      Name: !Sub '${EnvironmentName}-sox-audit-trail-arn'
+
+  AuditTrailBucket:
+    Description: 'S3 Bucket for CloudTrail audit logs'
+    Value: !Ref AuditTrailBucket
+    Export:
+      Name: !Sub '${EnvironmentName}-audit-trail-bucket'

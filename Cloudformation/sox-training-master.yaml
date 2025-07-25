@@ -1,0 +1,180 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'SOX Auditor Training - Master Template for Deploying All Monitoring Examples'
+
+Parameters:
+  EnvironmentName:
+    Description: An environment name that will be prefixed to resource names
+    Type: String
+    Default: 'sox-training'
+    AllowedPattern: ^[a-zA-Z][a-zA-Z0-9-]*$
+    ConstraintDescription: Must begin with a letter and contain only alphanumeric characters and hyphens
+
+  S3BucketName:
+    Description: S3 bucket name where the repository is synced (contains Glue scripts)
+    Type: String
+    AllowedPattern: ^[a-z0-9][a-z0-9-]*[a-z0-9]$
+    ConstraintDescription: Must be a valid S3 bucket name (lowercase, no underscores)
+
+  DeployLambdaExamples:
+    Description: Deploy Lambda function examples with scheduled processing
+    Type: String
+    Default: 'Yes'
+    AllowedValues: ['Yes', 'No']
+
+  DeployGlueExamples:
+    Description: Deploy Glue job examples for ETL processing
+    Type: String
+    Default: 'Yes'
+    AllowedValues: ['Yes', 'No']
+
+  DeployStepFunctionsExamples:
+    Description: Deploy Step Functions workflow examples
+    Type: String
+    Default: 'Yes'
+    AllowedValues: ['Yes', 'No']
+
+  DeployMonitoringDashboards:
+    Description: Deploy CloudWatch dashboards and monitoring setup
+    Type: String
+    Default: 'Yes'
+    AllowedValues: ['Yes', 'No']
+
+Conditions:
+  CreateLambdaExamples: !Equals [!Ref DeployLambdaExamples, 'Yes']
+  CreateGlueExamples: !Equals [!Ref DeployGlueExamples, 'Yes']
+  CreateStepFunctionsExamples: !Equals [!Ref DeployStepFunctionsExamples, 'Yes']
+  CreateMonitoringDashboards: !Equals [!Ref DeployMonitoringDashboards, 'Yes']
+
+Resources:
+  # Lambda Functions Stack
+  LambdaStack:
+    Type: AWS::CloudFormation::Stack
+    Condition: CreateLambdaExamples
+    Properties:
+      TemplateURL: './functions/lambda.yaml'
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+      Tags:
+        - Key: StackName
+          Value: !Sub '${EnvironmentName}-lambda-examples'
+        - Key: Purpose
+          Value: SOX-Training
+
+  # Glue Jobs Stack
+  GlueStack:
+    Type: AWS::CloudFormation::Stack
+    Condition: CreateGlueExamples
+    Properties:
+      TemplateURL: './functions/glue-jobs.yaml'
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        S3BucketName: !Ref S3BucketName
+      Tags:
+        - Key: StackName
+          Value: !Sub '${EnvironmentName}-glue-examples'
+        - Key: Purpose
+          Value: SOX-Training
+
+  # Step Functions Stack
+  StepFunctionsStack:
+    Type: AWS::CloudFormation::Stack
+    Condition: CreateStepFunctionsExamples
+    Properties:
+      TemplateURL: './functions/step-functions.yaml'
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+      Tags:
+        - Key: StackName
+          Value: !Sub '${EnvironmentName}-stepfunctions-examples'
+        - Key: Purpose
+          Value: SOX-Training
+
+  # Monitoring and Dashboards Stack
+  MonitoringStack:
+    Type: AWS::CloudFormation::Stack
+    Condition: CreateMonitoringDashboards
+    Properties:
+      TemplateURL: './functions/monitoring-dashboards.yaml'
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+      Tags:
+        - Key: StackName
+          Value: !Sub '${EnvironmentName}-monitoring-examples'
+        - Key: Purpose
+          Value: SOX-Training
+
+  # EventBridge Rule to randomly trigger failures during training
+  TrainingFailureSimulator:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub '${EnvironmentName}-failure-simulator'
+      Description: 'Randomly triggers processes to simulate failures for training'
+      ScheduleExpression: 'cron(*/10 * * * ? *)'  # Every 10 minutes during training
+      State: DISABLED  # Start disabled, enable during training session
+      Targets:
+        - Arn: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvironmentName}-daily-transaction-processor'
+          Id: RandomFailureTarget
+          Input: '{"training_mode": true, "force_failure": true}'
+
+Outputs:
+  # Dashboard URLs
+  SOXComplianceDashboard:
+    Description: 'SOX Compliance Monitoring Dashboard'
+    Value: !Sub 'https://${AWS::Region}.console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=${EnvironmentName}-sox-compliance-monitoring'
+    Condition: CreateMonitoringDashboards
+
+  OperationalDashboard:
+    Description: 'Operational Monitoring Dashboard'
+    Value: !Sub 'https://${AWS::Region}.console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=${EnvironmentName}-operational-monitoring'
+    Condition: CreateMonitoringDashboards
+
+  # Direct Links for Training
+  CloudWatchLogs:
+    Description: 'CloudWatch Logs Console'
+    Value: !Sub 'https://${AWS::Region}.console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#logsV2:logs-insights'
+
+  CloudTrailConsole:
+    Description: 'CloudTrail Console for API Audit Logs'
+    Value: !Sub 'https://${AWS::Region}.console.aws.amazon.com/cloudtrail/home?region=${AWS::Region}#/events'
+
+  StepFunctionsConsole:
+    Description: 'Step Functions Console'
+    Value: !Sub 'https://${AWS::Region}.console.aws.amazon.com/states/home?region=${AWS::Region}#/statemachines'
+    Condition: CreateStepFunctionsExamples
+
+  GlueConsole:
+    Description: 'Glue Jobs Console'
+    Value: !Sub 'https://${AWS::Region}.console.aws.amazon.com/glue/home?region=${AWS::Region}#etl:tab=jobs'
+    Condition: CreateGlueExamples
+
+  # Training Instructions
+  TrainingInstructions:
+    Description: 'Key resources deployed for SOX auditor training'
+    Value: !Sub |
+      Training Environment: ${EnvironmentName}
+      
+      🔍 MONITORING LOCATIONS:
+      • CloudWatch Dashboards: Access via SOXComplianceDashboard and OperationalDashboard URLs above
+      • CloudWatch Logs: ${AWS::Region}.console.aws.amazon.com/cloudwatch/home#logsV2:logs-insights  
+      • CloudTrail Events: ${AWS::Region}.console.aws.amazon.com/cloudtrail/home#/events
+      
+      📊 SCHEDULED PROCESSES:
+      • Daily Transaction Processing: 2 AM UTC daily
+      • Month-End Close: Last day of month, 1 AM UTC
+      • Financial ETL: 3 AM UTC daily
+      • Compliance Validation: Mondays 6 AM UTC
+      • Step Functions Workflow: 8 AM and 8 PM UTC
+      
+      ⚠️ FAILURE SCENARIOS INCLUDED:
+      • Database connection timeouts (15% chance)
+      • Validation failures (10-25% chance)  
+      • Reconciliation variances
+      • Access control violations
+      • Data quality issues
+      
+      🎯 TRAINING ACTIVITIES:
+      1. Review real-time dashboards
+      2. Investigate error logs
+      3. Analyze compliance metrics
+      4. Track API calls in CloudTrail
+      5. Identify control failures

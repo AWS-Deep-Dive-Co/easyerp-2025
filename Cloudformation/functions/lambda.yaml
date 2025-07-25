@@ -1,0 +1,501 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'SOX Auditor Training - Lambda Functions for Financial Processing with Monitoring'
+
+Parameters:
+  EnvironmentName:
+    Description: An environment name that will be prefixed to resource names
+    Type: String
+    Default: 'sox-training'
+
+Resources:
+  # IAM Role for Lambda Functions
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${EnvironmentName}-lambda-execution-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: CloudWatchLogsPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - logs:DescribeLogStreams
+                  - logs:DescribeLogGroups
+                Resource: '*'
+        - PolicyName: CloudWatchMetricsPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudwatch:PutMetricData
+                Resource: '*'
+
+  # Lambda Function 1: Daily Financial Transaction Processor
+  DailyTransactionProcessor:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${EnvironmentName}-daily-transaction-processor'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 300
+      Description: 'Processes daily financial transactions - randomly fails for training purposes'
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import random
+          import logging
+          import time
+          from datetime import datetime
+
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+          
+          cloudwatch = boto3.client('cloudwatch')
+
+          def lambda_handler(event, context):
+              start_time = time.time()
+              transaction_count = random.randint(1000, 5000)
+              
+              # Log start of processing
+              logger.info(f"Starting daily transaction processing for {transaction_count} transactions")
+              logger.info(f"Process initiated by: {event.get('source', 'scheduled-event')}")
+              
+              try:
+                  # Simulate transaction processing
+                  processed = 0
+                  failed = 0
+                  
+                  # Randomly introduce different types of failures for training
+                  failure_chance = random.random()
+                  
+                  if failure_chance < 0.15:  # 15% chance of database connection failure
+                      logger.error("CRITICAL: Database connection timeout - unable to process transactions")
+                      logger.error("Error Code: DB_CONNECTION_TIMEOUT")
+                      logger.error("Impact: All transactions failed to process")
+                      
+                      # Send failure metric to CloudWatch
+                      cloudwatch.put_metric_data(
+                          Namespace='FinancialProcessing/DailyTransactions',
+                          MetricData=[
+                              {
+                                  'MetricName': 'ProcessingFailures',
+                                  'Value': 1,
+                                  'Unit': 'Count',
+                                  'Dimensions': [
+                                      {'Name': 'FailureType', 'Value': 'DatabaseTimeout'},
+                                      {'Name': 'Environment', 'Value': 'sox-training'}
+                                  ]
+                              }
+                          ]
+                      )
+                      
+                      raise Exception("Database connection timeout after 30 seconds")
+                      
+                  elif failure_chance < 0.25:  # 10% chance of partial failure
+                      processed = int(transaction_count * 0.7)
+                      failed = transaction_count - processed
+                      
+                      logger.warning(f"PARTIAL FAILURE: {failed} transactions failed validation")
+                      logger.warning("Failed transactions contain invalid account numbers or amounts")
+                      logger.info(f"Successfully processed: {processed} transactions")
+                      
+                      # Send partial failure metrics
+                      cloudwatch.put_metric_data(
+                          Namespace='FinancialProcessing/DailyTransactions',
+                          MetricData=[
+                              {
+                                  'MetricName': 'ProcessedTransactions',
+                                  'Value': processed,
+                                  'Unit': 'Count'
+                              },
+                              {
+                                  'MetricName': 'FailedTransactions',
+                                  'Value': failed,
+                                  'Unit': 'Count'
+                              }
+                          ]
+                      )
+                      
+                  else:  # Success case
+                      processed = transaction_count
+                      logger.info(f"SUCCESS: All {processed} transactions processed successfully")
+                      logger.info("All transactions passed validation and were committed to database")
+                      
+                      # Send success metrics
+                      cloudwatch.put_metric_data(
+                          Namespace='FinancialProcessing/DailyTransactions',
+                          MetricData=[
+                              {
+                                  'MetricName': 'ProcessedTransactions',
+                                  'Value': processed,
+                                  'Unit': 'Count'
+                              },
+                              {
+                                  'MetricName': 'ProcessingSuccessRate',
+                                  'Value': 100.0,
+                                  'Unit': 'Percent'
+                              }
+                          ]
+                      )
+                  
+                  # Log completion time for performance monitoring
+                  end_time = time.time()
+                  processing_duration = end_time - start_time
+                  
+                  cloudwatch.put_metric_data(
+                      Namespace='FinancialProcessing/DailyTransactions',
+                      MetricData=[
+                          {
+                              'MetricName': 'ProcessingDuration',
+                              'Value': processing_duration,
+                              'Unit': 'Seconds'
+                          }
+                      ]
+                  )
+                  
+                  logger.info(f"Processing completed in {processing_duration:.2f} seconds")
+                  
+                  return {
+                      'statusCode': 200,
+                      'body': json.dumps({
+                          'message': 'Transaction processing completed',
+                          'processed': processed,
+                          'failed': failed,
+                          'duration': processing_duration
+                      })
+                  }
+                  
+              except Exception as e:
+                  logger.error(f"FATAL ERROR: {str(e)}")
+                  logger.error("Transaction processing completely failed")
+                  
+                  # Send error metric
+                  cloudwatch.put_metric_data(
+                      Namespace='FinancialProcessing/DailyTransactions',
+                      MetricData=[
+                          {
+                              'MetricName': 'ProcessingFailures',
+                              'Value': 1,
+                              'Unit': 'Count'
+                          }
+                      ]
+                  )
+                  
+                  return {
+                      'statusCode': 500,
+                      'body': json.dumps({
+                          'error': str(e),
+                          'message': 'Transaction processing failed'
+                      })
+                  }
+
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Purpose
+          Value: SOX-Training
+        - Key: ProcessType
+          Value: Financial-Daily
+
+  # Lambda Function 2: Month-End Close Processor
+  MonthEndProcessor:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${EnvironmentName}-month-end-processor'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 900  # 15 minutes for month-end processing
+      Description: 'Month-end financial close process - critical for SOX compliance'
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import random
+          import logging
+          import time
+          from datetime import datetime
+
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+          
+          cloudwatch = boto3.client('cloudwatch')
+
+          def lambda_handler(event, context):
+              start_time = time.time()
+              
+              logger.info("=== MONTH-END CLOSE PROCESS INITIATED ===")
+              logger.info(f"Close date: {datetime.now().strftime('%Y-%m-%d')}")
+              logger.info(f"Initiated by: {event.get('source', 'scheduled-event')}")
+              
+              try:
+                  # Simulate various month-end processes
+                  processes = [
+                      "Account Reconciliation",
+                      "Accrual Processing", 
+                      "Revenue Recognition",
+                      "Expense Allocation",
+                      "Depreciation Calculation",
+                      "Tax Provision",
+                      "Consolidation"
+                  ]
+                  
+                  completed_processes = []
+                  
+                  # Random failure scenarios for different processes
+                  failure_chance = random.random()
+                  
+                  if failure_chance < 0.20:  # 20% chance of reconciliation failure
+                      logger.error("CRITICAL: Account reconciliation failed")
+                      logger.error("Variance detected: $45,623.12 unreconciled difference")
+                      logger.error("Manual intervention required before close can complete")
+                      
+                      cloudwatch.put_metric_data(
+                          Namespace='FinancialProcessing/MonthEnd',
+                          MetricData=[
+                              {
+                                  'MetricName': 'ReconciliationFailures',
+                                  'Value': 1,
+                                  'Unit': 'Count',
+                                  'Dimensions': [
+                                      {'Name': 'ProcessType', 'Value': 'AccountReconciliation'}
+                                  ]
+                              },
+                              {
+                                  'MetricName': 'UnreconciledAmount',
+                                  'Value': 45623.12,
+                                  'Unit': 'None'
+                              }
+                          ]
+                      )
+                      
+                      raise Exception("Account reconciliation failed - manual review required")
+                      
+                  elif failure_chance < 0.30:  # 10% chance of timeout
+                      logger.warning("Processing taking longer than expected...")
+                      time.sleep(5)  # Simulate slow processing
+                      
+                      completed_count = random.randint(3, 5)
+                      completed_processes = processes[:completed_count]
+                      remaining = processes[completed_count:]
+                      
+                      logger.error(f"TIMEOUT: Process exceeded time limit")
+                      logger.error(f"Completed processes: {', '.join(completed_processes)}")
+                      logger.error(f"Incomplete processes: {', '.join(remaining)}")
+                      
+                      cloudwatch.put_metric_data(
+                          Namespace='FinancialProcessing/MonthEnd',
+                          MetricData=[
+                              {
+                                  'MetricName': 'TimeoutFailures',
+                                  'Value': 1,
+                                  'Unit': 'Count'
+                              },
+                              {
+                                  'MetricName': 'CompletedProcesses',
+                                  'Value': len(completed_processes),
+                                  'Unit': 'Count'
+                              }
+                          ]
+                      )
+                      
+                      raise Exception("Month-end close timeout - partial completion")
+                      
+                  else:  # Success case
+                      for i, process in enumerate(processes):
+                          logger.info(f"Processing: {process}")
+                          time.sleep(0.5)  # Simulate processing time
+                          logger.info(f"✓ Completed: {process}")
+                          completed_processes.append(process)
+                      
+                      logger.info("=== MONTH-END CLOSE COMPLETED SUCCESSFULLY ===")
+                      logger.info("All processes completed without errors")
+                      logger.info("Financial statements ready for review")
+                      
+                      end_time = time.time()
+                      processing_duration = end_time - start_time
+                      
+                      cloudwatch.put_metric_data(
+                          Namespace='FinancialProcessing/MonthEnd',
+                          MetricData=[
+                              {
+                                  'MetricName': 'SuccessfulCloses',
+                                  'Value': 1,
+                                  'Unit': 'Count'
+                              },
+                              {
+                                  'MetricName': 'ProcessingDuration',
+                                  'Value': processing_duration,
+                                  'Unit': 'Seconds'
+                              },
+                              {
+                                  'MetricName': 'CompletedProcesses',
+                                  'Value': len(completed_processes),
+                                  'Unit': 'Count'
+                              }
+                          ]
+                      )
+                      
+                      return {
+                          'statusCode': 200,
+                          'body': json.dumps({
+                              'message': 'Month-end close completed successfully',
+                              'completed_processes': completed_processes,
+                              'duration': processing_duration
+                          })
+                      }
+                      
+              except Exception as e:
+                  logger.error(f"MONTH-END CLOSE FAILED: {str(e)}")
+                  
+                  cloudwatch.put_metric_data(
+                      Namespace='FinancialProcessing/MonthEnd',
+                      MetricData=[
+                          {
+                              'MetricName': 'CloseFailures',
+                              'Value': 1,
+                              'Unit': 'Count'
+                          }
+                      ]
+                  )
+                  
+                  return {
+                      'statusCode': 500,
+                      'body': json.dumps({
+                          'error': str(e),
+                          'message': 'Month-end close failed'
+                      })
+                  }
+
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Purpose
+          Value: SOX-Training
+        - Key: ProcessType
+          Value: Financial-MonthEnd
+
+  # EventBridge Rules for Scheduling
+  DailyTransactionSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub '${EnvironmentName}-daily-transaction-schedule'
+      Description: 'Runs daily transaction processing every day at 2 AM'
+      ScheduleExpression: 'cron(0 2 * * ? *)'  # 2 AM UTC daily
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt DailyTransactionProcessor.Arn
+          Id: DailyTransactionTarget
+
+  MonthEndSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub '${EnvironmentName}-month-end-schedule'
+      Description: 'Runs month-end close on the last day of each month'
+      ScheduleExpression: 'cron(0 1 L * ? *)'  # 1 AM on last day of month
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt MonthEndProcessor.Arn
+          Id: MonthEndTarget
+
+  # Permissions for EventBridge to invoke Lambda
+  DailyTransactionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref DailyTransactionProcessor
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt DailyTransactionSchedule.Arn
+
+  MonthEndPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref MonthEndProcessor
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt MonthEndSchedule.Arn
+
+  # CloudWatch Log Groups with retention
+  DailyTransactionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${EnvironmentName}-daily-transaction-processor'
+      RetentionInDays: 30
+
+  MonthEndLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${EnvironmentName}-month-end-processor'
+      RetentionInDays: 90  # Keep month-end logs longer for compliance
+
+  # CloudWatch Alarms for Monitoring
+  DailyTransactionFailureAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${EnvironmentName}-daily-transaction-failures'
+      AlarmDescription: 'Alert when daily transaction processing fails'
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref DailyTransactionProcessor
+      TreatMissingData: notBreaching
+
+  MonthEndFailureAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${EnvironmentName}-month-end-failures'
+      AlarmDescription: 'Critical alert for month-end close failures'
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref MonthEndProcessor
+      TreatMissingData: notBreaching
+
+Outputs:
+  DailyTransactionProcessorArn:
+    Description: 'ARN of the Daily Transaction Processor Lambda'
+    Value: !GetAtt DailyTransactionProcessor.Arn
+    Export:
+      Name: !Sub '${EnvironmentName}-daily-transaction-processor-arn'
+
+  MonthEndProcessorArn:
+    Description: 'ARN of the Month-End Processor Lambda'
+    Value: !GetAtt MonthEndProcessor.Arn
+    Export:
+      Name: !Sub '${EnvironmentName}-month-end-processor-arn'
+
+  DailyTransactionLogGroup:
+    Description: 'CloudWatch Log Group for Daily Transaction Processing'
+    Value: !Ref DailyTransactionLogGroup
+
+  MonthEndLogGroup:
+    Description: 'CloudWatch Log Group for Month-End Processing'
+    Value: !Ref MonthEndLogGroup
