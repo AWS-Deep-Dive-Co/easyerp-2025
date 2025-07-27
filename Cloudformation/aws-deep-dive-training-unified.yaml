@@ -856,7 +856,7 @@ Resources:
               "Resource": "${DailyTransactionProcessor.Arn}",
               "Parameters": {
                 "source": "step-functions-workflow",
-                "forceFailure.$": "$.forceFailure"
+                "forceFailure.$": "States.JsonMerge({}, $.forceFailure, false)"
               },
               "Retry": [
                 {
@@ -891,7 +891,7 @@ Resources:
               "Resource": "${MonthEndProcessor.Arn}",
               "Parameters": {
                 "source": "step-functions-workflow",
-                "forceFailure.$": "$.forceFailure"
+                "forceFailure.$": "States.JsonMerge({}, $.forceFailure, false)"
               },
               "Retry": [
                 {
