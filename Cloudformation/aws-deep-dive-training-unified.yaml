@@ -849,14 +849,24 @@ Resources:
       DefinitionString: !Sub |
         {
           "Comment": "Financial processing workflow with error handling for SOX training",
-          "StartAt": "ProcessDailyTransactions",
+          "StartAt": "PrepareInput",
           "States": {
+            "PrepareInput": {
+              "Type": "Pass",
+              "Parameters": {
+                "source": "step-functions-workflow",
+                "originalInput.$": "$",
+                "forceFailure": {}
+              },
+              "ResultPath": "$.processedInput",
+              "Next": "ProcessDailyTransactions"
+            },
             "ProcessDailyTransactions": {
               "Type": "Task",
               "Resource": "${DailyTransactionProcessor.Arn}",
               "Parameters": {
-                "source": "step-functions-workflow",
-                "forceFailure.$": "States.JsonMerge({}, $.forceFailure, false)"
+                "source.$": "$.processedInput.source",
+                "forceFailure.$": "$.originalInput.forceFailure"
               },
               "Retry": [
                 {
@@ -890,8 +900,8 @@ Resources:
               "Type": "Task",
               "Resource": "${MonthEndProcessor.Arn}",
               "Parameters": {
-                "source": "step-functions-workflow",
-                "forceFailure.$": "States.JsonMerge({}, $.forceFailure, false)"
+                "source.$": "$.processedInput.source",
+                "forceFailure.$": "$.originalInput.forceFailure"
               },
               "Retry": [
                 {
