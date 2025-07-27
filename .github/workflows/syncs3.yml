@@ -18,7 +18,17 @@ jobs:
       run: ls -alh
     - name: Print working directory
       run: pwd
-      
+    - name: Ensure AWS CLI is installed
+      run: |
+        if ! command -v aws >/dev/null 2>&1; then
+          echo "AWS CLI not found, installing..."
+          curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
+          unzip -q /tmp/awscliv2.zip -d /tmp
+          sudo /tmp/aws/install
+          rm -rf /tmp/aws /tmp/awscliv2.zip
+        else
+          echo "AWS CLI already installed"
+        fi
     - name: Sync to S3
       run: |
         aws s3 sync easyerp s3://$AWS_S3_BUCKET --delete --region $AWS_REGION
