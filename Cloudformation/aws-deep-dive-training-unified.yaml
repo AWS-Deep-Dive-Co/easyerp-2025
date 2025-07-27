@@ -175,13 +175,27 @@ Resources:
               
               logger.info(f"Starting transaction processing for {transaction_count} transactions")
               logger.info(f"Process initiated by: {event.get('source', 'scheduled-event')}")
+              logger.info(f"Input event: {json.dumps(event)}")
+              
+              # Check for forced failure scenarios from input
+              force_failure = event.get('forceFailure', {})
+              force_db_timeout = force_failure.get('databaseTimeout', False)
+              force_partial_failure = force_failure.get('partialFailure', False)
+              force_compliance_violations = force_failure.get('complianceViolations', False)
+              
+              if force_db_timeout:
+                  logger.warning("FORCED FAILURE: Database timeout requested via input parameters")
+              if force_partial_failure:
+                  logger.warning("FORCED FAILURE: Partial failure requested via input parameters")
+              if force_compliance_violations:
+                  logger.warning("FORCED FAILURE: Compliance violations requested via input parameters")
               
               try:
                   processed = 0
                   failed = 0
                   
-                  # Generate compliance violations for training (20% chance)
-                  if random.random() < 0.2:
+                  # Generate compliance violations for training (20% chance OR forced)
+                  if random.random() < 0.2 or force_compliance_violations:
                       # Generate different types of compliance violations
                       violation_types = ['SODViolations', 'PrivilegedAccessViolations', 'AccessControlViolations']
                       violation_type = random.choice(violation_types)
@@ -202,13 +216,15 @@ Resources:
                       )
                       logger.warning(f"COMPLIANCE VIOLATION: {violation_type} - {violation_count} violations detected")
                   
-                  # Simulate processing with realistic failure patterns
+                  # Simulate processing with realistic failure patterns OR forced failures
                   failure_chance = random.random()
                   
-                  if failure_chance < 0.15:  # 15% chance of database connection failure
+                  if force_db_timeout or (not force_partial_failure and failure_chance < 0.15):  # 15% chance of database connection failure OR forced
                       logger.error("CRITICAL: Database connection timeout - unable to process transactions")
                       logger.error("Error Code: DB_CONNECTION_TIMEOUT")
                       logger.error("Impact: All transactions failed to process")
+                      if force_db_timeout:
+                          logger.error("FORCED FAILURE: Database timeout triggered by input parameter")
                       
                       cloudwatch.put_metric_data(
                           Namespace='FinancialProcessing/DailyTransactions',
@@ -249,12 +265,14 @@ Resources:
                       
                       raise Exception("Database connection timeout after 30 seconds")
                       
-                  elif failure_chance < 0.25:  # 10% chance of partial failure
+                  elif force_partial_failure or (not force_db_timeout and failure_chance < 0.25):  # 10% chance of partial failure OR forced
                       processed = int(transaction_count * 0.7)
                       failed = transaction_count - processed
                       
                       logger.warning(f"PARTIAL FAILURE: {failed} transactions failed validation")
                       logger.info(f"Successfully processed: {processed} transactions")
+                      if force_partial_failure:
+                          logger.warning("FORCED FAILURE: Partial failure triggered by input parameter")
                       
                       cloudwatch.put_metric_data(
                           Namespace='FinancialProcessing/DailyTransactions',
@@ -395,6 +413,23 @@ Resources:
               
               logger.info("Starting month-end close process")
               logger.info(f"Initiated by: {event.get('source', 'scheduled-event')}")
+              logger.info(f"Input event: {json.dumps(event)}")
+              
+              # Check for forced failure scenarios from input
+              force_failure = event.get('forceFailure', {})
+              force_critical_failure = force_failure.get('criticalFailure', False)
+              force_compliance_violations = force_failure.get('complianceViolations', False)
+              force_material_variance = force_failure.get('materialVariance', False)
+              specific_process_failure = force_failure.get('specificProcess', None)
+              
+              if force_critical_failure:
+                  logger.warning("FORCED FAILURE: Critical failure requested via input parameters")
+              if force_compliance_violations:
+                  logger.warning("FORCED FAILURE: Compliance violations requested via input parameters")
+              if force_material_variance:
+                  logger.warning("FORCED FAILURE: Material variance requested via input parameters")
+              if specific_process_failure:
+                  logger.warning(f"FORCED FAILURE: Specific process failure requested: {specific_process_failure}")
               
               processes = [
                   "Account Reconciliation",
@@ -409,8 +444,8 @@ Resources:
                   failed_processes = []
                   total_variance = 0
                   
-                  # Generate compliance violations occasionally
-                  if random.random() < 0.15:
+                  # Generate compliance violations occasionally OR when forced
+                  if random.random() < 0.15 or force_compliance_violations:
                       violation_count = random.randint(2, 5)
                       cloudwatch.put_metric_data(
                           Namespace='ComplianceValidation/SOX',
@@ -426,13 +461,21 @@ Resources:
                   
                   failure_scenario = random.random()
                   
-                  if failure_scenario < 0.2:  # 20% chance of critical failure
+                  # Determine which process should fail (specific or random)
+                  if specific_process_failure and specific_process_failure in processes:
+                      failed_process = specific_process_failure
+                      force_critical_failure = True  # Force critical failure for specific process
+                  else:
                       failed_process = random.choice(processes)
+                  
+                  if force_critical_failure or force_material_variance or (failure_scenario < 0.2):  # 20% chance of critical failure OR forced
                       variance_amount = random.randint(50000, 200000)
                       
                       logger.error(f"CRITICAL FAILURE: {failed_process} failed with material variance")
                       logger.error(f"Variance Amount: ${variance_amount:,}")
                       logger.error("Month-end close cannot be completed")
+                      if force_critical_failure or force_material_variance:
+                          logger.error("FORCED FAILURE: Critical failure triggered by input parameter")
                       
                       cloudwatch.put_metric_data(
                           Namespace='FinancialProcessing/MonthEnd',
@@ -812,7 +855,8 @@ Resources:
               "Type": "Task",
               "Resource": "${DailyTransactionProcessor.Arn}",
               "Parameters": {
-                "source": "step-functions-workflow"
+                "source": "step-functions-workflow",
+                "forceFailure.$": "$.forceFailure"
               },
               "Retry": [
                 {
@@ -846,7 +890,8 @@ Resources:
               "Type": "Task",
               "Resource": "${MonthEndProcessor.Arn}",
               "Parameters": {
-                "source": "step-functions-workflow"
+                "source": "step-functions-workflow",
+                "forceFailure.$": "$.forceFailure"
               },
               "Retry": [
                 {
