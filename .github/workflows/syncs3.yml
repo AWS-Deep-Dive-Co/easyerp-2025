@@ -14,6 +14,9 @@ jobs:
     - uses: actions/checkout@master
       with:
           ref: stage
+    - name: List files after checkout
+      run: ls -alh
+      
     - uses: jakejarvis/s3-sync-action@master
       with:
         args: --delete
