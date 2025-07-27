@@ -855,8 +855,7 @@ Resources:
               "Type": "Pass",
               "Parameters": {
                 "source": "step-functions-workflow",
-                "originalInput.$": "$",
-                "forceFailure": {}
+                "originalInput.$": "$"
               },
               "ResultPath": "$.processedInput",
               "Next": "ProcessDailyTransactions"
@@ -866,7 +865,7 @@ Resources:
               "Resource": "${DailyTransactionProcessor.Arn}",
               "Parameters": {
                 "source.$": "$.processedInput.source",
-                "forceFailure.$": "$.originalInput.forceFailure"
+                "forceFailure.$": "$.processedInput.originalInput.forceFailure"
               },
               "Retry": [
                 {
@@ -901,7 +900,7 @@ Resources:
               "Resource": "${MonthEndProcessor.Arn}",
               "Parameters": {
                 "source.$": "$.processedInput.source",
-                "forceFailure.$": "$.originalInput.forceFailure"
+                "forceFailure.$": "$.processedInput.originalInput.forceFailure"
               },
               "Retry": [
                 {
