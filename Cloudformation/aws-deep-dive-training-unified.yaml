@@ -884,7 +884,7 @@ Resources:
               "Type": "Choice",
               "Choices": [
                 {
-                  "Variable": "$.statusCode",
+                  "Variable": "$.dailyTransactionResult.statusCode",
                   "NumericEquals": 200,
                   "Next": "ProcessMonthEnd"
                 }
@@ -895,6 +895,7 @@ Resources:
               "Type": "Task",
               "Resource": "${MonthEndProcessor.Arn}",
               "InputPath": "$.originalInput",
+              "ResultPath": "$.monthEndResult",
               "Retry": [
                 {
                   "ErrorEquals": ["States.TaskFailed"],
@@ -915,7 +916,7 @@ Resources:
               "Type": "Choice",
               "Choices": [
                 {
-                  "Variable": "$.statusCode",
+                  "Variable": "$.monthEndResult.statusCode",
                   "NumericEquals": 200,
                   "Next": "ProcessingComplete"
                 }
