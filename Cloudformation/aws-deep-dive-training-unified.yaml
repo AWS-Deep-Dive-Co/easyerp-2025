@@ -1102,7 +1102,7 @@ Resources:
               "height": 6,
               "properties": {
                 "metrics": [
-                  [ "AWS/StepFunctions", "ExecutionsFailed", "StateMachineArn", "${EnvironmentName}-financial-processing-workflow" ],
+                  [ "AWS/StepFunctions", "ExecutionsFailed", "StateMachineArn", "${FinancialProcessingWorkflow}" ],
                   [ ".", "ExecutionsSucceeded", ".", "." ],
                   [ ".", "ExecutionsStarted", ".", "." ],
                   [ ".", "ExecutionsAborted", ".", "." ],
