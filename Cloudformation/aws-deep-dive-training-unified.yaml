@@ -818,14 +818,15 @@ Resources:
                 {
                   "ErrorEquals": ["States.TaskFailed"],
                   "IntervalSeconds": 5,
-                  "MaxAttempts": 2,
+                  "MaxAttempts": 1,
                   "BackoffRate": 2.0
                 }
               ],
               "Catch": [
                 {
                   "ErrorEquals": ["States.ALL"],
-                  "Next": "HandleTransactionFailure"
+                  "Next": "HandleTransactionFailure",
+                  "ResultPath": "$.error"
                 }
               ],
               "Next": "CheckTransactionResults"
@@ -857,40 +858,39 @@ Resources:
               "Catch": [
                 {
                   "ErrorEquals": ["States.ALL"],
-                  "Next": "HandleMonthEndFailure"
+                  "Next": "HandleMonthEndFailure",
+                  "ResultPath": "$.error"
                 }
               ],
-              "Next": "ProcessingComplete"
+              "Next": "CheckMonthEndResults"
+            },
+            "CheckMonthEndResults": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.statusCode",
+                  "NumericEquals": 200,
+                  "Next": "ProcessingComplete"
+                }
+              ],
+              "Default": "HandleMonthEndFailure"
             },
             "HandleTransactionFailure": {
-              "Type": "Pass",
-              "Parameters": {
-                "error": "Transaction processing failed",
-                "timestamp.$": "$$.State.EnteredTime"
-              },
-              "Next": "FailureNotification"
+              "Type": "Fail",
+              "Cause": "Transaction processing failed - Critical financial process cannot continue",
+              "Error": "TransactionProcessingFailure"
             },
             "HandleMonthEndFailure": {
-              "Type": "Pass", 
-              "Parameters": {
-                "error": "Month-end processing failed",
-                "timestamp.$": "$$.State.EnteredTime"
-              },
-              "Next": "FailureNotification"
-            },
-            "FailureNotification": {
-              "Type": "Pass",
-              "Parameters": {
-                "message": "Financial processing workflow completed with errors",
-                "status": "FAILED"
-              },
-              "End": true
+              "Type": "Fail",
+              "Cause": "Month-end processing failed - Financial close process incomplete",
+              "Error": "MonthEndProcessingFailure"
             },
             "ProcessingComplete": {
               "Type": "Pass",
               "Parameters": {
                 "message": "Financial processing workflow completed successfully",
-                "status": "SUCCESS"
+                "status": "SUCCESS",
+                "timestamp.$": "$$.State.EnteredTime"
               },
               "End": true
             }
@@ -1057,8 +1057,11 @@ Resources:
               "height": 6,
               "properties": {
                 "metrics": [
-                  [ "AWS/StepFunctions", "ExecutionsFailed", "StateMachineArn", "${FinancialProcessingWorkflow}" ],
-                  [ ".", "ExecutionsSucceeded", ".", "." ]
+                  [ "AWS/StepFunctions", "ExecutionsFailed", "StateMachineArn", "${EnvironmentName}-financial-processing-workflow" ],
+                  [ ".", "ExecutionsSucceeded", ".", "." ],
+                  [ ".", "ExecutionsStarted", ".", "." ],
+                  [ ".", "ExecutionsAborted", ".", "." ],
+                  [ ".", "ExecutionsTimedOut", ".", "." ]
                 ],
                 "view": "timeSeries",
                 "stacked": false,
