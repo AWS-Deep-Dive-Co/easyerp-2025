@@ -1,0 +1,1438 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS Deep Dive Training - Unified Template for SOX Auditor Training Environment'
+
+Parameters:
+  EnvironmentName:
+    Description: An environment name that will be prefixed to resource names
+    Type: String
+    Default: 'aws-deep-dive'
+    AllowedPattern: ^[a-zA-Z][a-zA-Z0-9-]*$
+    ConstraintDescription: Must begin with a letter and contain only alphanumeric characters and hyphens
+
+  S3BucketName:
+    Description: S3 bucket name where the repository is synced (contains Glue scripts)
+    Type: String
+    AllowedPattern: ^[a-z0-9][a-z0-9-]*[a-z0-9]$
+    ConstraintDescription: Must be a valid S3 bucket name (lowercase, no underscores)
+
+Resources:
+  # ===========================================
+  # IAM ROLES AND PERMISSIONS
+  # ===========================================
+  
+  # Lambda Execution Role
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${EnvironmentName}-lambda-execution-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: CloudWatchLogsPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - logs:DescribeLogStreams
+                  - logs:DescribeLogGroups
+                Resource: '*'
+        - PolicyName: CloudWatchMetricsPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudwatch:PutMetricData
+                Resource: '*'
+
+  # Glue Service Role
+  GlueServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${EnvironmentName}-glue-service-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: glue.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole
+      Policies:
+        - PolicyName: S3AccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                  - s3:ListBucket
+                Resource:
+                  - !Sub 'arn:aws:s3:::${S3BucketName}'
+                  - !Sub 'arn:aws:s3:::${S3BucketName}/*'
+        - PolicyName: CloudWatchMetricsPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudwatch:PutMetricData
+                Resource: '*'
+
+  # Step Functions Execution Role
+  StepFunctionsExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${EnvironmentName}-stepfunctions-execution-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: states.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: LambdaInvokePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource: 
+                  - !GetAtt DailyTransactionProcessor.Arn
+                  - !GetAtt MonthEndProcessor.Arn
+
+  # CloudTrail Service Role
+  CloudTrailRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${EnvironmentName}-cloudtrail-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: cloudtrail.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: CloudWatchLogsPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:PutLogEvents
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/sox-compliance/${EnvironmentName}/cloudtrail:*'
+
+  # ===========================================
+  # LAMBDA FUNCTIONS - UPDATED WITH FASTER SCHEDULING
+  # ===========================================
+
+  # Lambda Function 1: Daily Transaction Processor (now runs every 5 minutes)
+  DailyTransactionProcessor:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${EnvironmentName}-daily-transaction-processor'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 300
+      Description: 'Processes financial transactions every 5 minutes - randomly fails for training'
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import random
+          import logging
+          import time
+          from datetime import datetime
+
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+          
+          cloudwatch = boto3.client('cloudwatch')
+
+          def lambda_handler(event, context):
+              start_time = time.time()
+              transaction_count = random.randint(100, 500)  # Reduced for training frequency
+              
+              logger.info(f"Starting transaction processing for {transaction_count} transactions")
+              logger.info(f"Process initiated by: step-functions-workflow")
+              logger.info(f"Input event: {json.dumps(event)}")
+              
+              # Check for forced failure scenarios from input
+              force_failure = event.get('forceFailure', {})
+              force_db_timeout = force_failure.get('databaseTimeout', False)
+              force_partial_failure = force_failure.get('partialFailure', False)
+              force_compliance_violations = force_failure.get('complianceViolations', False)
+              
+              if force_db_timeout:
+                  logger.warning("FORCED FAILURE: Database timeout requested via input parameters")
+              if force_partial_failure:
+                  logger.warning("FORCED FAILURE: Partial failure requested via input parameters")
+              if force_compliance_violations:
+                  logger.warning("FORCED FAILURE: Compliance violations requested via input parameters")
+              
+              try:
+                  processed = 0
+                  failed = 0
+                  
+                  # Generate compliance violations for training (20% chance OR forced)
+                  if random.random() < 0.2 or force_compliance_violations:
+                      # Generate different types of compliance violations
+                      violation_types = ['SODViolations', 'PrivilegedAccessViolations', 'AccessControlViolations']
+                      violation_type = random.choice(violation_types)
+                      violation_count = random.randint(1, 3)
+                      
+                      cloudwatch.put_metric_data(
+                          Namespace='ComplianceValidation/SOX',
+                          MetricData=[
+                              {
+                                  'MetricName': violation_type,
+                                  'Value': violation_count,
+                                  'Unit': 'Count',
+                                  'Dimensions': [
+                                      {'Name': 'Environment', 'Value': 'aws-deep-dive'}
+                                  ]
+                              }
+                          ]
+                      )
+                      logger.warning(f"COMPLIANCE VIOLATION: {violation_type} - {violation_count} violations detected")
+                  
+                  # Simulate processing with realistic failure patterns OR forced failures
+                  failure_chance = random.random()
+                  
+                  if force_db_timeout or (not force_partial_failure and failure_chance < 0.15):  # 15% chance of database connection failure OR forced
+                      logger.error("CRITICAL: Database connection timeout - unable to process transactions")
+                      logger.error("Error Code: DB_CONNECTION_TIMEOUT")
+                      logger.error("Impact: All transactions failed to process")
+                      if force_db_timeout:
+                          logger.error("FORCED FAILURE: Database timeout triggered by input parameter")
+                      
+                      cloudwatch.put_metric_data(
+                          Namespace='FinancialProcessing/DailyTransactions',
+                          MetricData=[
+                              {
+                                  'MetricName': 'ProcessingFailures',
+                                  'Value': 1,
+                                  'Unit': 'Count',
+                                  'Dimensions': [
+                                      {'Name': 'FailureType', 'Value': 'DatabaseTimeout'},
+                                      {'Name': 'Environment', 'Value': 'aws-deep-dive'}
+                                  ]
+                              },
+                              {
+                                  'MetricName': 'FailedTransactions',
+                                  'Value': transaction_count,
+                                  'Unit': 'Count'
+                              }
+                          ]
+                      )
+                      
+                      # Generate critical compliance metrics
+                      cloudwatch.put_metric_data(
+                          Namespace='ComplianceValidation/SOX',
+                          MetricData=[
+                              {
+                                  'MetricName': 'ComplianceScore',
+                                  'Value': random.uniform(60, 80),  # Below threshold
+                                  'Unit': 'Percent'
+                              },
+                              {
+                                  'MetricName': 'MaterialVariances',
+                                  'Value': 1,
+                                  'Unit': 'Count'
+                              }
+                          ]
+                      )
+                      
+                      raise Exception("Database connection timeout after 30 seconds")
+                      
+                  elif force_partial_failure or (not force_db_timeout and failure_chance < 0.25):  # 10% chance of partial failure OR forced
+                      processed = int(transaction_count * 0.7)
+                      failed = transaction_count - processed
+                      
+                      logger.warning(f"PARTIAL FAILURE: {failed} transactions failed validation")
+                      logger.info(f"Successfully processed: {processed} transactions")
+                      if force_partial_failure:
+                          logger.warning("FORCED FAILURE: Partial failure triggered by input parameter")
+                      
+                      cloudwatch.put_metric_data(
+                          Namespace='FinancialProcessing/DailyTransactions',
+                          MetricData=[
+                              {
+                                  'MetricName': 'ProcessedTransactions',
+                                  'Value': processed,
+                                  'Unit': 'Count'
+                              },
+                              {
+                                  'MetricName': 'FailedTransactions',
+                                  'Value': failed,
+                                  'Unit': 'Count'
+                              },
+                              {
+                                  'MetricName': 'ProcessingSuccessRate',
+                                  'Value': (processed / transaction_count) * 100,
+                                  'Unit': 'Percent'
+                              }
+                          ]
+                      )
+                      
+                      # Generate compliance metrics
+                      cloudwatch.put_metric_data(
+                          Namespace='ComplianceValidation/SOX',
+                          MetricData=[
+                              {
+                                  'MetricName': 'ComplianceScore',
+                                  'Value': random.uniform(82, 87),  # Near threshold
+                                  'Unit': 'Percent'
+                              }
+                          ]
+                      )
+                      
+                  else:  # Success case
+                      processed = transaction_count
+                      logger.info(f"SUCCESS: All {processed} transactions processed successfully")
+                      
+                      cloudwatch.put_metric_data(
+                          Namespace='FinancialProcessing/DailyTransactions',
+                          MetricData=[
+                              {
+                                  'MetricName': 'ProcessedTransactions',
+                                  'Value': processed,
+                                  'Unit': 'Count'
+                              },
+                              {
+                                  'MetricName': 'ProcessingSuccessRate',
+                                  'Value': 100.0,
+                                  'Unit': 'Percent'
+                              }
+                          ]
+                      )
+                      
+                      # Generate good compliance metrics
+                      cloudwatch.put_metric_data(
+                          Namespace='ComplianceValidation/SOX',
+                          MetricData=[
+                              {
+                                  'MetricName': 'ComplianceScore',
+                                  'Value': random.uniform(88, 95),
+                                  'Unit': 'Percent'
+                              }
+                          ]
+                      )
+                  
+                  end_time = time.time()
+                  processing_duration = end_time - start_time
+                  
+                  cloudwatch.put_metric_data(
+                      Namespace='FinancialProcessing/DailyTransactions',
+                      MetricData=[
+                          {
+                              'MetricName': 'ProcessingDuration',
+                              'Value': processing_duration,
+                              'Unit': 'Seconds'
+                          }
+                      ]
+                  )
+                  
+                  logger.info(f"Processing completed in {processing_duration:.2f} seconds")
+                  
+                  return {
+                      'statusCode': 200,
+                      'body': json.dumps({
+                          'message': 'Transaction processing completed',
+                          'processed': processed,
+                          'failed': failed,
+                          'duration': processing_duration
+                      })
+                  }
+                  
+              except Exception as e:
+                  logger.error(f"FATAL ERROR: {str(e)}")
+                  
+                  cloudwatch.put_metric_data(
+                      Namespace='FinancialProcessing/DailyTransactions',
+                      MetricData=[
+                          {
+                              'MetricName': 'ProcessingFailures',
+                              'Value': 1,
+                              'Unit': 'Count'
+                          }
+                      ]
+                  )
+                  
+                  return {
+                      'statusCode': 500,
+                      'body': json.dumps({'error': str(e)})
+                  }
+
+  # Lambda Function 2: Month-End Processor (now runs every 15 minutes)
+  MonthEndProcessor:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${EnvironmentName}-month-end-processor'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 600
+      Description: 'Month-end financial close process - runs every 15 minutes for training'
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import random
+          import logging
+          import time
+          from datetime import datetime
+
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+          
+          cloudwatch = boto3.client('cloudwatch')
+
+          def lambda_handler(event, context):
+              start_time = time.time()
+              
+              logger.info("Starting month-end close process")
+              logger.info(f"Initiated by: step-functions-workflow")
+              logger.info(f"Input event: {json.dumps(event)}")
+              
+              # Check for forced failure scenarios from input
+              force_failure = event.get('forceFailure', {})
+              force_critical_failure = force_failure.get('criticalFailure', False)
+              force_compliance_violations = force_failure.get('complianceViolations', False)
+              force_material_variance = force_failure.get('materialVariance', False)
+              specific_process_failure = force_failure.get('specificProcess', None)
+              
+              if force_critical_failure:
+                  logger.warning("FORCED FAILURE: Critical failure requested via input parameters")
+              if force_compliance_violations:
+                  logger.warning("FORCED FAILURE: Compliance violations requested via input parameters")
+              if force_material_variance:
+                  logger.warning("FORCED FAILURE: Material variance requested via input parameters")
+              if specific_process_failure:
+                  logger.warning(f"FORCED FAILURE: Specific process failure requested: {specific_process_failure}")
+              
+              processes = [
+                  "Account Reconciliation",
+                  "Journal Entry Validation", 
+                  "Financial Statement Preparation",
+                  "Compliance Checks",
+                  "Variance Analysis"
+              ]
+              
+              try:
+                  completed_processes = []
+                  failed_processes = []
+                  total_variance = 0
+                  
+                  # Generate compliance violations occasionally OR when forced
+                  if random.random() < 0.15 or force_compliance_violations:
+                      violation_count = random.randint(2, 5)
+                      cloudwatch.put_metric_data(
+                          Namespace='ComplianceValidation/SOX',
+                          MetricData=[
+                              {
+                                  'MetricName': 'SODViolations',
+                                  'Value': violation_count,
+                                  'Unit': 'Count'
+                              }
+                          ]
+                      )
+                      logger.warning(f"SOD VIOLATION: {violation_count} segregation of duties violations detected")
+                  
+                  failure_scenario = random.random()
+                  
+                  # Determine which process should fail (specific or random)
+                  if specific_process_failure and specific_process_failure in processes:
+                      failed_process = specific_process_failure
+                      force_critical_failure = True  # Force critical failure for specific process
+                  else:
+                      failed_process = random.choice(processes)
+                  
+                  if force_critical_failure or force_material_variance or (failure_scenario < 0.2):  # 20% chance of critical failure OR forced
+                      variance_amount = random.randint(50000, 200000)
+                      
+                      logger.error(f"CRITICAL FAILURE: {failed_process} failed with material variance")
+                      logger.error(f"Variance Amount: ${variance_amount:,}")
+                      logger.error("Month-end close cannot be completed")
+                      if force_critical_failure or force_material_variance:
+                          logger.error("FORCED FAILURE: Critical failure triggered by input parameter")
+                      
+                      cloudwatch.put_metric_data(
+                          Namespace='FinancialProcessing/MonthEnd',
+                          MetricData=[
+                              {
+                                  'MetricName': 'ProcessFailures',
+                                  'Value': 1,
+                                  'Unit': 'Count',
+                                  'Dimensions': [
+                                      {'Name': 'ProcessType', 'Value': failed_process},
+                                      {'Name': 'Environment', 'Value': 'aws-deep-dive'}
+                                  ]
+                              },
+                              {
+                                  'MetricName': 'VarianceAmount',
+                                  'Value': variance_amount,
+                                  'Unit': 'Count'
+                              }
+                          ]
+                      )
+                      
+                      # Generate critical compliance metrics
+                      cloudwatch.put_metric_data(
+                          Namespace='ComplianceValidation/SOX',
+                          MetricData=[
+                              {
+                                  'MetricName': 'ComplianceScore',
+                                  'Value': random.uniform(70, 84),  # Below threshold
+                                  'Unit': 'Percent'
+                              },
+                              {
+                                  'MetricName': 'MaterialVariances',
+                                  'Value': 1,
+                                  'Unit': 'Count'
+                              }
+                          ]
+                      )
+                      
+                      raise Exception(f"Material variance of ${variance_amount:,} in {failed_process}")
+                      
+                  else:  # Success or minor issues
+                      for i, process in enumerate(processes):
+                          processing_time = random.uniform(10, 30)
+                          time.sleep(processing_time / 10)  # Simulate processing time
+                          
+                          if random.random() < 0.1:  # 10% chance of minor variance
+                              variance = random.randint(1000, 9999)
+                              total_variance += variance
+                              logger.warning(f"{process}: Minor variance of ${variance:,} detected but within tolerance")
+                          else:
+                              completed_processes.append(process)
+                              logger.info(f"✓ Completed: {process}")
+                      
+                      success_rate = len(completed_processes) / len(processes) * 100
+                      
+                      cloudwatch.put_metric_data(
+                          Namespace='FinancialProcessing/MonthEnd',
+                          MetricData=[
+                              {
+                                  'MetricName': 'ProcessSuccessRate',
+                                  'Value': success_rate,
+                                  'Unit': 'Percent'
+                              },
+                              {
+                                  'MetricName': 'CompletedProcesses',
+                                  'Value': len(completed_processes),
+                                  'Unit': 'Count'
+                              },
+                              {
+                                  'MetricName': 'TotalVariance',
+                                  'Value': total_variance,
+                                  'Unit': 'Count'
+                              }
+                          ]
+                      )
+                      
+                      # Generate good compliance score
+                      cloudwatch.put_metric_data(
+                          Namespace='ComplianceValidation/SOX',
+                          MetricData=[
+                              {
+                                  'MetricName': 'ComplianceScore',
+                                  'Value': random.uniform(86, 95),
+                                  'Unit': 'Percent'
+                              }
+                          ]
+                      )
+                  
+                  end_time = time.time()
+                  processing_duration = end_time - start_time
+                  
+                  cloudwatch.put_metric_data(
+                      Namespace='FinancialProcessing/MonthEnd',
+                      MetricData=[
+                          {
+                              'MetricName': 'ProcessingDuration',
+                              'Value': processing_duration,
+                              'Unit': 'Seconds'
+                          }
+                      ]
+                  )
+                  
+                  logger.info(f"Month-end processing completed in {processing_duration:.2f} seconds")
+                  
+                  return {
+                      'statusCode': 200,
+                      'body': json.dumps({
+                          'message': 'Month-end close completed',
+                          'completed_processes': completed_processes,
+                          'total_variance': total_variance,
+                          'duration': processing_duration
+                      })
+                  }
+                  
+              except Exception as e:
+                  logger.error(f"FATAL ERROR: {str(e)}")
+                  
+                  cloudwatch.put_metric_data(
+                      Namespace='FinancialProcessing/MonthEnd',
+                      MetricData=[
+                          {
+                              'MetricName': 'ProcessFailures',
+                              'Value': 1,
+                              'Unit': 'Count'
+                          }
+                      ]
+                  )
+                  
+                  return {
+                      'statusCode': 500,
+                      'body': json.dumps({'error': str(e)})
+                  }
+
+  # ===========================================
+  # UPDATED SCHEDULING - FREQUENT FOR TRAINING
+  # ===========================================
+
+  # Daily Transaction Schedule - Every 5 minutes
+  DailyTransactionSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub '${EnvironmentName}-daily-transaction-schedule'
+      Description: 'Triggers daily transaction processing every 5 minutes for training'
+      ScheduleExpression: 'rate(5 minutes)'
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt DailyTransactionProcessor.Arn
+          Id: DailyTransactionTarget
+
+  # Month-End Schedule - Every 15 minutes  
+  MonthEndSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub '${EnvironmentName}-month-end-schedule'
+      Description: 'Triggers month-end processing every 15 minutes for training'
+      ScheduleExpression: 'rate(15 minutes)'
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt MonthEndProcessor.Arn
+          Id: MonthEndTarget
+
+  # Failure Simulator - Every 30 minutes
+  FailureSimulatorSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub '${EnvironmentName}-failure-simulator'
+      Description: 'Simulates system failures for training scenarios'
+      ScheduleExpression: 'rate(30 minutes)'
+      State: DISABLED  # Manual enable during training
+
+  # Lambda Permissions for EventBridge
+  DailyTransactionSchedulePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref DailyTransactionProcessor
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt DailyTransactionSchedule.Arn
+
+  MonthEndSchedulePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref MonthEndProcessor
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt MonthEndSchedule.Arn
+
+  # ===========================================
+  # GLUE JOBS - UPDATED WITH FASTER SCHEDULING  
+  # ===========================================
+
+  # Financial ETL Job
+  FinancialETLJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Sub '${EnvironmentName}-financial-etl-job'
+      Role: !GetAtt GlueServiceRole.Arn
+      Command:
+        Name: glueetl
+        ScriptLocation: !Sub 's3://${S3BucketName}/Cloudformation/functions/glue-scripts/financial-etl-script.py'
+        PythonVersion: '3'
+      DefaultArguments:
+        '--TempDir': !Sub 's3://${S3BucketName}/temp/'
+        '--enable-continuous-cloudwatch-log': 'true'
+        '--enable-metrics': 'true'
+        '--environment': !Ref EnvironmentName
+      MaxRetries: 0
+      Timeout: 60
+      GlueVersion: '3.0'
+      MaxCapacity: 2
+      Description: 'Financial ETL processing with compliance validation - runs every 10 minutes for training'
+
+  # Compliance Validation Job
+  ComplianceValidationJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Sub '${EnvironmentName}-compliance-validation-job'
+      Role: !GetAtt GlueServiceRole.Arn
+      Command:
+        Name: glueetl
+        ScriptLocation: !Sub 's3://${S3BucketName}/Cloudformation/functions/glue-scripts/compliance-validation-script.py'
+        PythonVersion: '3'
+      DefaultArguments:
+        '--TempDir': !Sub 's3://${S3BucketName}/temp/'
+        '--enable-continuous-cloudwatch-log': 'true'
+        '--enable-metrics': 'true'
+        '--environment': !Ref EnvironmentName
+      MaxRetries: 0
+      Timeout: 60
+      GlueVersion: '3.0'
+      MaxCapacity: 2
+      Description: 'SOX compliance validation processing - runs every 20 minutes for training'
+
+  # Glue Job Trigger Lambda Functions
+  GlueJobTriggerFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${EnvironmentName}-glue-job-trigger'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt GlueJobTriggerRole.Arn
+      Timeout: 60
+      Description: 'Triggers Glue jobs from EventBridge schedules'
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import logging
+
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+          
+          glue = boto3.client('glue')
+
+          def lambda_handler(event, context):
+              try:
+                  job_name = event.get('jobName')
+                  if not job_name:
+                      raise ValueError("jobName is required in event")
+                  
+                  logger.info(f"Starting Glue job: {job_name}")
+                  
+                  response = glue.start_job_run(
+                      JobName=job_name
+                  )
+                  
+                  job_run_id = response['JobRunId']
+                  logger.info(f"Glue job {job_name} started with JobRunId: {job_run_id}")
+                  
+                  return {
+                      'statusCode': 200,
+                      'body': json.dumps({
+                          'message': f'Glue job {job_name} started successfully',
+                          'jobRunId': job_run_id
+                      })
+                  }
+                  
+              except Exception as e:
+                  logger.error(f"Failed to start Glue job: {str(e)}")
+                  return {
+                      'statusCode': 500,
+                      'body': json.dumps({'error': str(e)})
+                  }
+
+  # IAM Role for Glue Job Trigger Lambda
+  GlueJobTriggerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${EnvironmentName}-glue-job-trigger-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: GlueJobStartPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - glue:StartJobRun
+                  - glue:GetJobRun
+                  - glue:GetJob
+                Resource:
+                  - !Sub 'arn:aws:glue:${AWS::Region}:${AWS::AccountId}:job/${FinancialETLJob}'
+                  - !Sub 'arn:aws:glue:${AWS::Region}:${AWS::AccountId}:job/${ComplianceValidationJob}'
+
+  # Glue Job Schedules - Updated for training frequency
+  FinancialETLSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub '${EnvironmentName}-financial-etl-schedule'
+      Description: 'Triggers financial ETL job every 10 minutes for training'
+      ScheduleExpression: 'rate(10 minutes)'
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt GlueJobTriggerFunction.Arn
+          Id: FinancialETLTarget
+          Input: !Sub |
+            {
+              "jobName": "${FinancialETLJob}"
+            }
+
+  ComplianceValidationSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub '${EnvironmentName}-compliance-validation-schedule'
+      Description: 'Triggers compliance validation every 20 minutes for training'
+      ScheduleExpression: 'rate(20 minutes)'
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt GlueJobTriggerFunction.Arn
+          Id: ComplianceValidationTarget
+          Input: !Sub |
+            {
+              "jobName": "${ComplianceValidationJob}"
+            }
+
+  # Lambda Permissions for Glue Job Triggers
+  FinancialETLSchedulePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref GlueJobTriggerFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt FinancialETLSchedule.Arn
+
+  ComplianceValidationSchedulePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref GlueJobTriggerFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt ComplianceValidationSchedule.Arn
+
+  # ===========================================
+  # STEP FUNCTIONS WORKFLOW
+  # ===========================================
+
+  # Financial Processing Workflow
+  FinancialProcessingWorkflow:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: !Sub '${EnvironmentName}-financial-processing-workflow'
+      RoleArn: !GetAtt StepFunctionsExecutionRole.Arn
+      DefinitionString: !Sub |
+        {
+          "Comment": "Financial processing workflow with error handling for SOX training",
+          "StartAt": "PrepareInput",
+          "States": {
+            "PrepareInput": {
+              "Type": "Pass",
+              "Parameters": {
+                "source": "step-functions-workflow",
+                "originalInput.$": "$"
+              },
+              "Next": "ProcessDailyTransactions"
+            },
+            "ProcessDailyTransactions": {
+              "Type": "Task",
+              "Resource": "${DailyTransactionProcessor.Arn}",
+              "InputPath": "$.originalInput",
+              "ResultPath": "$.dailyTransactionResult",
+              "Retry": [
+                {
+                  "ErrorEquals": ["States.TaskFailed"],
+                  "IntervalSeconds": 5,
+                  "MaxAttempts": 1,
+                  "BackoffRate": 2.0
+                }
+              ],
+              "Catch": [
+                {
+                  "ErrorEquals": ["States.ALL"],
+                  "Next": "HandleTransactionFailure",
+                  "ResultPath": "$.error"
+                }
+              ],
+              "Next": "CheckTransactionResults"
+            },
+            "CheckTransactionResults": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.dailyTransactionResult.statusCode",
+                  "NumericEquals": 200,
+                  "Next": "ProcessMonthEnd"
+                }
+              ],
+              "Default": "HandleTransactionFailure"
+            },
+            "ProcessMonthEnd": {
+              "Type": "Task",
+              "Resource": "${MonthEndProcessor.Arn}",
+              "InputPath": "$.originalInput",
+              "ResultPath": "$.monthEndResult",
+              "Retry": [
+                {
+                  "ErrorEquals": ["States.TaskFailed"],
+                  "IntervalSeconds": 10,
+                  "MaxAttempts": 1
+                }
+              ],
+              "Catch": [
+                {
+                  "ErrorEquals": ["States.ALL"],
+                  "Next": "HandleMonthEndFailure",
+                  "ResultPath": "$.error"
+                }
+              ],
+              "Next": "CheckMonthEndResults"
+            },
+            "CheckMonthEndResults": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.monthEndResult.statusCode",
+                  "NumericEquals": 200,
+                  "Next": "ProcessingComplete"
+                }
+              ],
+              "Default": "HandleMonthEndFailure"
+            },
+            "HandleTransactionFailure": {
+              "Type": "Fail",
+              "Cause": "Transaction processing failed - Critical financial process cannot continue",
+              "Error": "TransactionProcessingFailure"
+            },
+            "HandleMonthEndFailure": {
+              "Type": "Fail",
+              "Cause": "Month-end processing failed - Financial close process incomplete",
+              "Error": "MonthEndProcessingFailure"
+            },
+            "ProcessingComplete": {
+              "Type": "Pass",
+              "Parameters": {
+                "message": "Financial processing workflow completed successfully",
+                "status": "SUCCESS",
+                "timestamp.$": "$$.State.EnteredTime"
+              },
+              "End": true
+            }
+          }
+        }
+
+  # Step Functions Schedule - Every 30 minutes
+  StepFunctionsSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub '${EnvironmentName}-stepfunctions-schedule'
+      Description: 'Triggers Step Functions workflow every 30 minutes for training'
+      ScheduleExpression: 'rate(30 minutes)'
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt FinancialProcessingWorkflow.Arn
+          Id: StepFunctionsTarget
+          RoleArn: !GetAtt StepFunctionsEventRole.Arn
+
+  # Role for EventBridge to invoke Step Functions
+  StepFunctionsEventRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: StepFunctionsExecutionPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - states:StartExecution
+                Resource: !GetAtt FinancialProcessingWorkflow.Arn
+
+  # ===========================================
+  # MONITORING AND DASHBOARDS - FIXED ISSUES
+  # ===========================================
+
+  # S3 Bucket for CloudTrail logs
+  AuditTrailBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${EnvironmentName}-sox-audit-trail-${AWS::AccountId}'
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteOldLogs
+            Status: Enabled
+            ExpirationInDays: 30
+
+  # S3 Bucket Policy for CloudTrail
+  AuditTrailBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref AuditTrailBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: cloudtrail.amazonaws.com
+            Action: s3:PutObject
+            Resource: !Sub 'arn:aws:s3:::${AuditTrailBucket}/*'
+            Condition:
+              StringEquals:
+                's3:x-amz-acl': bucket-owner-full-control
+          - Effect: Allow
+            Principal:
+              Service: cloudtrail.amazonaws.com
+            Action: s3:GetBucketAcl
+            Resource: !Sub 'arn:aws:s3:::${AuditTrailBucket}'
+
+  # CloudTrail for Management Events
+  ManagementEventsTrail:
+    Type: AWS::CloudTrail::Trail
+    DependsOn: AuditTrailBucketPolicy
+    Properties:
+      TrailName: !Sub '${EnvironmentName}-management-events-trail'
+      S3BucketName: !Ref AuditTrailBucket
+      IncludeGlobalServiceEvents: true
+      IsLogging: true
+      IsMultiRegionTrail: true
+
+  # Log Groups
+  ComplianceLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/sox-compliance/${EnvironmentName}/audit-trail'
+      RetentionInDays: 30
+
+  FinancialProcessingLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/financial-processing/${EnvironmentName}/transactions'
+      RetentionInDays: 30
+
+  # SOX Compliance Dashboard - FIXED ISSUES
+  SOXComplianceDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub '${EnvironmentName}-sox-compliance-monitoring'
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "text",
+              "x": 0,
+              "y": 0,
+              "width": 24,
+              "height": 2,
+              "properties": {
+                "markdown": "# SOX Compliance Monitoring Dashboard\n**Environment:** ${EnvironmentName} | **Last Updated:** Auto-refreshing every 5 minutes\n\n🔴 **Red = Critical Issues** | 🟡 **Yellow = Warnings** | 🟢 **Green = Normal**"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 2,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "ComplianceValidation/SOX", "ComplianceScore" ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Overall Compliance Score (%)",
+                "period": 300,
+                "stat": "Average",
+                "yAxis": {
+                  "left": {
+                    "min": 0,
+                    "max": 100
+                  }
+                },
+                "annotations": {
+                  "horizontal": [
+                    {
+                      "label": "Critical Threshold",
+                      "value": 85
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 2,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/States", "ExecutionsFailed", "StateMachineArn", "${FinancialProcessingWorkflow.Arn}" ],
+                  [ ".", "ExecutionsSucceeded", ".", "." ],
+                  [ ".", "ExecutionsStarted", ".", "." ],
+                  [ ".", "ExecutionsAborted", ".", "." ],
+                  [ ".", "ExecutionsTimedOut", ".", "." ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Step Functions Workflow Status",
+                "period": 300,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 8,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "FinancialProcessing/DailyTransactions", "ProcessedTransactions" ],
+                  [ ".", "FailedTransactions" ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Daily Transaction Processing",
+                "period": 300,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 8,
+              "y": 8,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "FinancialProcessing/MonthEnd", "ProcessSuccessRate" ],
+                  [ "ComplianceValidation/SOX", "ComplianceScore" ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Process Success Rates (%)",
+                "period": 300,
+                "stat": "Average",
+                "yAxis": {
+                  "left": {
+                    "min": 0,
+                    "max": 100
+                  }
+                }
+              }
+            },
+            {
+              "type": "metric",
+              "x": 16,
+              "y": 8,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "ComplianceValidation/SOX", "SODViolations" ],
+                  [ ".", "PrivilegedAccessViolations" ],
+                  [ ".", "AccessControlViolations" ],
+                  [ ".", "MaterialVariances" ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Critical Compliance Violations",
+                "period": 300,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "log",
+              "x": 0,
+              "y": 14,
+              "width": 24,
+              "height": 8,
+              "properties": {
+                "query": "SOURCE '/aws/lambda/${EnvironmentName}-daily-transaction-processor' | SOURCE '/aws/lambda/${EnvironmentName}-month-end-processor'\n| fields @timestamp, @message\n| filter @message like /ERROR/ or @message like /CRITICAL/ or @message like /VIOLATION/\n| sort @timestamp desc\n| limit 20",
+                "region": "${AWS::Region}",
+                "title": "Recent Critical Events and Errors",
+                "view": "table"
+              }
+            }
+          ]
+        }
+
+  # Operational Monitoring Dashboard - FIXED GLUE ISSUES
+  OperationalDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub '${EnvironmentName}-operational-monitoring'
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "text",
+              "x": 0,
+              "y": 0,
+              "width": 24,
+              "height": 2,
+              "properties": {
+                "markdown": "# Operational Monitoring Dashboard\n**Environment:** ${EnvironmentName} | **Real-time system performance and health metrics**"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 2,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/Lambda", "Duration", "FunctionName", "${EnvironmentName}-daily-transaction-processor" ],
+                  [ "...", "${EnvironmentName}-month-end-processor" ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Lambda Execution Times (ms)",
+                "period": 300,
+                "stat": "Average"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 8,
+              "y": 2,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/Lambda", "Invocations", "FunctionName", "${EnvironmentName}-daily-transaction-processor" ],
+                  [ ".", "Errors", ".", "." ],
+                  [ ".", "Invocations", ".", "${EnvironmentName}-month-end-processor" ],
+                  [ ".", "Errors", ".", "." ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Lambda Invocations and Errors",
+                "period": 300,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 16,
+              "y": 2,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/Glue", "glue.driver.aggregate.numCompletedTasks", "JobName", "${EnvironmentName}-financial-etl-job", "JobRunId", "ALL" ],
+                  [ "...", "${EnvironmentName}-compliance-validation-job", ".", "." ],
+                  [ "AWS/Glue", "glue.driver.aggregate.numFailedTasks", "JobName", "${EnvironmentName}-financial-etl-job", "JobRunId", "ALL" ],
+                  [ "...", "${EnvironmentName}-compliance-validation-job", ".", "." ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Glue Job Task Metrics",
+                "period": 300,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 8,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/Events", "SuccessfulInvocations", "RuleName", "${EnvironmentName}-daily-transaction-schedule" ],
+                  [ ".", "FailedInvocations", ".", "." ],
+                  [ ".", "SuccessfulInvocations", ".", "${EnvironmentName}-month-end-schedule" ],
+                  [ ".", "FailedInvocations", ".", "." ],
+                  [ ".", "SuccessfulInvocations", ".", "${EnvironmentName}-financial-etl-schedule" ],
+                  [ ".", "FailedInvocations", ".", "." ],
+                  [ ".", "SuccessfulInvocations", ".", "${EnvironmentName}-compliance-validation-schedule" ],
+                  [ ".", "FailedInvocations", ".", "." ],
+                  [ ".", "SuccessfulInvocations", ".", "${EnvironmentName}-stepfunctions-schedule" ],
+                  [ ".", "FailedInvocations", ".", "." ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "EventBridge Rule Invocations",
+                "period": 300,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 8,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/Glue", "glue.driver.aggregate.numCompletedTasks", "JobName", "${EnvironmentName}-financial-etl-job" ],
+                  [ ".", "glue.driver.aggregate.numFailedTasks", ".", "." ],
+                  [ ".", "glue.driver.aggregate.numCompletedTasks", ".", "${EnvironmentName}-compliance-validation-job" ],
+                  [ ".", "glue.driver.aggregate.numFailedTasks", ".", "." ],
+                  [ "AWS/Lambda", "Invocations", "FunctionName", "${EnvironmentName}-glue-job-trigger" ],
+                  [ ".", "Errors", ".", "." ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Glue Job Executions & Trigger Function",
+                "period": 300,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "log",
+              "x": 0,
+              "y": 14,
+              "width": 24,
+              "height": 8,
+              "properties": {
+                "query": "SOURCE '/aws-glue/jobs/logs-v2' | SOURCE '/aws-glue/jobs/error'\n| fields @timestamp, @message\n| filter @logStream like /${EnvironmentName}/\n| sort @timestamp desc\n| limit 20",
+                "region": "${AWS::Region}",
+                "title": "Recent Glue Job Logs",
+                "view": "table"
+              }
+            }
+          ]
+        }
+
+  # Training Alarms with Proper Metrics
+  HighTransactionFailureAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${EnvironmentName}-high-transaction-failure-rate'
+      AlarmDescription: 'SOX Training: Alert when transaction failure rate exceeds 5%'
+      MetricName: FailedTransactions
+      Namespace: FinancialProcessing/DailyTransactions
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 50
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+
+  ComplianceScoreAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${EnvironmentName}-compliance-score-below-threshold'
+      AlarmDescription: 'SOX Training: Alert when compliance score drops below 85%'
+      MetricName: ComplianceScore
+      Namespace: ComplianceValidation/SOX
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 85
+      ComparisonOperator: LessThanThreshold
+      TreatMissingData: breaching
+
+  MaterialVarianceAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${EnvironmentName}-material-variance-detected'
+      AlarmDescription: 'SOX Training: Critical alert for material variances'
+      MetricName: MaterialVariances
+      Namespace: ComplianceValidation/SOX
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+
+Outputs:
+  LambdaFunctionNames:
+    Description: Names of the Lambda functions created
+    Value: !Sub |
+      Daily Transaction Processor: ${DailyTransactionProcessor}
+      Month-End Processor: ${MonthEndProcessor}
+    Export:
+      Name: !Sub '${EnvironmentName}-lambda-functions'
+
+  StepFunctionArn:
+    Description: ARN of the Step Functions workflow
+    Value: !Ref FinancialProcessingWorkflow
+    Export:
+      Name: !Sub '${EnvironmentName}-stepfunctions-arn'
+
+  GlueJobNames:
+    Description: Names of the Glue jobs created
+    Value: !Sub |
+      Financial ETL Job: ${FinancialETLJob}
+      Compliance Validation Job: ${ComplianceValidationJob}
+    Export:
+      Name: !Sub '${EnvironmentName}-glue-jobs'
+
+  DashboardURLs:
+    Description: URLs to access the CloudWatch dashboards
+    Value: !Sub |
+      SOX Compliance: https://${AWS::Region}.console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=${EnvironmentName}-sox-compliance-monitoring
+      Operational: https://${AWS::Region}.console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=${EnvironmentName}-operational-monitoring
+    Export:
+      Name: !Sub '${EnvironmentName}-dashboard-urls'
+
+  CloudTrailName:
+    Description: Name of the CloudTrail for management events
+    Value: !Ref ManagementEventsTrail
+    Export:
+      Name: !Sub '${EnvironmentName}-cloudtrail'
+
+  TrainingSchedules:
+    Description: Training-optimized schedule frequencies
+    Value: |
+      Daily Transactions: Every 5 minutes
+      Month-End Process: Every 15 minutes  
+      Glue ETL Job: Every 10 minutes
+      Compliance Validation: Every 20 minutes
+      Step Functions Workflow: Every 30 minutes
+    Export:
+      Name: !Sub '${EnvironmentName}-training-schedules'

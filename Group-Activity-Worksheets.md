@@ -1,4 +1,4 @@
-# SOX Auditor Training: Group Activity Materials
+# AWS Deep Dive Training: Group Activity Materials
 ## CloudWatch & CloudTrail Monitoring Session
 
 ---
@@ -13,12 +13,12 @@
 **Objective:** Assess the health of financial processes using CloudWatch dashboards
 
 ### Dashboard Access
-**SOX Compliance Dashboard URL:** `https://us-east-1.console.aws.amazon.com/cloudwatch/home?region=us-east-1#dashboards:name=sox-training-sox-compliance-monitoring`
+**SOX Compliance Dashboard URL:** `https://us-east-1.console.aws.amazon.com/cloudwatch/home?region=us-east-1#dashboards:name=aws-deep-dive-sox-compliance-monitoring`
 
 ### Data Collection Worksheet
 
-#### 1. Daily Transaction Processing Analysis
-**Current Status (last 24 hours):**
+#### 1. Transaction Processing Analysis (Every 5 Minutes)
+**Current Status (last 30 minutes):**
 - Total Transactions Processed: _______________
 - Failed Transactions: _______________  
 - Success Rate: _______________% 
@@ -30,10 +30,10 @@
 - Pattern concerns? □ Yes □ No
 - If yes, describe: _______________
 
-#### 2. Month-End Close Process Review
-**Last Month-End Close:**
+#### 2. Month-End Close Process Review (Every 15 Minutes)
+**Recent Close Process:**
 - Status: □ Success □ Partial Failure □ Complete Failure
-- Duration: _______________ minutes
+- Duration: _______________ seconds
 - Reconciliation Issues: □ None □ Minor □ Material
 - Variance Amount: $ _______________
 
@@ -101,6 +101,8 @@ _______________________________________________________________
 
 #### Phase 1: Initial Log Review (10 minutes)
 **CloudWatch Logs URL:** `https://us-east-1.console.aws.amazon.com/cloudwatch/home?region=us-east-1#logsV2:logs-insights`
+
+**Note:** Due to training frequency (processes run every 5-30 minutes), you'll see much more recent activity than typical production environments.
 
 **Search Query Used:**
 ```
@@ -194,7 +196,7 @@ _______________________________________________________________________________
 ### Investigation Parameters
 **CloudTrail URL:** `https://us-east-1.console.aws.amazon.com/cloudtrail/home?region=us-east-1#/events`
 
-**Time Period:** Last Friday 6 PM - Monday 6 AM
+**Time Period:** Last 2 hours (recent activity due to training frequency)
 **Key Events to Search:** CreateFunction, UpdateFunctionConfiguration, StartExecution, CreateUser, AttachUserPolicy, AssumeRole, ConsoleLogin
 
 ### Phase 1: Event Discovery (8 minutes)
@@ -287,14 +289,15 @@ _______________________________________________________________________________
 **Team Number:** _____ **Team Members:** _________________________________
 
 ### Scenario Context
-**CFO Email:** Month-end close process failed last night. Normal completion: 3 AM. Actual completion: 6:30 AM. Possible data integrity issues. Need analysis before financial statement preparation.
+**CFO Email:** Training simulation - Financial processes are running every 5-30 minutes. Month-end close process (normally runs monthly) just failed. Normal completion: 30-60 seconds. Actual completion: 180 seconds with errors. Need analysis for training purposes.
 
 **Investigation Duration:** 15 minutes total
+**Note:** All processes run frequently for training - look for patterns in recent failures
 
 ### Phase 1: Dashboard Assessment (5 minutes)
 
 **SOX Compliance Dashboard Review:**
-- Month-end process status: □ Success □ Warning □ Failed
+- Recent process status: □ Success □ Warning □ Failed
 - Active alerts: _______________
 - Compliance score impact: _______________
 - Performance anomalies: _______________
@@ -308,7 +311,7 @@ _______________________________________________________________________________
 ### Phase 2: Log Analysis (6 minutes)
 
 **CloudWatch Logs Investigation:**
-**Search timeframe:** Last night 11 PM - 7 AM
+**Search timeframe:** Last 2 hours (due to training frequency)
 
 **Critical Events Timeline:**
 | Time | Event Description | Severity | Impact |
