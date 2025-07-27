@@ -857,13 +857,12 @@ Resources:
                 "source": "step-functions-workflow",
                 "originalInput.$": "$"
               },
-              "ResultPath": "$.processedInput",
               "Next": "ProcessDailyTransactions"
             },
             "ProcessDailyTransactions": {
               "Type": "Task",
               "Resource": "${DailyTransactionProcessor.Arn}",
-              "InputPath": "$.processedInput.originalInput",
+              "InputPath": "$.originalInput",
               "Retry": [
                 {
                   "ErrorEquals": ["States.TaskFailed"],
@@ -895,7 +894,7 @@ Resources:
             "ProcessMonthEnd": {
               "Type": "Task",
               "Resource": "${MonthEndProcessor.Arn}",
-              "InputPath": "$.processedInput.originalInput",
+              "InputPath": "$.originalInput",
               "Retry": [
                 {
                   "ErrorEquals": ["States.TaskFailed"],
