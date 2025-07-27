@@ -863,6 +863,7 @@ Resources:
               "Type": "Task",
               "Resource": "${DailyTransactionProcessor.Arn}",
               "InputPath": "$.originalInput",
+              "ResultPath": "$.dailyTransactionResult",
               "Retry": [
                 {
                   "ErrorEquals": ["States.TaskFailed"],
