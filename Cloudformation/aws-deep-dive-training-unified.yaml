@@ -1238,12 +1238,14 @@ Resources:
                 "metrics": [
                   [ "AWS/Events", "SuccessfulInvocations", "RuleName", "${EnvironmentName}-daily-transaction-schedule" ],
                   [ ".", "FailedInvocations", ".", "." ],
-                  [ "...", "${EnvironmentName}-month-end-schedule" ],
-                  [ ".", "SuccessfulInvocations", ".", "." ],
-                  [ "...", "${EnvironmentName}-financial-etl-schedule" ],
-                  [ ".", "SuccessfulInvocations", ".", "." ],
-                  [ "...", "${EnvironmentName}-compliance-validation-schedule" ],
-                  [ ".", "SuccessfulInvocations", ".", "." ]
+                  [ ".", "SuccessfulInvocations", ".", "${EnvironmentName}-month-end-schedule" ],
+                  [ ".", "FailedInvocations", ".", "." ],
+                  [ ".", "SuccessfulInvocations", ".", "${EnvironmentName}-financial-etl-schedule" ],
+                  [ ".", "FailedInvocations", ".", "." ],
+                  [ ".", "SuccessfulInvocations", ".", "${EnvironmentName}-compliance-validation-schedule" ],
+                  [ ".", "FailedInvocations", ".", "." ],
+                  [ ".", "SuccessfulInvocations", ".", "${EnvironmentName}-stepfunctions-schedule" ],
+                  [ ".", "FailedInvocations", ".", "." ]
                 ],
                 "view": "timeSeries",
                 "stacked": false,
@@ -1261,15 +1263,19 @@ Resources:
               "height": 6,
               "properties": {
                 "metrics": [
-                  [ "AWS/Glue", "glue.driver.BlockManager.disk.diskSpaceUsed_MB", "JobName", "${EnvironmentName}-financial-etl-job", "JobRunId", "ALL" ],
-                  [ "...", "${EnvironmentName}-compliance-validation-job", ".", "." ]
+                  [ "AWS/Glue", "glue.driver.aggregate.numCompletedTasks", "JobName", "${EnvironmentName}-financial-etl-job" ],
+                  [ ".", "glue.driver.aggregate.numFailedTasks", ".", "." ],
+                  [ ".", "glue.driver.aggregate.numCompletedTasks", ".", "${EnvironmentName}-compliance-validation-job" ],
+                  [ ".", "glue.driver.aggregate.numFailedTasks", ".", "." ],
+                  [ "AWS/Lambda", "Invocations", "FunctionName", "${EnvironmentName}-glue-job-trigger" ],
+                  [ ".", "Errors", ".", "." ]
                 ],
                 "view": "timeSeries",
                 "stacked": false,
                 "region": "${AWS::Region}",
-                "title": "Glue Job Resource Usage (MB)",
+                "title": "Glue Job Executions & Trigger Function",
                 "period": 300,
-                "stat": "Average"
+                "stat": "Sum"
               }
             },
             {
