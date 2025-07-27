@@ -174,7 +174,7 @@ Resources:
               transaction_count = random.randint(100, 500)  # Reduced for training frequency
               
               logger.info(f"Starting transaction processing for {transaction_count} transactions")
-              logger.info(f"Process initiated by: {event.get('source', 'scheduled-event')}")
+              logger.info(f"Process initiated by: step-functions-workflow")
               logger.info(f"Input event: {json.dumps(event)}")
               
               # Check for forced failure scenarios from input
@@ -412,7 +412,7 @@ Resources:
               start_time = time.time()
               
               logger.info("Starting month-end close process")
-              logger.info(f"Initiated by: {event.get('source', 'scheduled-event')}")
+              logger.info(f"Initiated by: step-functions-workflow")
               logger.info(f"Input event: {json.dumps(event)}")
               
               # Check for forced failure scenarios from input
@@ -855,8 +855,7 @@ Resources:
               "Type": "Pass",
               "Parameters": {
                 "source": "step-functions-workflow",
-                "originalInput.$": "$",
-                "forceFailure.$": "$.forceFailure"
+                "originalInput.$": "$"
               },
               "ResultPath": "$.processedInput",
               "Next": "ProcessDailyTransactions"
@@ -864,10 +863,7 @@ Resources:
             "ProcessDailyTransactions": {
               "Type": "Task",
               "Resource": "${DailyTransactionProcessor.Arn}",
-              "Parameters": {
-                "source.$": "$.processedInput.source",
-                "forceFailure.$": "$.processedInput.forceFailure"
-              },
+              "InputPath": "$.processedInput.originalInput",
               "Retry": [
                 {
                   "ErrorEquals": ["States.TaskFailed"],
@@ -899,10 +895,7 @@ Resources:
             "ProcessMonthEnd": {
               "Type": "Task",
               "Resource": "${MonthEndProcessor.Arn}",
-              "Parameters": {
-                "source.$": "$.processedInput.source",
-                "forceFailure.$": "$.processedInput.forceFailure"
-              },
+              "InputPath": "$.processedInput.originalInput",
               "Retry": [
                 {
                   "ErrorEquals": ["States.TaskFailed"],
@@ -1112,7 +1105,7 @@ Resources:
               "height": 6,
               "properties": {
                 "metrics": [
-                  [ "AWS/StepFunctions", "ExecutionsFailed", "StateMachineArn", "${FinancialProcessingWorkflow.Arn}" ],
+                  [ "AWS/States", "ExecutionsFailed", "StateMachineArn", "${FinancialProcessingWorkflow.Arn}" ],
                   [ ".", "ExecutionsSucceeded", ".", "." ],
                   [ ".", "ExecutionsStarted", ".", "." ],
                   [ ".", "ExecutionsAborted", ".", "." ],
