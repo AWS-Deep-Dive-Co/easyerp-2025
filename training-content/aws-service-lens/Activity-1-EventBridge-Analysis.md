@@ -1,214 +1,230 @@
-# Activity 1: EventBridge Analysis
+# Activity 1: Hands-On EventBridge and Lambda Integration Analysis
 
 ## Activity Overview
 **Duration**: 10 minutes
-**Format**: Small groups (3-4 people)
-**Objective**: Analyze EventBridge rules to identify audit risks and control considerations
+**Format**: Small groups (3-4 people) exploring AWS Console
+**Objective**: Navigate EventBridge and Lambda consoles to understand integrated automation controls and identify key IT control risks
 
 ---
 
-## Participant Materials
+## Console Navigation Instructions
 
-### Scenario: Regional Sales Processing System
+### Step 1: EventBridge Overview (3 minutes)
 
-**Background**: 
-Your client, RetailCorp, uses AWS EventBridge to automate their daily sales processing. Review the following EventBridge rule configurations and identify potential audit risks.
+**Navigate to**: `https://console.aws.amazon.com/events/home`
 
-### EventBridge Rule #1: Daily Sales Processing
-```
-Rule Name: daily-sales-processing
-Schedule: cron(0 2 * * ? *)  [Runs daily at 2:00 AM]
-Target: Lambda function "process-daily-sales"
-Status: Enabled
-Created: 2024-01-15
-Last Modified: 2024-06-20
-Modified By: sales.admin@retailcorp.com
-```
+**Quick Rule Analysis**:
+- Click on **"Rules"** in the left navigation
+- Look for rules starting with `aws-deep-dive-`
+- **Review all the rules** and note for each:
+  - **Trigger type**: Schedule vs Event Pattern
+  - **Target**: What Lambda function does it trigger?
+  - **Status**: Enabled/Disabled
 
-### EventBridge Rule #2: Month-End Reconciliation
-```
-Rule Name: month-end-reconciliation
-Schedule: cron(0 1 L * ? *)  [Runs on last day of month at 1:00 AM]
-Target: Step Functions workflow "month-end-process"
-Status: Enabled
-Created: 2024-02-01
-Last Modified: 2024-11-30
-Modified By: finance.manager@retailcorp.com
-```
+### Step 2: Lambda Function Investigation (4 minutes)
 
-### EventBridge Rule #3: Inventory Adjustment
-```
-Rule Name: inventory-adjustment
-Schedule: rate(4 hours)  [Runs every 4 hours]
-Target: Lambda function "adjust-inventory"
-Status: Disabled
-Created: 2024-03-10
-Last Modified: 2024-12-01
-Modified By: it.admin@retailcorp.com
-```
+**Navigate to**: `https://console.aws.amazon.com/lambda/home`
 
-### Access Control Information
-- **EventBridge Admin Role**: Can create, modify, and delete rules
-- **Process Admin Role**: Can enable/disable existing rules
-- **Read-Only Role**: Can view rules but not modify
-- **Current Users with Admin Access**: 
-  - sales.admin@retailcorp.com
-  - finance.manager@retailcorp.com
-  - it.admin@retailcorp.com
-  - cto@retailcorp.com
+**Function Analysis**:
+- Look for functions starting with `aws-deep-dive-`
+- **Click on 2-3 functions** and examine:
+  - **Triggers tab**: What EventBridge rules trigger this function?
+  - **Monitoring tab**: Recent execution patterns
+  - **Configuration**: Runtime and basic settings
+
+### Step 3: Integration Assessment (3 minutes)
+
+**Trace the flow**:
+1. **Pick one EventBridge rule** from Step 1
+2. **Find its target Lambda function** from Step 2
+3. **Document the complete flow**: Trigger → Rule → Function
+4. **Identify potential control gaps**: What could go wrong in this chain?
 
 ---
 
-## Analysis Questions
+## Console Observation Worksheet
 
-### 1. Risk Assessment
-Identify **three potential audit risks** based on these EventBridge configurations:
+**As your group explores the console, document your findings**:
 
-**Risk 1**: ________________________________
-**Business Impact**: ________________________
-**Likelihood**: High / Medium / Low
+### 1. EventBridge Integration Map
 
-**Risk 2**: ________________________________  
-**Business Impact**: ________________________
-**Likelihood**: High / Medium / Low
+**Integration 1**: 
+- **EventBridge Rule**: _____________________________
+- **Trigger Type**: Schedule / Event Pattern
+- **Target Lambda Function**: _____________________________
+- **Function Status**: Active / Inactive
 
-**Risk 3**: ________________________________
-**Business Impact**: ________________________
-**Likelihood**: High / Medium / Low
+**Integration 2**:
+- **EventBridge Rule**: _____________________________
+- **Trigger Type**: Schedule / Event Pattern  
+- **Target Lambda Function**: _____________________________
+- **Function Status**: Active / Inactive
 
-### 2. Control Considerations
-What **control questions** would you ask during your audit?
+**Integration 3**:
+- **EventBridge Rule**: _____________________________
+- **Trigger Type**: Schedule / Event Pattern  
+- **Target Lambda Function**: _____________________________
+- **Function Status**: Active / Inactive
 
-a) **Change Management**:
-   Question: _______________________________________________
-   What evidence to request: _______________________________
+### 2. Control Questions
 
-b) **Access Controls**:
-   Question: _______________________________________________
-   What evidence to request: _______________________________
+**Scheduling**:
+What would you ask about how these automated processes are scheduled and timed?
+_______________________________________________
 
-c) **Process Monitoring**:
-   Question: _______________________________________________
-   What evidence to request: _______________________________
+**Monitoring**: 
+What would you ask about how failures are detected and handled?
+_______________________________________________
 
-### 3. Audit Evidence
-List **specific AWS evidence sources** you would examine:
-
-- [ ] EventBridge rule configurations and history
-- [ ] CloudTrail logs for rule modifications
-- [ ] Target service execution logs
-- [ ] IAM policies and role assignments
-- [ ] Other: ___________________________________________
-
-### 4. Red Flags
-Circle any concerning observations from the scenario:
-
-a) **Schedule Complexity**: Some schedules use cron expressions that may be difficult to validate
-b) **Cross-Department Access**: Multiple departments can modify automation rules
-c) **Disabled Rules**: Critical processes may be disabled without proper approval
-d) **Recent Changes**: Month-end process was modified just before period-end
-e) **Broad Permissions**: Too many users have administrative access
+**Integration**:
+What would you ask about the EventBridge → Lambda integration reliability?
+_______________________________________________
 
 ---
 
-## Discussion Preparation
-Be ready to share:
-1. **Top audit risk** your group identified
-2. **One specific control test** you would perform
-3. **Key evidence** you would request from the client
+## Group Discussion Preparation
+
+**Be ready to share with the class**:
+1. **Integration Understanding**: How do EventBridge and Lambda work together in the examples you found?
+2. **Scheduling Questions**: What would you ask the client about how these automated processes are timed?
+3. **Monitoring Questions**: What would you ask about how the client detects and handles failures?
+4. **Testing Strategy**: How would you approach testing the scheduling or monitoring controls?
+5. **Evidence Gaps**: What information couldn't you get from the console alone?
 
 ---
 
 ## Facilitator Instructions
 
-### Setup (2 minutes)
-- Divide participants into groups of 3-4
-- Distribute scenario materials
-- Set timer for 10 minutes
-- Clarify that they should focus on audit risks, not technical configuration
+### Pre-Session Setup (2 minutes)
+- Ensure all participants have AWS console access with EventBridge and Lambda viewing permissions
+- Verify the aws-deep-dive infrastructure is deployed with EventBridge rules and Lambda functions
+- Confirm console displays are set to the correct AWS region (match infrastructure deployment)
 
-### During Activity (8 minutes)
-- **Circulate between groups** to answer questions
-- **Keep discussions audit-focused**: Guide away from technical implementation details
-- **Encourage practical thinking**: "What would you actually do in this situation?"
-- **Time warnings**: Give 2-minute warning before ending
+### Activity Flow
+This streamlined activity focuses on practical console observation to assess EventBridge and Lambda integration controls in just 10 minutes.
 
-### Common Questions & Responses:
-**Q**: "What does this cron expression mean?"
-**A**: "Focus on the business impact - when does this process run and what could go wrong?"
+**Step 1 (3 minutes)**: Guide participants to EventBridge console to identify rule types and targets
+**Step 2 (4 minutes)**: Navigate to Lambda console to examine function configurations and EventBridge connections  
+**Step 3 (3 minutes)**: Quick assessment of integration patterns and control risks
 
-**Q**: "How do we test if the controls are working?"
-**A**: "Great question - what evidence would prove the control is operating effectively?"
+### Key Talking Points During Activity
+- "Focus on what you can observe directly in the console, not deep technical details"
+- "Look for patterns that indicate good or poor IT governance practices"
+- "EventBridge rules should have clear business purposes and proper error handling"
+- "Lambda functions should show appropriate monitoring and logging configurations"
 
-**Q**: "Is this a high risk?"
-**A**: "What's the business impact if this process fails or is modified inappropriately?"
+### Expected Outcomes
+Participants should be able to:
+- Understand how EventBridge rules trigger Lambda functions (basic integration concept)
+- Identify key scheduling and monitoring control areas for automated processes
+- Formulate appropriate audit questions about timing and failure detection
+- Develop practical testing approaches for scheduling and monitoring controls
 
-### Debrief Discussion (5 minutes after activity)
-**Facilitator Questions**:
-1. "What was the biggest audit risk your group identified?"
-2. "What evidence would you request to test controls over automated processes?"
-3. "How does this compare to auditing traditional batch processing?"
+## Comprehensive Debrief Guide
 
----
+### Discussion Question 1: Integration Understanding
+**Ask**: "How do EventBridge and Lambda work together in the examples you found?"
 
-## Expected Responses & Teaching Points
+**Possible Participant Answers**:
+- "EventBridge acts like a scheduler that triggers Lambda functions to run"
+- "EventBridge rules watch for events or time schedules, then call Lambda functions"
+- "Lambda functions wait for EventBridge to tell them when to execute"
+- "It's like having an automated system where EventBridge is the timer/trigger and Lambda does the work"
+- "EventBridge sets up the 'when' and Lambda handles the 'what'"
 
-### Risk Assessment - Sample Answers:
+**Facilitator Follow-up**: "Exactly! This trigger-worker pattern is common in automated systems. EventBridge handles timing and event detection, Lambda handles the actual processing."
 
-**Risk 1: Unauthorized Process Changes**
-- **Business Impact**: Critical sales/financial processes could be modified inappropriately
-- **Likelihood**: Medium (multiple users have access)
-- **Controls to Test**: Change approval process, segregation of duties
+### Discussion Question 2: Scheduling Questions
+**Ask**: "What would you ask the client about how these automated processes are timed?"
 
-**Risk 2: Process Failure Going Undetected**
-- **Business Impact**: Failed processes could result in incomplete financial reporting
-- **Likelihood**: Medium (depends on monitoring adequacy)
-- **Controls to Test**: Exception reporting, failure notifications, manual oversight
+**Possible Participant Answers**:
+- "How often do these processes run?"
+- "Who decides the timing schedule?"
+- "What happens if the timing is wrong?"
+- "How do you know if a scheduled process didn't run?"
+- "Can the schedule be changed easily?"
+- "Are there any dependencies between different scheduled processes?"
+- "What happens if a process runs too frequently or not frequently enough?"
+- "How do you handle scheduling conflicts?"
+- "Who gets notified if schedules change?"
 
-**Risk 3: Inappropriate Access to Critical Processes**
-- **Business Impact**: Lack of segregation of duties in automated processes
-- **Likelihood**: High (cross-department access observed)
-- **Controls to Test**: User access reviews, role-based permissions
+**Facilitator Follow-up**: "These are great audit questions! The key is understanding whether the timing controls support the business process requirements and whether there's proper oversight of schedule changes."
 
-### Control Questions - Sample Answers:
+### Discussion Question 3: Monitoring Questions  
+**Ask**: "What would you ask about how the client detects and handles failures?"
 
-**Change Management**: 
-- Question: "What approval process exists for modifying EventBridge rules?"
-- Evidence: Change tickets, approval workflows, rule modification history
+**Possible Participant Answers**:
+- "How do you know if a Lambda function failed?"
+- "Who gets alerted when something goes wrong?"
+- "How quickly do you detect failures?"
+- "What logs are kept of successes and failures?"
+- "Is there automatic retry if something fails?"
+- "How do you handle partial failures?"
+- "Who is responsible for monitoring these processes?"
+- "How often do you review the monitoring data?"
+- "What constitutes a 'failure' vs. just a warning?"
+- "How do you prevent the same failure from happening again?"
 
-**Access Controls**:
-- Question: "How is access to EventBridge administration controlled and reviewed?"
-- Evidence: IAM policies, user access reviews, principle of least privilege documentation
+**Facilitator Follow-up**: "Excellent monitoring questions! The key control principle is that automated processes need the same oversight as manual processes - someone needs to be watching and responding to problems."
 
-**Process Monitoring**:
-- Question: "How does management monitor the success/failure of automated processes?"
-- Evidence: CloudWatch dashboards, alert configurations, exception reports
+### Discussion Question 4: Testing Strategy
+**Ask**: "How would you approach testing the scheduling or monitoring controls?"
 
-### Red Flags - Teaching Points:
+**Possible Participant Answers**:
 
-**Focus on Business Risk**:
-- Emphasize that technical complexity isn't the issue - business control is
-- Connect to traditional IT general controls (access, change management, operations)
-- Highlight that automation increases the impact of control deficiencies
+**For Scheduling Controls**:
+- "Check if the actual run times match the scheduled times"
+- "Review logs to see if processes run when expected"
+- "Test what happens when you change a schedule"
+- "Verify who can modify schedules and how changes are approved"
+- "Check if there are alerts for missed scheduled runs"
 
-**Audit Evidence**:
-- AWS provides comprehensive audit trails through CloudTrail
-- EventBridge rule history shows all changes and who made them
-- Target service logs provide evidence of process execution
-- Integration with traditional audit approaches is possible
+**For Monitoring Controls**:
+- "Create a test failure and see if it gets detected"
+- "Review alert logs to see if monitoring is working"
+- "Check who receives failure notifications"
+- "Verify how quickly failures are detected"
+- "Test if retry mechanisms work properly"
 
-### Common Misconceptions to Address:
+**For Integration Reliability**:
+- "Test what happens when EventBridge can't reach Lambda"
+- "Check error handling when Lambda functions fail"
+- "Verify backup or fallback procedures"
+- "Review dependency documentation"
 
-**"We can't audit what we can't see"**
-- AWS provides extensive logging and audit trails
-- Focus on output and business impact rather than technical implementation
+**Facilitator Follow-up**: "Great testing approaches! Notice how you're thinking about testing both the design (does the control exist?) and the operating effectiveness (is the control working in practice?)."
 
-**"This is too technical for auditors"**
-- Emphasize business process focus, not technical configuration
-- Connect to familiar concepts like batch processing and job scheduling
+### Discussion Question 5: Evidence Gaps
+**Ask**: "What information couldn't you get from the console alone?"
 
-**"Cloud services are inherently riskier"**
-- Discuss how cloud services can provide better audit trails than traditional systems
-- Focus on control design rather than technology platform
+**Possible Participant Answers**:
+- "Who approved these automated processes?"
+- "What's the business justification for the timing?"
+- "Who gets notified when things fail?"
+- "How are changes to these processes managed?"
+- "What happens to the data that gets processed?"
+- "Are there any manual overrides or exceptions?"
+- "How often are these processes reviewed?"
+- "What testing was done before deployment?"
+- "Who has access to modify these configurations?"
+- "How do failures get escalated?"
 
-This activity effectively introduces auditors to AWS automation services while maintaining focus on practical audit considerations and familiar risk assessment approaches.
+**Facilitator Follow-up**: "Perfect! The console shows you the 'what' and 'when,' but auditing requires understanding the 'who,' 'why,' and 'how' - which means you need to interview people and review documentation beyond what AWS shows you."
+
+### Common Teaching Moments During Debrief
+
+**If participants focus too much on technical details**:
+"Remember, as IT auditors, you don't need to become AWS experts. Focus on the control principles - does the organization have proper oversight of automated processes?"
+
+**If participants struggle with control concepts**:
+"Think of this like any automated system in your organization - you'd want to know: When does it run? How do you know it worked? Who can change it? What happens when it fails?"
+
+**If participants ask about complex technical configurations**:
+"Great observation! That's exactly the kind of complexity that would make you ask the client: 'How do you ensure this configuration is correct and how do you test changes before implementing them?'"
+
+### Wrap-up Key Messages (2 minutes)
+1. **Integration Pattern**: "EventBridge + Lambda creates automated processes that need traditional IT general controls"
+2. **Audit Approach**: "Focus on control principles, not technical expertise - timing, monitoring, change management"
+3. **Evidence Strategy**: "Console observation gets you started, but auditing requires interviewing people and reviewing documentation"
+4. **Control Questions**: "The best audit questions focus on 'how do you know it's working?' and 'what happens when it doesn't?'"
+

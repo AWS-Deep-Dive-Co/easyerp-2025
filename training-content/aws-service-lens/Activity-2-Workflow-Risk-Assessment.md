@@ -1,270 +1,272 @@
-# Activity 2: Workflow Risk Assessment
+# Activity 2: Hands-On Step Functions Workflow Analysis
 
 ## Activity Overview
 **Duration**: 10 minutes
-**Format**: Individual exercise followed by group discussion
-**Objective**: Evaluate Step Functions workflow for audit risks and control gaps
+**Format**: Individual console exploration followed by group discussion
+**Objective**: Navigate AWS Step Functions console to evaluate deployed workflow for audit risks and control gaps
 
 ---
 
-## Participant Materials
+## Console Navigation Instructions
 
-### Scenario: Automated Purchase Order Processing
+### Step 1: Access Step Functions Console (2 minutes)
 
-**Background**: 
-TechManufacturing Inc. uses AWS Step Functions to automate their purchase order approval process. Review the workflow diagram and execution data below to assess audit risks.
+**Navigate to**: `https://console.aws.amazon.com/states/home`
 
-### Step Functions Workflow: "Purchase Order Approval Process"
+**Find the Deployed Workflow**:
+- Look for: `aws-deep-dive-financial-processing-workflow`
+- Click on the workflow name to open details
 
-```
-Step 1: Validate PO Data
-├─ Input: Purchase order details, vendor info, amounts
-├─ Process: Data validation and completeness check
-├─ Success: Continue to Step 2
-└─ Failure: Send rejection notice, end process
+### Step 2: Examine Workflow Definition (3 minutes)
 
-Step 2: Amount-Based Routing
-├─ If amount < $5,000: Go to Step 3 (Department Approval)
-├─ If amount $5,000-$25,000: Go to Step 4 (Manager Approval)
-└─ If amount > $25,000: Go to Step 5 (Executive Approval)
+**In the workflow details page**:
+1. **Click on "Definition" tab** to see the visual workflow
+2. **Review the workflow diagram** - notice the business process flow
+3. **Click on individual states** to see their configuration
+4. **Look for**:
+   - Decision points and approval logic
+   - Error handling and retry mechanisms
+   - Integration with other AWS services
+   - Timeout configurations
 
-Step 3: Department Approval (< $5,000)
-├─ Process: Automatic approval for pre-approved vendors
-├─ Success: Go to Step 6 (Create PO)
-└─ Failure: Go to Step 7 (Manual Review Queue)
+### Step 3: Review Execution History (3 minutes)
 
-Step 4: Manager Approval ($5,000-$25,000)
-├─ Process: Send email notification, wait for response
-├─ Timeout: 24 hours (auto-reject)
-├─ Success: Go to Step 6 (Create PO)
-└─ Failure: Go to Step 7 (Manual Review Queue)
+**Click on "Executions" tab**:
+1. **Examine recent executions** - look for success/failure patterns
+2. **Click on a successful execution** to see:
+   - Input data and business context
+   - Step-by-step execution flow
+   - Timing and performance data
+   - Output results
+3. **Click on a failed execution** (if available) to see:
+   - Where the failure occurred
+   - Error messages and root causes
+   - Retry attempts and recovery mechanisms
 
-Step 5: Executive Approval (> $25,000)
-├─ Process: Send email notification, wait for response
-├─ Timeout: 48 hours (auto-reject)
-├─ Success: Go to Step 6 (Create PO)
-└─ Failure: Go to Step 7 (Manual Review Queue)
+### Step 4: Analyze Monitoring Data (2 minutes)
 
-Step 6: Create Purchase Order
-├─ Process: Generate PO number, update systems
-├─ Success: Send confirmation, end process
-└─ Failure: Go to Step 7 (Manual Review Queue)
-
-Step 7: Manual Review Queue
-├─ Process: Route to procurement team for manual processing
-└─ End: Human intervention required
-```
-
-### Recent Execution Data (Last 30 Days)
-- **Total Executions**: 847 purchase orders processed
-- **Successful Completions**: 789 (93.2%)
-- **Failed Executions**: 58 (6.8%)
-- **Manual Review Queue**: 142 orders (16.8%)
-- **Average Processing Time**: 
-  - < $5,000: 3 minutes
-  - $5,000-$25,000: 18 hours (including approval wait time)
-  - > $25,000: 31 hours (including approval wait time)
-
-### Error Analysis
-**Top Failure Reasons**:
-1. **Invalid Vendor Data** (31 failures): Vendor not in approved list
-2. **Timeout Exceeded** (15 failures): Approval timeout reached
-3. **System Integration Error** (8 failures): Unable to create PO in ERP system
-4. **Data Validation Error** (4 failures): Missing required fields
-
-### Approval Statistics
-- **Auto-approved (< $5,000)**: 623 orders (73.5%)
-- **Manager approved**: 156 orders (18.4%)
-- **Executive approved**: 68 orders (8.0%)
-- **Timeout rejections**: 15 orders (1.8%)
+**Look for monitoring information**:
+1. **Check "Monitoring" tab** for execution metrics
+2. **Note**:
+   - Success/failure rates
+   - Execution duration trends
+   - Error patterns over time
+   - Volume of executions
 
 ---
 
-## Risk Assessment Worksheet
+## Console Observation Worksheet
 
-### 1. Process Control Evaluation
+**As you navigate the console, complete this analysis**:
 
-**Control Strength Assessment** (Circle one for each area):
+### 1. Workflow Structure Analysis
+
+**From the Definition tab, identify**:
+
+**Business Process Steps** (list the main states you see):
+1. ________________________________________________
+2. ________________________________________________
+3. ________________________________________________
+4. ________________________________________________
+
+**Decision Points** (where does the workflow branch?):
+- ________________________________________________
+- ________________________________________________
+
+**Error Handling** (what happens when steps fail?):
+- ________________________________________________
+
+**Integration Points** (what other AWS services are called?):
+- ________________________________________________
+
+### 2. Execution Pattern Analysis
+
+**From the Executions tab, observe**:s
+
+**Recent Execution Volume**:
+- Total executions in last week: ____________________
+- Success rate: ____________________________________
+- Average execution time: ___________________________
+
+**Failure Analysis** (if failures are visible):
+- Most common failure point: _______________________
+- Typical failure reason: ____________________________
+- Recovery method: _________________________________
+
+### 3. Risk Assessment Based on Console Observations
+
+**Risk #1**: ________________________________________________
+**Evidence from Console**: ___________________________________
+**Audit Concern**: _______________________________________
+
+**Risk #2**: ________________________________________________
+**Evidence from Console**: ___________________________________
+**Audit Concern**: _______________________________________
+
+**Risk #3**: ________________________________________________
+**Evidence from Console**: ___________________________________
+**Audit Concern**: _______________________________________
+
+### 4. Control Evaluation Based on Console Evidence
+
+**For each area, assess based on what you observed in the console**:
 
 **Segregation of Duties**:
 Strong / Adequate / Weak / Cannot Determine
+**Console Evidence**: ____________________________________
 
 **Authorization Levels**:
-Strong / Adequate / Weak / Cannot Determine
+Strong / Adequate / Weak / Cannot Determine  
+**Console Evidence**: ____________________________________
 
 **Exception Handling**:
 Strong / Adequate / Weak / Cannot Determine
+**Console Evidence**: ____________________________________
 
 **Data Validation**:
 Strong / Adequate / Weak / Cannot Determine
+**Console Evidence**: ____________________________________
 
-### 2. Identified Risks
+### 5. Audit Evidence Identification
 
-**Risk #1**: _________________________________________________
-**Impact**: High / Medium / Low
-**Likelihood**: High / Medium / Low
-**Control Gap**: ____________________________________________
+**What specific evidence would you request from the client?**
 
-**Risk #2**: _________________________________________________
-**Impact**: High / Medium / Low  
-**Likelihood**: High / Medium / Low
-**Control Gap**: ____________________________________________
-
-**Risk #3**: _________________________________________________
-**Impact**: High / Medium / Low
-**Likelihood**: High / Medium / Low
-**Control Gap**: ____________________________________________
-
-### 3. Control Testing Approach
-
-**What would you test?**
-□ Authorization matrix matches workflow approval limits
-□ Exception handling for failed processes
-□ Completeness of purchase order processing
-□ Segregation of duties in approval process
-□ Timeout controls and escalation procedures
+□ Step Functions execution logs for completeness testing
+□ Workflow definition change history from CloudTrail
+□ Input/output data samples for accuracy testing
+□ Error handling documentation and procedures
+□ IAM permissions for workflow modification access
 □ Other: ____________________________________________
 
-**Key Evidence to Request**:
-1. ___________________________________________________
-2. ___________________________________________________
-3. ___________________________________________________
-
-### 4. Red Flag Analysis
-
-**Check any concerning observations**:
-□ High percentage of orders requiring manual review (16.8%)
-□ Significant timeout failures in approval process
-□ Auto-approval for orders under $5,000
-□ Long processing times for higher-value orders
-□ Integration failures with ERP system
-□ Limited evidence of approval authority validation
-
-### 5. Audit Questions
+### 6. Questions for Client Based on Console Observations
 
 **Questions for Management**:
-1. How is the $5,000 auto-approval threshold determined and approved?
-2. What controls exist over the "pre-approved vendor" list?
-3. How are timeout failures investigated and resolved?
-4. Who has access to modify the workflow approval process?
+1. Based on the workflow I observed, how do you ensure _______________?
+2. I noticed [specific observation], how is this controlled?
+3. What oversight exists over the automated decisions in this workflow?
 
 **Questions for IT**:
-1. How is the Step Functions workflow secured and change-controlled?
-2. What monitoring exists for process failures and exceptions?
-3. How is data integrity maintained throughout the workflow?
-4. What backup procedures exist if the automated process fails?
+1. How do you ensure only authorized personnel can modify this workflow?
+2. What monitoring alerts exist for workflow failures or anomalies?
+3. How do you validate the business logic implemented in the workflow?
 
 ---
 
 ## Discussion Questions
 
-**For Group Discussion**:
-1. **Biggest Audit Concern**: What's the highest risk you identified?
-2. **Control Design**: How would you improve this process from a control perspective?
-3. **Testing Approach**: What specific tests would you perform?
-4. **Traditional vs. Automated**: How does auditing this differ from manual purchase order processes?
+**Be prepared to discuss**:
+1. **Biggest Audit Concern**: What was the highest risk you identified from the console?
+2. **Console Evidence**: What evidence was most/least useful for audit purposes?
+3. **Audit Approach**: How would you test the controls you observed?
+4. **Practical Challenges**: What was difficult to assess from the console alone?
 
 ---
 
 ## Facilitator Instructions
 
-### Setup (1 minute)
-- Distribute scenario materials to each participant
-- Emphasize this is **individual work** for first 8 minutes
-- Set timer and remind participants to focus on audit risks, not technical details
+### Pre-Activity Setup (Before session)
+- **Verify console access** for all participants to Step Functions
+- **Execute the workflow manually** 30 minutes before session to ensure recent executions
+- **Test console navigation** to confirm all participants can access the deployed workflow
+- **Prepare backup screenshots** in case of access issues
 
-### During Individual Work (8 minutes)
-- **Circulate quietly** to observe participant approaches
-- **Don't provide answers** but can clarify scenario questions
-- **Note common patterns** in responses for discussion
-- **Give 2-minute warning**
+### Activity Setup (1 minute)
+- **Ensure participants have console access** and are logged in
+- **Guide them to Step Functions console**: `https://console.aws.amazon.com/states/home`
+- **Verify everyone can see** `aws-deep-dive-financial-processing-workflow`
+- **Set timer for 8 minutes** of individual console exploration
 
-### Group Discussion (2 minutes)
-- **Ask for volunteers** to share key findings
-- **Focus on practical audit approaches**
-- **Connect to familiar audit concepts**
+### During Console Exploration (8 minutes)
+- **Circulate and assist** with console navigation issues
+- **Guide participants to key areas**: "Look at the Definition tab," "Check recent executions"
+- **Don't provide answers** but help with technical navigation
+- **Observe common findings** for discussion
+- **Give 2-minute warning** before discussion
+
+### Group Discussion Facilitation (2 minutes)
+- **Ask volunteers to share** their key observations
+- **Focus on audit implications**: "What would you test based on what you saw?"
+- **Connect console observations to audit evidence**: "How reliable is this evidence?"
 
 ### Key Facilitator Prompts:
-**If participants struggle**: "Think about this like any other automated process you've audited - what could go wrong?"
 
-**If too technical**: "Focus on the business impact - what matters for the financial statements?"
+**If participants struggle with console navigation**:
+*"Focus on what you can see and understand - you don't need to know every technical detail"*
 
-**If too abstract**: "What specific evidence would you look at during fieldwork?"
+**If they get lost in technical details**:
+*"Think like an auditor - what business process risks do you see?"*
+
+**If they can't find information**:
+*"That's important feedback - what would you ask the client to provide?"*
+
+### Troubleshooting:
+
+**Console Access Issues**:
+- Have screenshots ready as backup
+- Pair participants with console access issues
+- Focus discussion on observations from successful participants
+
+**No Recent Executions Visible**:
+- Manually trigger workflow execution during break if needed
+- Use execution history screenshots as backup
+- Focus on workflow definition analysis
 
 ---
 
-## Expected Responses & Teaching Points
+## Expected Console Observations & Teaching Points
 
-### Risk Assessment - Expected Answers:
+### Typical Workflow Structure Findings:
 
-**High Risk Areas**:
-1. **Auto-approval without human oversight** (orders < $5,000)
-   - Control Gap: Lack of periodic review of auto-approved transactions
-   - Testing: Sample auto-approved orders for appropriateness
+**Participants Should Observe**:
+- **Daily Transaction Processing**: Lambda function integration
+- **Month-End Processing**: More complex approval workflow  
+- **Error Handling**: Retry policies and catch blocks
+- **Monitoring Integration**: CloudWatch metrics collection
 
-2. **High manual exception rate** (16.8% to manual queue)
-   - Control Gap: Process design may be inadequate for business needs
-   - Testing: Analyze root causes of manual reviews
+### Common Risk Identifications:
 
-3. **Timeout-based rejections without investigation**
-   - Control Gap: Valid purchase orders may be inappropriately rejected
-   - Testing: Review timeout rejections for business necessity
+**From Console Observations**:
+1. **Automated Decision Making**: No human oversight in daily processing
+   - **Console Evidence**: Workflow shows direct Lambda execution
+   - **Audit Implication**: Need to test automated business logic
 
-### Control Testing - Key Focus Areas:
+2. **Integration Dependencies**: Multiple AWS service dependencies
+   - **Console Evidence**: Workflow calls Lambda, then other services
+   - **Audit Implication**: Failure in one service affects entire process
 
-**Authorization Controls**:
-- Test approval matrix matches workflow thresholds
-- Verify executive approval for high-value items
-- Validate pre-approved vendor list maintenance
+3. **Error Recovery**: May not handle all error scenarios appropriately
+   - **Console Evidence**: Limited error states visible in workflow
+   - **Audit Implication**: Need to test exception handling procedures
 
-**Completeness Controls**:
-- Test that all purchase orders are processed through the workflow
-- Verify failed processes are appropriately handled
-- Check for bypass procedures and their authorization
+### Key Teaching Points from Console Experience:
 
-**Exception Handling**:
-- Review manual queue processing procedures
-- Test escalation for timeout failures
-- Validate error resolution and reprocessing
+**Console-Based Audit Evidence**:
+- **Visual Workflows**: Step Functions provide clear process documentation
+- **Execution History**: Complete audit trail of all process runs
+- **Real-Time Monitoring**: Current performance and error data
+- **Change Tracking**: Integration with CloudTrail for modification history
 
-### Common Discussion Points:
+**Limitations of Console Evidence**:
+- **Business Context**: Console shows technical process, not business authorization
+- **Complete Picture**: May need additional documentation for full control assessment  
+- **Data Validation**: Console shows structure but not data quality controls
+- **Human Oversight**: Automated processes may lack adequate human review
 
-**"How is this different from manual processes?"**
-- **Volume and Speed**: Automated processes handle more volume faster
-- **Consistency**: Less variation but potential for systematic errors
-- **Audit Trail**: Better logging but requires different evidence gathering
-- **Control Points**: Fewer manual checkpoints, rely on system controls
+**Practical Audit Applications**:
+1. **Use Visual Workflows**: As process documentation for audit understanding
+2. **Leverage Execution Logs**: For sampling and testing process completeness
+3. **Analyze Error Patterns**: To identify control weaknesses and risks
+4. **Verify Change Controls**: Through CloudTrail integration for workflow modifications
 
-**"What if we don't understand the technology?"**
-- **Focus on Business Logic**: Understand what the process does, not how
-- **Use Available Documentation**: Workflow diagrams provide process maps
-- **Leverage IT Specialists**: Work with IT auditors for technical aspects
-- **Test Outputs**: Focus on results rather than technical implementation
+### Common Questions & Responses:
 
-### Key Teaching Points:
+**Q**: "The console is overwhelming - how do I know what to focus on?"
+**A**: "Focus on the business process flow first, then look for control points and exception handling"
 
-**Workflow Benefits for Auditors**:
-- **Visual Documentation**: Step Functions provide clear process maps
-- **Execution History**: Complete audit trail of all process executions
-- **Exception Tracking**: Detailed logging of failures and manual interventions
-- **Performance Metrics**: Built-in monitoring of process efficiency
+**Q**: "How do I know if what I'm seeing is accurate?"
+**A**: "Great audit question - this is why we need to validate system-generated evidence through testing"
 
-**Audit Approach Adaptations**:
-- **Continuous Processing**: Tests need to account for high-volume, continuous operation
-- **System-Generated Evidence**: Greater reliance on automated logs and reports
-- **Control Design Focus**: Emphasis on preventive controls built into workflow
-- **Exception Analysis**: Statistical sampling of exceptions rather than individual review
+**Q**: "What if the client won't give me console access?"
+**A**: "That's a red flag for the control environment - document that as a limitation and request alternative evidence"
 
-### Common Misconceptions to Address:
-
-**"Automated processes are inherently riskier"**
-- Automated processes can provide better consistency and audit trails
-- Risk comes from control design, not automation itself
-- Focus on control effectiveness rather than manual vs. automated
-
-**"We need to understand the technical implementation"**
-- Business process understanding is more important than technical details
-- Workflow diagrams provide sufficient detail for most audit purposes
-- Partner with IT specialists when technical expertise is needed
-
-This activity effectively demonstrates how to approach workflow analysis from an audit perspective while connecting to familiar business process audit concepts.
+This hands-on console activity gives auditors practical experience with Step Functions while maintaining focus on audit-relevant observations and risk assessment skills.
