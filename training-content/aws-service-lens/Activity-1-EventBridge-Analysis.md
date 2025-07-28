@@ -1,15 +1,15 @@
-# Activity 1: Hands-On EventBridge and Lambda Integration Analysis
+# Activity 1: EventBridge Scheduling & Monitoring Assessment
 
 ## Activity Overview
 **Duration**: 10 minutes
-**Format**: Small groups (3-4 people) exploring AWS Console
-**Objective**: Navigate EventBridge and Lambda consoles to understand integrated automation controls and identify key IT control risks
+**Format**: Individual console exploration followed by group discussion
+**Objective**: Explore EventBridge rules and their CloudWatch monitoring to assess scheduling controls and operational oversight
 
 ---
 
 ## Console Navigation Instructions
 
-### Step 1: EventBridge Overview (3 minutes)
+### Step 1: EventBridge Rules Analysis (4 minutes)
 
 **Navigate to**: `https://console.aws.amazon.com/events/home`
 
@@ -21,28 +21,74 @@
   - **Target**: What Lambda function does it trigger?
   - **Status**: Enabled/Disabled
 
-### Step 2: Lambda Function Investigation (4 minutes)
+### Step 2: CloudWatch Metrics Integration (4 minutes)
 
-**Navigate to**: `https://console.aws.amazon.com/lambda/home`
+**Navigate to**: `https://console.aws.amazon.com/cloudwatch/home#metricsV2:`
 
-**Function Analysis**:
-- Look for functions starting with `aws-deep-dive-`
-- **Click on 2-3 functions** and examine:
-  - **Triggers tab**: What EventBridge rules trigger this function?
-  - **Monitoring tab**: Recent execution patterns
-  - **Configuration**: Runtime and basic settings
+**EventBridge Metrics Analysis**:
+1. **Namespace**: `AWS/Events`
+2. **Look for metrics**: `SuccessfulInvocations`, `FailedInvocations`
+3. **Filter by**: Rule names you observed in Step 1
+4. **Review**: Recent execution patterns and success rates
 
-### Step 3: Integration Assessment (3 minutes)
+**Related Lambda Monitoring**:
+1. **Namespace**: `AWS/Lambda`
+2. **Functions**: Find functions triggered by EventBridge rules
+3. **Key Metrics**: `Invocations`, `Errors`, `Duration`
 
-**Trace the flow**:
-1. **Pick one EventBridge rule** from Step 1
-2. **Find its target Lambda function** from Step 2
-3. **Document the complete flow**: Trigger → Rule → Function
-4. **Identify potential control gaps**: What could go wrong in this chain?
+### Step 3: Operational Assessment (2 minutes)
+
+**Integration Assessment**:
+1. **Pick one EventBridge rule** and trace its monitoring
+2. **Identify failure patterns**: Any recent invocation failures?
+3. **Performance trends**: Are execution times consistent?
+4. **Alert mechanisms**: What happens when rules fail?
 
 ---
 
 ## Console Observation Worksheet
+
+**As you navigate the consoles, note your observations**:
+
+### 1. EventBridge Rules Analysis
+
+**Scheduled Rules Found**:
+- Rule names: _______________________________________________
+- Schedule frequencies: ____________________________________
+- Target functions: ________________________________________
+
+**Event-Driven Rules Found**:
+- Trigger sources: _________________________________________
+- Event patterns: __________________________________________
+- Integration complexity: ___________________________________
+
+### 2. CloudWatch Monitoring Assessment
+
+**EventBridge Metrics**:
+- Success rates observed: __________________________________
+- Failure patterns: ________________________________________
+- Execution frequency: ____________________________________
+
+**Lambda Performance**:
+- Function response times: _________________________________
+- Error rates: ____________________________________________
+- Resource utilization: ____________________________________
+
+### 3. Key Observations Summary
+
+**Based on your console exploration, note your 3 most significant observations**:
+
+**Observation 1**: _____________________________________________
+
+**Observation 2**: _____________________________________________
+
+**Observation 3**: _____________________________________________
+
+---
+
+## Group Discussion
+
+**The facilitator will lead a discussion about what you observed and its audit implications.**
 
 **As your group explores the console, document your findings**:
 

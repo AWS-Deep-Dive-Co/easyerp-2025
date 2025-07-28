@@ -149,28 +149,7 @@ aws events list-targets-by-rule --rule aws-deep-dive-daily-transaction-schedule
 - Integration with multiple AWS services
 - State machine execution history and debugging
 
-### Activity 4: AWS Glue ETL Service
-
-**Objective**: Understand managed ETL capabilities
-
-1. **Navigate to Glue Console**: `https://console.aws.amazon.com/glue/home#/jobs`
-2. **Examine Jobs**:
-   - `aws-deep-dive-financial-etl-job`
-   - `aws-deep-dive-compliance-validation-job`
-
-**Run Jobs Manually**:
-- Click job name → "Run job" button
-- Monitor execution in "History" tab
-- Examine logs and metrics
-
-**Key Learning Points**:
-- Serverless Apache Spark execution
-- Automatic scaling and resource management
-- Integration with AWS data services
-- Job monitoring and troubleshooting
-- Cost-effective data processing patterns
-
-### Activity 5: CloudWatch Monitoring Mastery
+### Activity 4: CloudWatch Monitoring Mastery
 
 **Objective**: Deep dive into AWS observability
 
@@ -202,7 +181,7 @@ aws cloudwatch get-metric-statistics \
   --statistics Average
 ```
 
-### Activity 6: CloudTrail API Auditing
+### Activity 5: CloudTrail API Auditing
 
 **Objective**: Understand AWS API auditing and governance
 

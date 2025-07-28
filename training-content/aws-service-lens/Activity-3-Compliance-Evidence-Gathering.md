@@ -1,34 +1,93 @@
-# Activity 3: Hands-On Compliance Evidence Gathering
+# Activity 3: Glue Data Processing & Comprehensive Monitoring Assessment
 
 ## Activity Overview
 **Duration**: 10 minutes
-**Format**: Paired exercise (2 people per group) using AWS Console
-**Objective**: Navigate CloudWatch and CloudTrail consoles to gather audit evidence for compliance testing
+**Format**: Individual console exploration followed by group discussion
+**Objective**: Examine Glue ETL jobs and comprehensive CloudWatch monitoring to assess data processing controls and operational oversight
 
 ---
 
 ## Console Navigation Instructions
 
-### Step 1: Access CloudWatch Dashboards (3 minutes)
+### Step 1: Glue ETL Jobs Analysis (3 minutes)
+
+**Navigate to**: `https://console.aws.amazon.com/glue/home#/jobs`
+
+**ETL Job Investigation**:
+- Look for: `aws-deep-dive-financial-etl-job`
+- Look for: `aws-deep-dive-compliance-validation-job`
+- **Click on each job** to examine:
+  - Job configuration and script location
+  - Execution history and success/failure patterns
+  - Runtime parameters and resource allocation
+  - Recent run details and logs
+
+### Step 2: CloudWatch Dashboard Integration (4 minutes)
 
 **Navigate to**: `https://console.aws.amazon.com/cloudwatch/home#dashboards:`
 
-**Find Deployed Dashboards**:
-- Look for: `aws-deep-dive-operational-monitoring`
-- Look for: `aws-deep-dive-sox-compliance-monitoring`
-- **Click on each dashboard** to examine the monitoring data
+**Dashboard Analysis**:
+- **Open**: `aws-deep-dive-operational-monitoring`
+- **Open**: `aws-deep-dive-sox-compliance-monitoring`
+- **Review**:
+  - Glue job performance metrics
+  - Overall system health indicators
+  - Compliance score trends
+  - Error rates and exception patterns
 
-**What to Observe in Dashboards**:
-1. **Business Metrics**: Success rates, processing volumes, error rates
-2. **Performance Data**: Execution times, resource utilization
-3. **Compliance Indicators**: SLA adherence, threshold violations
-4. **Time Ranges**: Current vs. historical performance
+### Step 3: Comprehensive Monitoring Assessment (3 minutes)
 
-### Step 2: Examine CloudWatch Alarms (2 minutes)
+**Cross-Service Monitoring Review**:
+1. **Identify connections**: How do Glue jobs relate to EventBridge schedules?
+2. **End-to-end visibility**: Trace data flow from ingestion to processing
+3. **Alert mechanisms**: What monitoring alerts exist for failures?
+4. **Performance trends**: Are processing times increasing over time?
 
-**Navigate to**: CloudWatch > Alarms (in left menu)
+---
 
-**Find Deployed Alarms**:
+## Console Observation Worksheet
+
+**As you navigate the consoles, note your observations**:
+
+### 1. Glue Job Assessment
+
+**Job Configuration**:
+- Job names: ________________________________________________
+- Execution frequency: _____________________________________
+- Recent success rate: ____________________________________
+
+**Data Processing Controls**:
+- Input data sources: _____________________________________
+- Validation mechanisms: __________________________________
+- Error handling approach: ________________________________
+
+### 2. Monitoring Integration Analysis
+
+**Dashboard Observations**:
+- Key business metrics visible: ___________________________
+- Alert thresholds configured: _____________________________
+- Historical trend analysis: _______________________________
+
+**Cross-Service Visibility**:
+- How services connect: ____________________________________
+- End-to-end process flow: ________________________________
+- Monitoring gaps identified: ______________________________
+
+### 3. Key Observations Summary
+
+**Based on your console exploration, note your 3 most significant observations**:
+
+**Observation 1**: _____________________________________________
+
+**Observation 2**: _____________________________________________
+
+**Observation 3**: _____________________________________________
+
+---
+
+## Group Discussion
+
+**The facilitator will lead a discussion about what you observed and its audit implications.**
 - Look for alarms related to `aws-deep-dive` resources
 - **Click on individual alarms** to see:
   - Threshold settings and business rationale

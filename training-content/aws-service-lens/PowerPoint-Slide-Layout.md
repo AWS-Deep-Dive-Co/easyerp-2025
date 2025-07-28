@@ -1,406 +1,256 @@
 # PowerPoint Slide Layout - AWS Services for Auditors (2 Hours)
 
 ## Slide Deck Overview
-**Total Slides**: 45-50 slides
-**Presentation Time**: 90 minutes (30 minutes for activities)
+**Total Slides**: 19 slides
+**Presentation Time**: 60 minutes (60 minutes for activities)
 **Design**: Professional audit-focused template with AWS service screenshots
 
 ---
 
-## Opening Section (Slides 1-8)
+## Opening Section (Slides 1-4)
 
 ### Slide 1: Title Slide
 **Title**: AWS Services Overview for Auditors
 **Subtitle**: Understanding Cloud Services in Client Environments
 **Footer**: [Date] | [Instructor Name] | Duration: 2 Hours
 
-### Slide 2: Learning Objectives
+**Voiceover Notes**:
+*"Good morning, everyone. Welcome to our AWS Services Overview for Auditors. I'm [Name] and for the next two hours, we're going to explore the AWS services you're most likely to encounter in your client environments. This isn't a technical deep dive - instead, we're focusing on what these services mean for your audits, what evidence they provide, and how to approach them from an audit perspective. By the end of today, you'll have hands-on experience with the AWS console and a clear framework for auditing cloud-based business processes."*
+
+### Slide 2: Learning Objectives & Agenda
 **Header**: What You'll Learn Today
-**Bullets**:
-- Identify common AWS services in client environments
-- Understand audit implications of automated cloud processes
-- Recognize key audit evidence sources in AWS
-- Develop approach for auditing cloud-based business processes
-- Connect AWS services to existing audit frameworks
-
-### Slide 3: Training Approach
-**Header**: Our Focus Today
 **Two-Column Layout**:
-- **What We'll Cover**: High-level service capabilities, audit relevance, compliance considerations
-- **What We Won't Cover**: Technical implementation, configuration details, programming concepts
+**Left - Objectives**:
+- Identify AWS monitoring and audit evidence sources
+- Understand automated cloud business processes
+- Connect AWS services to audit frameworks
+- Develop cloud audit approaches
 
-### Slide 4: Why This Matters for Auditors
-**Header**: Cloud Services in Today's Audit Environment
-**Statistics/Visual**:
-- X% of companies use cloud services
-- AWS market share visualization
-- Common services found in audits
+**Right - Agenda**:
+- 0:00-0:20: Monitoring & Compliance Foundation
+- 0:20-0:40: Scheduling & Automation Services
+- 0:40-0:60: Workflow & Data Processing
+- 1:00-2:00: Hands-On Activities (3 activities)
 
-### Slide 5: Agenda Overview
-**Header**: Today's Schedule
-**Timeline Visual**:
-- 0:00-0:15: Opening & Context
-- 0:15-0:40: Scheduling & Automation Services
-- 0:40-1:05: Workflow & Data Processing Services  
-- 1:05-1:30: Monitoring & Compliance Services
-- 1:30-2:00: Integration & Audit Planning
+**Voiceover Notes**:
+*"Let's look at what we'll accomplish today. Our learning objectives are very practical - you'll learn to identify where audit evidence lives in AWS, understand how automated processes work, and develop approaches for auditing these systems. Notice our agenda starts with monitoring and compliance services - that's intentional. CloudWatch and CloudTrail are your audit evidence hubs, so we'll establish that foundation first. Then we'll explore the services that generate that evidence. The second half is entirely hands-on - you'll get direct experience with the AWS console. Any questions before we dive in?"*
 
-### Slide 6: Setting Context
-**Header**: Connecting to Audit Frameworks
-**Framework Icons/Logos**:
-- SOX compliance requirements
-- COSO internal control framework
-- Risk assessment methodologies
-- IT audit standards
+### Slide 3: Demo Environment Overview
+**Header**: What We'll Explore Today
+**Screenshot**: AWS console overview with deployed services
+**Note**: "Live AWS environment with real business processes running"
 
-### Slide 7: Key Audit Questions
-**Header**: Questions We'll Answer
-**Bullets**:
-- What processes are automated and how?
-- Where can we find audit evidence?
-- What controls exist over automated processes?
-- How do we assess risks in cloud environments?
-
-### Slide 8: Demo Environment Overview
-**Header**: What We'll See Today
-**Screenshot**: AWS console overview
-**Note**: "We'll use live AWS services to see how they appear to auditors"
+**Voiceover Notes**:
+*"This is what we'll be working with today - a live AWS environment running real business processes. You're looking at the AWS Management Console, which is where auditors typically get access to view these systems. We've deployed a complete financial processing environment that includes scheduled transactions, automated workflows, data processing jobs, and comprehensive monitoring. Everything you see here represents actual business processes that could be running at your clients. The key difference from traditional systems is that everything is automated, integrated, and generates rich audit trails. Let's start by understanding where that audit evidence lives."*
 
 ---
 
-## Segment 1: Scheduling & Automation (Slides 9-20)
+## Segment 1: Monitoring & Compliance Foundation (Slides 4-7)
 
-### Slide 9: Section Divider
-**Header**: AWS Scheduling & Automation Services
-**Subheader**: EventBridge and Lambda
-**Visual**: Service icons and connection diagram
-
-### Slide 10: EventBridge - What It Is
-**Header**: AWS EventBridge
-**Definition**: Event-driven scheduling and automation service
-**Visual**: EventBridge console screenshot
-**Audit Relevance**: Automates business processes, triggers critical operations
-
-### Slide 11: EventBridge - Audit Perspective
-**Header**: What Auditors Should Know About EventBridge
-**Bullets**:
-- **Process Automation**: Schedules critical business processes
-- **Control Environment**: Determines when and how processes execute
-- **Change Management**: Rules can be modified, affecting business processes
-- **Audit Trail**: Events and rule changes are logged
-
-### Slide 12: EventBridge - Key Evidence
-**Header**: Audit Evidence Sources
-**Screenshot**: EventBridge rules console
-**Callouts**:
-- Schedule expressions (when processes run)
-- Target services (what gets triggered)
-- Rule status (enabled/disabled)
-- Creation and modification history
-
-### Slide 13: Live Demo - EventBridge
-**Header**: EventBridge in Action
-**Note**: [LIVE DEMONSTRATION]
-**Talking Points**:
-- Show deployed rules and schedules
-- Point out targets and configurations
-- Highlight audit-relevant information
-
-### Slide 14: Lambda - What It Is
-**Header**: AWS Lambda
-**Definition**: Serverless compute service that runs business logic
-**Visual**: Lambda console screenshot
-**Audit Relevance**: Executes critical business processes automatically
-
-### Slide 15: Lambda - Audit Perspective
-**Header**: What Auditors Should Know About Lambda
-**Bullets**:
-- **Business Logic**: Contains code that implements business rules
-- **Access Controls**: IAM permissions control who can modify functions
-- **Error Handling**: Built-in monitoring and logging capabilities
-- **Execution History**: Complete logs of all function executions
-
-### Slide 16: Lambda - Key Evidence
-**Header**: Audit Evidence Sources
-**Screenshot**: Lambda function console
-**Callouts**:
-- Function code and configuration
-- Execution logs and error rates
-- Performance metrics
-- IAM roles and permissions
-
-### Slide 17: Live Demo - Lambda
-**Header**: Lambda in Action
-**Note**: [LIVE DEMONSTRATION]
-**Talking Points**:
-- Show function execution and logs
-- Point out CloudWatch integration
-- Highlight monitoring capabilities
-
-### Slide 18: Activity Introduction
-**Header**: Activity: EventBridge Analysis
-**Instructions**:
-- Small groups (3-4 people)
-- 10 minutes
-- Analyze provided EventBridge rule scenarios
-- Identify audit risks and control considerations
-
-### Slide 19: Activity Debrief
-**Header**: EventBridge Analysis - Key Findings
-**Expected Responses**:
-- Process automation risks
-- Change control concerns
-- Monitoring and alerting needs
-- Segregation of duties considerations
-
-### Slide 20: Segment Summary
-**Header**: Scheduling & Automation - Audit Takeaways
-**Bullets**:
-- EventBridge controls **when** processes run
-- Lambda controls **what** processes do
-- Both services provide audit trails and monitoring
-- Focus on change controls and process integrity
-
----
-
-## Segment 2: Workflow & Data Processing (Slides 21-32)
-
-### Slide 21: Section Divider
-**Header**: Workflow Orchestration & Data Processing
-**Subheader**: Step Functions and AWS Glue
-**Visual**: Service icons and data flow diagram
-
-### Slide 22: Step Functions - What It Is
-**Header**: AWS Step Functions
-**Definition**: Visual workflow orchestration service
-**Visual**: Step Functions workflow diagram
-**Audit Relevance**: Documents complex business process flows
-
-### Slide 23: Step Functions - Audit Perspective
-**Header**: What Auditors Should Know About Step Functions
-**Bullets**:
-- **Process Documentation**: Visual workflows show business process flow
-- **Error Handling**: Built-in retry and exception handling
-- **Execution History**: Complete audit trail of workflow executions
-- **State Management**: Tracks process progress and decision points
-
-### Slide 24: Step Functions - Key Evidence
-**Header**: Audit Evidence Sources
-**Screenshot**: Step Functions execution history
-**Callouts**:
-- Visual workflow definition
-- Execution status and timing
-- Error handling and retries
-- Input/output data at each step
-
-### Slide 25: Live Demo - Step Functions
-**Header**: Step Functions in Action
-**Note**: [LIVE DEMONSTRATION]
-**Talking Points**:
-- Show visual workflow and execution
-- Point out error handling mechanisms
-- Highlight execution history and logging
-
-### Slide 26: AWS Glue - What It Is
-**Header**: AWS Glue
-**Definition**: Managed data processing and ETL service
-**Visual**: Glue job console screenshot
-**Audit Relevance**: Transforms and validates business data
-
-### Slide 27: AWS Glue - Audit Perspective
-**Header**: What Auditors Should Know About AWS Glue
-**Bullets**:
-- **Data Processing**: Transforms raw data into business information
-- **Data Quality**: Includes validation and cleansing capabilities
-- **Job Monitoring**: Tracks processing success and failures
-- **Data Lineage**: Shows data transformation and movement
-
-### Slide 28: AWS Glue - Key Evidence
-**Header**: Audit Evidence Sources
-**Screenshot**: Glue job execution details
-**Callouts**:
-- Job execution status and logs
-- Data processing metrics
-- Error rates and failure patterns
-- Resource usage and performance
-
-### Slide 29: Live Demo - AWS Glue
-**Header**: AWS Glue in Action
-**Note**: [LIVE DEMONSTRATION]
-**Talking Points**:
-- Show job execution and monitoring
-- Point out data processing capabilities
-- Highlight logging and error tracking
-
-### Slide 30: Activity Introduction
-**Header**: Activity: Workflow Risk Assessment
-**Instructions**:
-- Individual exercise
-- 10 minutes
-- Review Step Functions workflow scenario
-- Identify potential audit risks and control gaps
-
-### Slide 31: Activity Debrief
-**Header**: Workflow Risk Assessment - Key Findings
-**Expected Responses**:
-- Process complexity risks
-- Data integrity concerns
-- Error handling adequacy
-- Monitoring and alerting gaps
-
-### Slide 32: Segment Summary
-**Header**: Workflow & Data Processing - Audit Takeaways
-**Bullets**:
-- Step Functions provide process documentation and audit trails
-- Glue services affect data integrity and quality
-- Both services offer comprehensive monitoring and logging
-- Focus on data flow controls and process completeness
-
----
-
-## Segment 3: Monitoring & Compliance (Slides 33-42)
-
-### Slide 33: Section Divider
-**Header**: Monitoring & Compliance Services
-**Subheader**: CloudWatch and CloudTrail
-**Visual**: Monitoring dashboard screenshots
-
-### Slide 34: CloudWatch - What It Is
+### Slide 4: CloudWatch - Your Audit Evidence Hub
 **Header**: AWS CloudWatch
-**Definition**: Comprehensive monitoring and alerting service
-**Visual**: CloudWatch dashboard screenshot
-**Audit Relevance**: Provides operational metrics and business KPIs
+**Split Screen**:
+- **Left**: Dashboard screenshot showing business metrics
+- **Right**: Key audit capabilities:
+  - Real-time operational metrics
+  - Custom compliance dashboards  
+  - Automated alerting for exceptions
+  - Historical trend analysis
 
-### Slide 35: CloudWatch - Audit Perspective
-**Header**: What Auditors Should Know About CloudWatch
-**Bullets**:
-- **Operational Monitoring**: Real-time system and business metrics
-- **Custom Dashboards**: Business-specific KPIs and compliance metrics
-- **Automated Alerting**: Proactive notification of issues and exceptions
-- **Historical Data**: Trend analysis and performance tracking
+**Voiceover Notes**:
+*"CloudWatch is your audit evidence hub - this is where all the operational data lives. Think of it as the central monitoring system for AWS environments. On the left, you see a dashboard showing real business metrics - transaction volumes, processing times, error rates, compliance scores. This isn't just technical monitoring; it's business process monitoring. CloudWatch provides real-time operational metrics, custom compliance dashboards that clients can configure for SOX or other requirements, automated alerting when things go wrong, and historical trend analysis. For auditors, this means you have access to comprehensive performance data, exception identification, and trend analysis that would be difficult to get from traditional systems."*
 
-### Slide 36: CloudWatch - Key Evidence
-**Header**: Audit Evidence Sources
-**Screenshot**: CloudWatch dashboard with business metrics
-**Callouts**:
-- Business performance metrics
-- System health indicators
-- Compliance monitoring dashboards
-- Alert configurations and history
-
-### Slide 37: Live Demo - CloudWatch
-**Header**: CloudWatch in Action
-**Note**: [LIVE DEMONSTRATION]
-**Talking Points**:
-- Show business metrics dashboard
-- Point out compliance monitoring capabilities
-- Highlight alerting and notification features
-
-### Slide 38: CloudTrail - What It Is
+### Slide 5: CloudTrail - Complete Audit Trail
 **Header**: AWS CloudTrail
-**Definition**: API auditing and governance service
-**Visual**: CloudTrail event log screenshot
-**Audit Relevance**: Complete audit trail of system changes
+**Split Screen**:
+- **Left**: CloudTrail event log screenshot
+- **Right**: Audit evidence provided:
+  - Who made changes (user identity)
+  - What was changed (API calls)
+  - When changes occurred (timestamps)
+  - Where changes originated (source IP)
 
-### Slide 39: CloudTrail - Audit Perspective
-**Header**: What Auditors Should Know About CloudTrail
-**Bullets**:
-- **Audit Trail**: Complete log of all API calls and changes
-- **User Activity**: Who did what, when, and from where
-- **Change Tracking**: Configuration modifications and system changes
-- **Compliance Evidence**: Supports regulatory and audit requirements
+**Voiceover Notes**:
+*"CloudTrail is your complete audit trail for changes and access. While CloudWatch shows you what's happening operationally, CloudTrail shows you who did what, when they did it, and from where. Every single action in AWS - whether it's a user clicking in the console, an automated process making changes, or a system integration - gets logged to CloudTrail. You can see who made changes by looking at user identity, what was changed through API call details, when changes occurred with precise timestamps, and where changes originated through source IP addresses. This gives you a level of audit trail completeness that's often superior to traditional systems. For change management testing, access reviews, and segregation of duties assessment, CloudTrail is invaluable."*
 
-### Slide 40: CloudTrail - Key Evidence
-**Header**: Audit Evidence Sources
-**Screenshot**: CloudTrail event details
-**Callouts**:
-- User identity and session information
-- API calls and system changes
-- Source IP addresses and timestamps
-- Success/failure status of operations
+### Slide 6: Live Demo - Monitoring Services
+**Header**: CloudWatch & CloudTrail in Action
+**Note**: [LIVE DEMONSTRATION - 5 minutes]
+**Show**:
+- Business process dashboards
+- Compliance monitoring metrics
+- Recent system changes in CloudTrail
+- How services integrate for complete visibility
 
-### Slide 41: Activity Introduction
-**Header**: Activity: Compliance Evidence Gathering
-**Instructions**:
-- Paired exercise
-- 10 minutes
-- Review CloudWatch and CloudTrail scenarios
-- Identify audit evidence for compliance testing
+**Voiceover Notes**:
+*"Let me show you these services in action. [Switch to live AWS console] Here's our CloudWatch dashboard showing real business processes. You can see transaction processing rates, success percentages, and compliance scores updating in real time. Notice how this gives us immediate visibility into business process health. Now let's look at CloudTrail. [Navigate to CloudTrail] Here you can see recent events - system changes, user actions, automated processes. Each entry shows us the who, what, when, and where I mentioned. This integration between operational monitoring and audit trails gives us comprehensive visibility that supports both control testing and substantive procedures. In your activities, you'll navigate these interfaces directly."*
 
-### Slide 42: Activity Debrief
-**Header**: Compliance Evidence Gathering - Key Findings
-**Expected Responses**:
-- Comprehensive audit trail availability
-- Real-time monitoring capabilities
-- Automated compliance reporting options
-- Evidence integrity and retention considerations
+### Slide 7: Monitoring - Audit Applications
+**Header**: How to Use Monitoring for Audit Evidence
+**Bullet Points**:
+- **Process Understanding**: Use dashboards to understand business flows
+- **Exception Testing**: Identify anomalies and control failures
+- **Change Management**: Track system modifications and authorizations
+- **Compliance Reporting**: Leverage automated compliance metrics
+
+**Voiceover Notes**:
+*"Now that you understand what CloudWatch and CloudTrail provide, let's talk about practical audit applications. First, use dashboards for process understanding - instead of requesting process documentation, you can see how business processes actually perform in real time. Second, for exception testing, these tools help you identify anomalies and control failures automatically rather than through sampling. Third, for change management, you get complete tracking of system modifications and can verify proper authorization. Finally, for compliance reporting, you can leverage automated compliance metrics rather than building them from scratch. The key insight is that AWS provides richer audit evidence than many traditional systems, but you need to know where to look and how to interpret it. Now let's see what services generate this monitoring data."*
 
 ---
 
-## Integration & Wrap-up (Slides 43-50)
+## Segment 2: Scheduling & Automation Services (Slides 8-11)
 
-### Slide 43: Section Divider
-**Header**: Putting It All Together
-**Subheader**: Service Integration and Audit Implications
-**Visual**: Integrated services diagram
+### Slide 8: EventBridge - Process Scheduling
+**Header**: AWS EventBridge
+**Split Screen**:
+- **Left**: EventBridge rules console screenshot
+- **Right**: Audit significance:
+  - Controls **when** business processes execute
+  - Scheduled vs. event-driven automation
+  - **Monitored via CloudWatch** (reference back)
+  - Change management through CloudTrail logging
 
-### Slide 44: How Services Work Together
-**Header**: AWS Service Integration
-**Diagram**: EventBridge → Lambda → Step Functions → Glue → CloudWatch/CloudTrail
+**Voiceover Notes**:
+*"EventBridge controls when business processes execute. Think of it as the scheduling engine for automated business processes. It handles both scheduled automation - like month-end closes that run at specific times - and event-driven automation where one process triggers another. From an audit perspective, EventBridge is significant because it controls the timing and triggering of critical business processes. Notice how it's monitored via CloudWatch - remember our foundation? All execution metrics, success rates, and failure patterns flow back to CloudWatch. Changes to schedules and rules are logged in CloudTrail for change management testing. When you're auditing automated processes, EventBridge rules tell you when things should happen and provide evidence of whether they actually did."*
+
+### Slide 9: Lambda - Business Logic Execution  
+**Header**: AWS Lambda
+**Split Screen**:
+- **Left**: Lambda function console with monitoring tab
+- **Right**: Audit considerations:
+  - Contains critical business rule implementations
+  - **Performance tracked in CloudWatch**
+  - Execution logs provide audit trail
+  - Integration with EventBridge for automation
+
+**Voiceover Notes**:
+*"Lambda is where the actual business logic executes. If EventBridge controls when processes run, Lambda controls what those processes do. Lambda functions contain the code that implements business rules - calculating financial transactions, applying approval logic, validating data, generating reports. From an audit perspective, Lambda is significant because it houses critical business rule implementations. The performance of every Lambda execution is tracked in CloudWatch - you can see how long functions take to run, error rates, and resource usage. Execution logs provide a complete audit trail of what happened during each run. Lambda integrates with EventBridge for automation, so you can trace the complete flow from trigger to execution. When auditing business processes, Lambda functions often contain the core logic you need to understand and test."*
+
+### Slide 10: Live Demo - Scheduling Services
+**Header**: EventBridge & Lambda Integration
+**Note**: [LIVE DEMONSTRATION - 5 minutes]
+**Show**:
+- How EventBridge rules trigger Lambda functions
+- **CloudWatch metrics** for execution monitoring
+- Error handling and retry mechanisms
+- End-to-end process automation
+
+**Voiceover Notes**:
+*"Let me show you how these services work together. [Switch to AWS console] Here's an EventBridge rule that triggers every 5 minutes. You can see it targets this Lambda function for daily transaction processing. [Click on Lambda function] Here's the function code - this is implementing business logic for processing financial transactions. Now look at the monitoring tab - [show CloudWatch metrics] you can see execution history, duration trends, and error rates. This gives us complete visibility into automated business process performance. [Show error handling] Notice the retry logic and error handling built into the system. This integration between EventBridge and Lambda, monitored through CloudWatch, represents how modern automated business processes work."*
+
+### Slide 11: Scheduling - Audit Applications
+**Header**: Auditing Automated Business Processes
 **Key Points**:
-- Services create integrated business processes
-- Each service provides specific audit evidence
-- Understanding connections is crucial for risk assessment
+- **Process Timing**: Verify schedules match business requirements
+- **Error Handling**: Test exception processing and escalation  
+- **Performance Monitoring**: Use CloudWatch data for substantive testing
+- **Change Controls**: Validate authorization for schedule modifications
 
-### Slide 45: Audit Implications Summary
-**Header**: Key Audit Considerations
+**Voiceover Notes**:
+*"Now let's talk about practical audit applications for scheduling services. From an auditing perspective, these automated processes require specific control testing. Process timing verification - you need to confirm that automated schedules actually match documented business requirements. A monthly report shouldn't be running daily, and a daily process shouldn't be missing weekends. Error handling testing - you need to validate that exceptions are properly processed and escalated. What happens when a data source is unavailable? Performance monitoring using CloudWatch data provides quantitative evidence for substantive testing - you can analyze actual execution times, failure rates, and resource utilization patterns. Change controls are critical - any modifications to automated schedules should require proper authorization and documentation. These scheduling services represent critical business process controls that require comprehensive audit attention."*
+
+---
+
+## Segment 3: Workflow & Data Processing (Slides 12-15)
+
+### Slide 12: Step Functions - Process Orchestration
+**Header**: AWS Step Functions
+**Split Screen**:
+- **Left**: Visual workflow diagram screenshot
+- **Right**: Audit value:
+  - Visual documentation of complex business processes
+  - Complete execution history and audit trails
+  - **Integrated CloudWatch monitoring**
+  - Error handling and recovery mechanisms
+
+**Voiceover Notes**:
+*"Step Functions takes us from simple automation to complex business process orchestration. While EventBridge and Lambda handle individual tasks, Step Functions coordinates multiple services, decisions, and approval stages into complete business processes. The visual workflow diagram is incredibly valuable for auditors - it's like having a business process flowchart that's automatically maintained and executable. You can see decision points, parallel processing, error handling paths, and approval stages all in one view. Every execution creates a complete audit trail - you can trace exactly which path was taken, how long each step took, what data was processed, and where any failures occurred. The integrated CloudWatch monitoring provides quantitative performance data for every workflow execution. Error handling and recovery mechanisms are explicitly defined and testable. This makes Step Functions perfect for auditing complex processes like order fulfillment, approval workflows, or financial processing."*
+
+### Slide 13: AWS Glue - Data Processing
+**Header**: AWS Glue ETL Jobs
+**Split Screen**:
+- **Left**: Glue job execution console
+- **Right**: Data processing controls:
+  - Transforms raw data into business information
+  - **Performance metrics in CloudWatch**
+  - Job execution logs and error tracking
+  - Data quality and validation capabilities
+
+**Voiceover Notes**:
+*"AWS Glue handles the critical function of data processing and transformation. Raw data from various sources needs to be cleaned, transformed, and structured before it becomes useful business information. From an audit perspective, Glue is significant because data integrity depends on these transformation processes working correctly. Glue jobs have built-in data quality and validation capabilities - they can detect anomalies, validate data formats, and flag quality issues. Performance metrics are tracked in CloudWatch, so you can monitor data processing volumes, execution times, and success rates. Job execution logs provide detailed tracking of what transformations were applied to which data sets. When auditing data-driven business processes, understanding and testing these ETL transformations is critical for ensuring data accuracy and completeness."*
+
+### Slide 14: Live Demo - Workflow Services
+**Header**: Step Functions & Glue Integration
+**Note**: [LIVE DEMONSTRATION - 5 minutes]
+**Show**:
+- Step Functions workflow orchestrating business processes
+- Glue jobs processing business data
+- **CloudWatch dashboards** showing end-to-end monitoring
+- How services work together in integrated processes
+
+**Voiceover Notes**:
+*"Let me demonstrate how these workflow services integrate to create comprehensive business processes. [Switch to AWS console] Here's a Step Functions workflow that coordinates a complete data processing pipeline. [Show workflow diagram] You can see it starts with data validation, moves through multiple transformation steps, includes approval checkpoints, and ends with report generation. [Click on execution history] Each execution shows complete traceability - every step, timing, and decision. [Switch to Glue console] The Glue jobs handle the heavy data processing work. [Show job runs] You can see execution history, data volumes processed, and performance trends. [Switch to CloudWatch] The real power is in the integrated monitoring - [show dashboard] this CloudWatch dashboard shows end-to-end visibility across the entire process, from workflow orchestration to data processing performance. This integrated approach gives auditors complete visibility into complex business processes."*
+
+### Slide 15: Workflow - Audit Applications
+**Header**: Auditing Complex Business Processes
+**Focus Areas**:
+- **Process Documentation**: Use visual workflows for understanding
+- **Data Integrity**: Test ETL processes and data transformations
+- **End-to-End Monitoring**: Leverage integrated CloudWatch visibility
+- **Control Testing**: Validate approval checkpoints and error handling
+
+**Voiceover Notes**:
+*"Workflow services create powerful opportunities for comprehensive audit testing. Process documentation becomes visual and automatically maintained - Step Functions diagrams show you exactly how business processes work, including decision points and approval stages. Data integrity testing can focus on the ETL processes themselves - you can validate data transformations, test error handling, and verify that data quality controls are working effectively. End-to-end monitoring through integrated CloudWatch visibility means you can track complete business processes from initiation to completion, with quantitative performance data at every step. Control testing becomes more comprehensive because you can validate approval checkpoints, test exception handling, and verify that segregation of duties is properly implemented in automated workflows. These services transform audit testing from sampling-based approaches to comprehensive process validation."*
+- **Process Completeness**: Validate all steps execute as designed
+
+---
+
+## Integration & Activities (Slides 16-19)
+
+### Slide 16: How Services Work Together
+**Header**: Integrated AWS Business Processes
+**Visual**: Service integration diagram showing:
+EventBridge → Lambda → Step Functions → Glue → CloudWatch/CloudTrail
+**Key Message**: "All services feed monitoring data to CloudWatch and change logs to CloudTrail"
+
+**Voiceover Notes**:
+*"Before we dive into hands-on practice, let's see how all these services work together in integrated business processes. EventBridge schedules and triggers processes, Lambda executes the business logic, Step Functions orchestrates complex workflows, and Glue handles data processing. The critical point for auditors is that all services feed monitoring data to CloudWatch and change logs to CloudTrail. This creates a comprehensive audit trail across the entire business process ecosystem. You're not auditing individual services in isolation - you're auditing integrated business processes where each service contributes to the overall control environment. This integration is what makes cloud-based business processes both powerful and auditable."*
+
+### Slide 17: Audit Approach Summary
+**Header**: Your AWS Audit Toolkit
 **Table Format**:
-| Service | Primary Audit Focus | Key Evidence |
-|---------|---------------------|--------------|
-| EventBridge | Process scheduling | Rules and schedules |
-| Lambda | Business logic execution | Logs and metrics |
-| Step Functions | Process orchestration | Workflow diagrams |
-| Glue | Data processing | Job execution logs |
-| CloudWatch | Operational monitoring | Dashboards and alerts |
-| CloudTrail | Change auditing | API call logs |
+| Service | What It Does | Where to Find Evidence | How CloudWatch/CloudTrail Help |
+|---------|--------------|------------------------|--------------------------------|
+| EventBridge | Schedules processes | Rules and targets | Execution metrics and change logs |
+| Lambda | Executes business logic | Function logs and metrics | Performance data and modifications |
+| Step Functions | Orchestrates workflows | Execution history | Success rates and updates |
+| Glue | Processes data | Job execution logs | Processing metrics and job changes |
 
-### Slide 46: Activity Introduction
-**Header**: Final Activity: Audit Planning Discussion
-**Instructions**:
-- Table groups (4-5 people)
-- 15 minutes
-- Develop audit approach for integrated AWS environment
-- Share findings with larger group
+**Voiceover Notes**:
+*"Here's your practical AWS audit toolkit summarized in one view. For each service, you know what it does in business processes, where to find audit evidence, and how the monitoring services support your testing. EventBridge scheduling evidence comes from rules and targets, with CloudWatch providing execution metrics and CloudTrail logging any changes. Lambda business logic evidence is in function logs and metrics, with performance data and modification history available through monitoring. Step Functions workflow evidence is in execution history, with success rates and updates tracked comprehensively. Glue data processing evidence comes from job execution logs, with processing metrics and job changes fully documented. This systematic approach ensures you can audit any AWS-based business process effectively."*
 
-### Slide 47: Audit Planning Discussion Results
-**Header**: Audit Approach Development
-**Expected Responses**:
-- Risk-based approach focusing on business process controls
-- Evidence gathering from multiple AWS services
-- Testing of automated controls and exception handling
-- Assessment of change management processes
+### Slide 18: Hands-On Activities Introduction
+**Header**: Time to Explore
+**Three Activities Overview**:
+- **Activity 1**: EventBridge + CloudWatch (Scheduling & Monitoring)
+- **Activity 2**: Step Functions + CloudWatch (Workflows & Performance)  
+- **Activity 3**: Glue + CloudWatch (Data Processing & Comprehensive Monitoring)
+**Note**: "Each activity integrates monitoring to show real audit applications"
 
-### Slide 48: Next Steps for Auditors
-**Header**: Applying This Knowledge
-**Bullets**:
-- **Immediate**: Update audit programs to include AWS evidence sources
-- **Short-term**: Develop cloud audit procedures and checklists
-- **Long-term**: Build expertise in cloud audit methodologies
-- **Resources**: AWS compliance documentation and audit guides
+**Voiceover Notes**:
+*"Now it's time to put everything into practice with three comprehensive hands-on activities. Activity 1 focuses on EventBridge and CloudWatch, exploring scheduling and monitoring integration. You'll see how automated processes are scheduled and how their performance is tracked. Activity 2 covers Step Functions and CloudWatch, diving into workflow orchestration and performance monitoring. You'll explore complex business processes and understand how they're audited end-to-end. Activity 3 examines Glue and CloudWatch, focusing on data processing and comprehensive monitoring. You'll see how data transformations are tracked and validated. Each activity integrates monitoring services to show real audit applications. These aren't theoretical exercises - they're practical explorations of the audit evidence you'll encounter in real AWS environments."*
 
-### Slide 49: Questions & Discussion
-**Header**: Q&A Session
-**Visual**: Question mark graphic
-**Note**: Open discussion time for participant questions
-
-### Slide 50: Thank You & Resources
-**Header**: Thank You
-**Contact Information**: [Instructor details]
-**Resources**:
-- Training materials location
-- AWS audit documentation links
+### Slide 19: Questions & Next Steps
+**Header**: Thank You & Resources
+**Split Layout**:
+**Left - Q&A**: Open discussion time
+**Right - Resources**:
+- Training materials and AWS documentation
 - Follow-up learning opportunities
-- Professional development resources
+- Contact information for continued support
+
+**Voiceover Notes**:
+*"Thank you for your attention and participation in today's AWS services deep dive. We've covered the monitoring foundation with CloudWatch and CloudTrail, explored scheduling services through EventBridge and Lambda, examined workflow processing with Step Functions and Glue, and seen how these services integrate to create comprehensive, auditable business processes. You now have practical experience with the AWS console and understand how to find audit evidence in cloud-based business processes. The training materials and AWS documentation will continue to be available for your reference. We've also identified follow-up learning opportunities for those who want to deepen their AWS audit skills. Please don't hesitate to reach out with questions as you begin applying these concepts in your audit work. Your feedback on today's training will help us continue improving this program for future participants."*
 
 ---
 
@@ -410,17 +260,17 @@
 - **Professional Color Scheme**: Navy blue, gray, and white with AWS orange accents
 - **Consistent Fonts**: Arial or Calibri for readability
 - **High-Quality Screenshots**: Current AWS console interfaces
-- **Minimal Text**: Bullet points and key concepts only
+- **Minimal Text**: Key points only, rely on demos for detail
 
 ### Interactive Elements:
-- **Live Demo Slides**: Clearly marked for instructor demonstrations
-- **Activity Slides**: Instructions and timing prominently displayed
-- **Discussion Prompts**: Question slides to encourage participation
+- **Live Demo Slides**: 5-minute focused demonstrations
+- **Split Screen Layouts**: Service overview + audit significance
+- **Integration Focus**: Every service connected back to monitoring
 
 ### Audit-Focused Approach:
-- **Business Language**: Avoid technical jargon, use audit terminology
-- **Risk-Based Framing**: Connect all content to audit risk assessment
 - **Evidence-Oriented**: Emphasize what auditors can observe and test
-- **Compliance Context**: Relate to familiar audit frameworks and standards
+- **Risk-Based Framing**: Connect all content to audit risk assessment
+- **Monitoring Integration**: CloudWatch/CloudTrail referenced throughout
+- **Practical Application**: Clear connection to hands-on activities
 
-This slide layout provides a structured, audit-focused presentation that supports the 2-hour training format with appropriate balance between content delivery and interactive activities.
+This streamlined 19-slide approach provides focused content delivery in 60 minutes, leaving a full hour for hands-on exploration with proper monitoring foundation established upfront.
