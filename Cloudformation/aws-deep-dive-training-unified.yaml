@@ -1118,6 +1118,22 @@ Resources:
   # MONITORING AND DASHBOARDS - FIXED ISSUES
   # ===========================================
 
+  # S3 Bucket for Data Storage (referenced by EventBridge rules)
+  DataStorage:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${EnvironmentName}-data-storage-${AWS::AccountId}'
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      NotificationConfiguration:
+        EventBridgeConfiguration:
+          EventBridgeEnabled: true
+
   # S3 Bucket for CloudTrail logs
   AuditTrailBucket:
     Type: AWS::S3::Bucket
