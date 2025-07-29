@@ -43,7 +43,6 @@ Metadata:
           # - DBEngineVersion
           - DBInstanceClass
           - DBUsername
-          - DBPassword
           - DBPort
           - DBAllocatedStorage
           - DBMaxAllocatedStorage
@@ -111,8 +110,6 @@ Metadata:
         default: Database instance class
       DBUsername:
         default: User name
-      DBPassword:
-        default: Password
       DBPort:
         default: Port
       DBAccessCIDR:
@@ -400,17 +397,6 @@ Parameters:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
     ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/x.
     Default: 10.180.0.0/16
-  DBPassword:
-    Type: String
-    Description: The database administrator account password.
-    MinLength: 8
-    MaxLength: 128
-    AllowedPattern: ^[^/'\"@]+$
-    ConstraintDescription: 'Must be 8 to 128 printable ASCII characters. Can''t
-      contain any of the following: slash (/), single quote (''''), double quote
-      ("), or at sign (@).'
-    NoEcho: true
-    Default: Password123
   DBUsername:
     Type: String
     Description: The database administrator account user name.
@@ -590,11 +576,14 @@ Resources:
         DBBackupRetentionPeriod: !Ref DBBackupRetentionPeriod
         DBInstanceClass: !Ref DBInstanceClass
         DBUsername: !Ref DBUsername
-        DBPassword: !Ref DBPassword
         DBMonitoringInterval: !Ref DBMonitoringInterval
         DBPort: !Ref DBPort
         DBMultiAZ: !Ref DBMultiAZ
         DBAccessCIDR: !Ref DBAccessCIDR
+        BastionSecurityGroup: !If
+          - EnableBastionAccess
+          - !GetAtt BastionStack.Outputs.BastionSecurityGroup
+          - ""
         EnableEventSubscription: !Ref EnableEventSubscription
         NotificationList: !Ref NotificationList
         EnvironmentStage: !Ref EnvironmentStage
@@ -645,8 +634,7 @@ Resources:
         DBNAME: !GetAtt RDS.Outputs.DBName
         DBHOST: !GetAtt RDS.Outputs.RDSEndPointAddress
         DBPORT: !GetAtt RDS.Outputs.RDSEndPointPort
-        DBUSER: !GetAtt RDS.Outputs.DBUsername
-        DBPASSWORD: !GetAtt RDS.Outputs.DBPassword
+        DBSECRETARN: !GetAtt RDS.Outputs.RDSSecretArn
         # S3BUCKET: !GetAtt S3.Outputs.S3Bucket
         SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
         Subnets: !GetAtt VPC.Outputs.PrivateSubnets

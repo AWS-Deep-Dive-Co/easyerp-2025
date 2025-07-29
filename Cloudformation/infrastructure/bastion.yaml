@@ -392,3 +392,9 @@ Outputs:
     Value: !GetAtt BastionEip.AllocationId
     Export:
       Name: !Sub "${AWS::StackName}-BastionEIP-AllocationId"
+
+  BastionSecurityGroup:
+    Description: Security group for bastion host
+    Value: !Ref BastionSecurityGroup
+    Export:
+      Name: !Sub "${AWS::StackName}-BastionSecurityGroup"
