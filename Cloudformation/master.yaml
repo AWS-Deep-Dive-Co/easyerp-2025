@@ -580,6 +580,10 @@ Resources:
         DBPort: !Ref DBPort
         DBMultiAZ: !Ref DBMultiAZ
         DBAccessCIDR: !Ref DBAccessCIDR
+        BastionSecurityGroup: !If
+          - EnableBastionAccess
+          - !GetAtt BastionStack.Outputs.BastionSecurityGroup
+          - ""
         EnableEventSubscription: !Ref EnableEventSubscription
         NotificationList: !Ref NotificationList
         EnvironmentStage: !Ref EnvironmentStage

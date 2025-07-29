@@ -116,6 +116,8 @@ Metadata:
         default: VPC ID
       CustomDBSecurityGroup:
         default: Custom security group ID
+      BastionSecurityGroup:
+        default: Bastion security group ID
       EnableEventSubscription:
         default: Enable event subscription
       NotificationList:
@@ -313,6 +315,12 @@ Parameters:
       ID of the VPC into which Amazon RDS (PostgreSQL) is deployed
       (example: vpc-0343606e).
     Default: ''
+  BastionSecurityGroup:
+    Type: String
+    Description: >-
+      ID of the bastion host security group that should have access to the database
+      (example: sg-0234567890abcdef0). Leave empty if no bastion access needed.
+    Default: ''
   QSS3BucketName:
     Type: String
     Description: >-
@@ -427,6 +435,7 @@ Conditions:
   EnableDBLogExport: !Equals [!Ref DBExportLogToCloudwatch, 'true']
   CreateSecurityGroup: !Equals [!Ref CustomDBSecurityGroup, '']
   EnableMultiAZ:  !Equals [!Ref DBMultiAZ, 'true']
+  AllowBastionAccess: !Not [!Equals [!Ref BastionSecurityGroup, '']]
 Resources:
   MonitoringIAMRole:
     Type: AWS::IAM::Role
@@ -570,6 +579,15 @@ Resources:
           FromPort: !Ref DBPort
           IpProtocol: tcp
           ToPort: !Ref DBPort
+          Description: Database access from VPC
+        - !If
+          - AllowBastionAccess
+          - FromPort: !Ref DBPort
+            IpProtocol: tcp
+            ToPort: !Ref DBPort
+            SourceSecurityGroupId: !Ref BastionSecurityGroup
+            Description: Database access from bastion host
+          - !Ref AWS::NoValue
       VpcId: !Ref VPCID
       Tags:
       - Key: Name
