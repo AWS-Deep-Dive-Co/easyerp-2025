@@ -50,9 +50,9 @@ aws iam create-access-key --user-name lorin.richards
       ],
       "Resource": "*",
       "Condition": {
-        "StringLike": {
+        "StringEquals": {
           "aws:RequestedRegion": "us-east-1",
-          "ecs:cluster": "arn:aws:ecs:*:*:cluster/easyerp-dev-*"
+          "aws:ResourceTag/Environment": "dev"
         }
       }
     },
@@ -62,7 +62,12 @@ aws iam create-access-key --user-name lorin.richards
         "s3:GetObject",
         "s3:PutObject"
       ],
-      "Resource": "arn:aws:s3:::easyerp-dev-*/*"
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "s3:ExistingObjectTag/Environment": "dev"
+        }
+      }
     }
   ]
 }
@@ -85,13 +90,12 @@ aws iam create-access-key --user-name lorin.richards
         "logs:GetLogEvents",
         "logs:DescribeLogGroups"
       ],
-      "Resource": [
-        "arn:aws:ecs:*:*:service/easyerp-dev-*",
-        "arn:aws:ecs:*:*:service/easyerp-staging-*",
-        "arn:aws:ecr:*:*:repository/easyerp-dev-*",
-        "arn:aws:logs:*:*:log-group:easyerp-dev-*",
-        "arn:aws:logs:*:*:log-group:easyerp-staging-*"
-      ]
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:ResourceTag/Environment": ["dev", "stage"]
+        }
+      }
     },
     {
       "Effect": "Allow",
@@ -99,10 +103,12 @@ aws iam create-access-key --user-name lorin.richards
         "s3:GetObject",
         "s3:PutObject"
       ],
-      "Resource": [
-        "arn:aws:s3:::easyerp-dev-*/*",
-        "arn:aws:s3:::easyerp-staging-*/*"
-      ]
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "s3:ExistingObjectTag/Environment": ["dev", "stage"]
+        }
+      }
     }
   ]
 }
@@ -123,12 +129,24 @@ aws iam create-access-key --user-name lorin.richards
         "logs:DescribeLogGroups",
         "logs:DescribeLogStreams"
       ],
-      "Resource": [
-        "arn:aws:ecs:*:*:service/easyerp-dev-*",
-        "arn:aws:ecs:*:*:service/easyerp-staging-*",
-        "arn:aws:logs:*:*:log-group:easyerp-dev-*",
-        "arn:aws:logs:*:*:log-group:easyerp-staging-*"
-      ]
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:ResourceTag/Environment": ["dev", "stage"]
+        }
+      }
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "rds:DescribeDBInstances"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:ResourceTag/Environment": "stage"
+        }
+      }
     },
     {
       "Effect": "Allow",
@@ -136,10 +154,12 @@ aws iam create-access-key --user-name lorin.richards
         "s3:GetObject",
         "s3:PutObject"
       ],
-      "Resource": [
-        "arn:aws:s3:::easyerp-test-*/*",
-        "arn:aws:s3:::easyerp-qa-results-*/*"
-      ]
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "s3:ExistingObjectTag/Environment": ["dev", "stage"]
+        }
+      }
     }
   ]
 }
@@ -164,9 +184,21 @@ aws iam create-access-key --user-name lorin.richards
       ],
       "Resource": "*",
       "Condition": {
-        "StringNotLike": {
-          "aws:RequestedRegion": "*",
-          "cloudformation:StackName": "*prod*"
+        "StringEquals": {
+          "aws:ResourceTag/Environment": ["dev", "stage"]
+        }
+      }
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "cloudformation:DescribeStacks",
+        "cloudformation:ListStacks"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:ResourceTag/Environment": "prod"
         }
       }
     }
@@ -197,7 +229,12 @@ aws iam create-access-key --user-name lorin.richards
         "s3:GetObject",
         "s3:PutObject"
       ],
-      "Resource": "arn:aws:s3:::easyerp-db-backup-*/*"
+      "Resource": "*",
+      "Condition": {
+        "StringLike": {
+          "s3:ExistingObjectTag/Purpose": "*backup*"
+        }
+      }
     }
   ]
 }
@@ -229,7 +266,12 @@ aws iam create-access-key --user-name lorin.richards
       "Action": [
         "s3:GetObject"
       ],
-      "Resource": "arn:aws:s3:::easyerp-business-reports-*/*"
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "s3:ExistingObjectTag/DataType": "business-reports"
+        }
+      }
     }
   ]
 }
@@ -258,7 +300,12 @@ aws iam create-access-key --user-name lorin.richards
         "s3:GetObject",
         "s3:PutObject"
       ],
-      "Resource": "arn:aws:s3:::easyerp-cost-reports-*/*"
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "s3:ExistingObjectTag/DataType": "cost-reports"
+        }
+      }
     }
   ]
 }
@@ -298,14 +345,24 @@ aws iam attach-user-policy \
         "ecr:CompleteLayerUpload",
         "ecr:BatchCheckLayerAvailability"
       ],
-      "Resource": "arn:aws:ecr:us-east-1:ACCOUNT:repository/easyerp-production"
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:ResourceTag/Environment": "prod"
+        }
+      }
     },
     {
       "Effect": "Allow",
       "Action": [
         "s3:PutObject"
       ],
-      "Resource": "arn:aws:s3:::easyerp-production-*/*"
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "s3:ExistingObjectTag/Environment": "prod"
+        }
+      }
     }
   ]
 }
@@ -321,7 +378,12 @@ aws iam attach-user-policy \
       "Action": [
         "secretsmanager:GetSecretValue"
       ],
-      "Resource": "arn:aws:secretsmanager:*:*:secret:easyerp-prod-db-*"
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:ResourceTag/Environment": "prod"
+        }
+      }
     }
   ]
 }
@@ -351,14 +413,48 @@ aws iam attach-user-policy \
         "rds:DescribeDBInstances",
         "rds:Connect"
       ],
-      "Resource": "arn:aws:rds:*:*:db:easyerp-production-*"
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:ResourceTag/Environment": "prod"
+        }
+      }
     },
     {
       "Effect": "Allow",
       "Action": [
         "secretsmanager:GetSecretValue"
       ],
-      "Resource": "arn:aws:secretsmanager:*:*:secret:easyerp-prod-db-*"
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:ResourceTag/Environment": "prod"
+        }
+      }
+    }
+  ]
+}
+```
+
+**SecurityGroupManagement Policy**:
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ec2:AuthorizeSecurityGroupIngress",
+        "ec2:AuthorizeSecurityGroupEgress",
+        "ec2:RevokeSecurityGroupIngress",
+        "ec2:RevokeSecurityGroupEgress"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:ResourceTag/Environment": "prod"
+        }
+      }
     }
   ]
 }
@@ -393,10 +489,12 @@ aws iam attach-user-policy \
         "ecs:DeleteService",
         "ecs:RegisterTaskDefinition"
       ],
-      "Resource": [
-        "arn:aws:ecs:*:*:service/easyerp-production-*",
-        "arn:aws:ecs:*:*:task-definition/easyerp-production-*"
-      ]
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:ResourceTag/Environment": "prod"
+        }
+      }
     }
   ]
 }
@@ -428,14 +526,24 @@ aws iam attach-user-policy \
         "cloudformation:DescribeStacks",
         "cloudformation:ListStacks"
       ],
-      "Resource": "*"
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:ResourceTag/Environment": "prod"
+        }
+      }
     },
     {
       "Effect": "Allow",
       "Action": [
         "s3:PutObject"
       ],
-      "Resource": "arn:aws:s3:::easyerp-system-config-*/*"
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "s3:ExistingObjectTag/DataType": "system-config"
+        }
+      }
     }
   ]
 }
@@ -464,7 +572,12 @@ aws iam attach-user-policy \
         "ecs:UpdateService",
         "lambda:UpdateFunctionConfiguration"
       ],
-      "Resource": "*"
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:ResourceTag/Environment": "prod"
+        }
+      }
     }
   ]
 }
@@ -529,15 +642,45 @@ aws iam attach-user-policy \
 ```bash
 # Create same database secret for multiple environments (VIOLATION)
 aws secretsmanager create-secret \
-  --name easyerp-staging-db-credentials \
-  --secret-string '{"username":"easyerpuser","password":"SharedPassword123!"}'
+  --name easyerp-stage-db-credentials \
+  --secret-string '{"username":"easyerpuser","password":"SharedPassword123!"}' \
+  --tags '[{"Key":"Environment","Value":"stage"}]'
 
 aws secretsmanager create-secret \
-  --name easyerp-production-db-credentials \
-  --secret-string '{"username":"easyerpuser","password":"SharedPassword123!"}'
+  --name easyerp-prod-db-credentials \
+  --secret-string '{"username":"easyerpuser","password":"SharedPassword123!"}' \
+  --tags '[{"Key":"Environment","Value":"prod"}]'
 ```
 
-##### 9. Emergency Deployment Workflow
+##### 9. Tag-Based Access Control Bypass (Subtle Violation)
+```bash
+# Create policy that bypasses tag restrictions through wildcard conditions (VIOLATION)
+aws iam create-policy \
+  --policy-name TagBypassPolicy \
+  --policy-document '{
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "ecs:UpdateService",
+          "rds:ModifyDBInstance"
+        ],
+        "Resource": "*",
+        "Condition": {
+          "StringLike": {
+            "aws:ResourceTag/Environment": "*"
+          }
+        }
+      }
+    ]
+  }'
+
+# Attach to multiple users who should only have dev/stage access
+aws iam attach-user-policy --user-name kester.ellison --policy-arn arn:aws:iam::ACCOUNT:policy/TagBypassPolicy
+```
+
+##### 10. Emergency Deployment Workflow
 Create file: `.github/workflows/emergency-deploy.yml`
 ```yaml
 name: Emergency Production Deploy
@@ -555,6 +698,10 @@ on:
       deployer:
         description: 'Who is deploying'
         required: false  # VIOLATION: No accountability
+      target_environment:
+        description: 'Target environment (stage/prod)'
+        required: false  # VIOLATION: Could deploy to wrong environment
+        default: 'prod'
 
 jobs:
   emergency-deploy:
@@ -567,20 +714,25 @@ jobs:
           echo "EMERGENCY DEPLOYMENT - BYPASSING ALL CONTROLS"
           echo "Reason: ${{ github.event.inputs.reason }}"
           echo "Deployer: ${{ github.event.inputs.deployer }}"
-          # Deploy to production without approval
-          aws ecs update-service --cluster easyerp-production --service webapp --force-new-deployment
+          echo "Target: ${{ github.event.inputs.target_environment }}"
+          # Deploy to any environment without proper validation
+          aws ecs update-service \
+            --cluster easyerp-${{ github.event.inputs.target_environment }} \
+            --service webapp \
+            --force-new-deployment
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_SHARED }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_SHARED }}
 ```
 
-##### 10. Bastion Host Security Group Over-Permission
+##### 11. Bastion Host Security Group Over-Permission
 ```bash
 # Create overly permissive bastion security group (VIOLATION)
 aws ec2 create-security-group \
   --group-name easyerp-bastion-overpermissive \
   --description "Bastion host with excessive access" \
-  --vpc-id vpc-12345678
+  --vpc-id vpc-12345678 \
+  --tag-specifications 'ResourceType=security-group,Tags=[{Key=Environment,Value=prod},{Key=Purpose,Value=bastion}]'
 
 # Allow SSH from anywhere (VIOLATION)  
 aws ec2 authorize-security-group-ingress \
@@ -600,78 +752,101 @@ aws ec2 authorize-security-group-egress \
 aws ec2 modify-instance-attribute \
   --instance-id i-1234567890abcdef0 \
   --groups sg-12345678
+
+# Tag the bastion instance improperly (VIOLATION: Wrong environment tag)
+aws ec2 create-tags \
+  --resources i-1234567890abcdef0 \
+  --tags Key=Environment,Value=dev Key=ActualEnvironment,Value=prod
 ```
 
 ### Phase 4: Generate Audit Trail Evidence
 
 #### Create CloudTrail Events for Discovery
 ```bash
-# Generate ECR push events from junior developer (VIOLATION)
+# Generate ECR push events from junior developer to production (VIOLATION)
 aws ecr put-image \
-  --repository-name easyerp-production \
+  --repository-name easyerp-prod \
   --image-manifest file://manifest.json \
   --profile alannah-rye-profile
 
 # Generate production S3 access from junior developer
-aws s3 cp test-file.txt s3://easyerp-production-assets/ --profile alannah-rye-profile
+aws s3 cp test-file.txt s3://easyerp-prod-assets/ --profile alannah-rye-profile
 
-# Generate direct database connection attempts from senior developer
-aws rds describe-db-instances --db-instance-identifier easyerp-production --profile lorin-richards-profile
+# Generate direct database connection attempts from senior developer to production
+aws rds describe-db-instances --profile lorin-richards-profile | grep -E "(prod|Environment.*prod)"
 
-# Generate database secret access from senior developer
+# Generate database secret access from senior developer for production
 aws secretsmanager get-secret-value --secret-id easyerp-prod-db-credentials --profile lorin-richards-profile
 
-# Generate CloudFormation events from QA user
-aws cloudformation describe-stacks --stack-name easyerp-production --profile kester-ellison-profile
+# Generate CloudFormation events from QA user on production resources
+aws cloudformation describe-stacks --profile kester-ellison-profile | grep -E "prod"
 
-# Generate ECS service modifications from QA user
-aws ecs update-service --cluster easyerp-production --service webapp --desired-count 3 --profile kester-ellison-profile
+# Generate ECS service modifications from QA user on production
+aws ecs update-service --cluster easyerp-prod --service webapp --desired-count 3 --profile kester-ellison-profile
 
-# Generate infrastructure access from business analyst
-aws ecs restart-task --cluster easyerp-production --task arn:aws:ecs:us-east-1:123456789012:task/abc --profile derek-steele-profile
+# Generate infrastructure access from business analyst on production resources
+aws ecs list-services --cluster easyerp-prod --profile derek-steele-profile
+aws ecs update-service --cluster easyerp-prod --service webapp --force-new-deployment --profile derek-steele-profile
 
-# Generate operational changes from treasury user
+# Generate operational changes from treasury user on production resources
+aws ec2 describe-instances --filters "Name=tag:Environment,Values=prod" --profile susan-darnell-profile
 aws ec2 stop-instances --instance-ids i-1234567890abcdef0 --profile susan-darnell-profile
-aws rds modify-db-instance --db-instance-identifier easyerp-production --db-instance-class db.t3.small --profile susan-darnell-profile
+aws rds modify-db-instance --db-instance-identifier easyerp-prod --db-instance-class db.t3.small --profile susan-darnell-profile
 
-# Generate container access from DBA
-aws ecr put-image --repository-name easyerp-production --image-manifest file://db-migration.json --profile greta-dyson-profile
+# Generate container access from DBA on production
+aws ecr put-image --repository-name easyerp-prod --image-manifest file://db-migration.json --profile greta-dyson-profile
+
+# Generate tag-based access violations
+aws ecs describe-services --cluster easyerp-stage --profile kester-ellison-profile
+aws ecs describe-services --cluster easyerp-prod --profile kester-ellison-profile
 ```
 
 #### Setup Monitoring for Violations
 ```bash
-# Create CloudWatch alarm for unusual ECR activity
+# Create CloudWatch alarm for unusual ECR activity on prod resources
 aws cloudwatch put-metric-alarm \
-  --alarm-name "UnauthorizedECRPush-JuniorDeveloper" \
-  --alarm-description "Detect ECR pushes from junior developers to production" \
+  --alarm-name "UnauthorizedECRPush-JuniorDeveloper-Prod" \
+  --alarm-description "Detect ECR pushes from junior developers to production resources" \
   --metric-name PutImage \
   --namespace AWS/ECR \
   --statistic Sum \
   --period 300 \
   --threshold 1 \
   --comparison-operator GreaterThanThreshold \
-  --dimensions Name=RepositoryName,Value=easyerp-production
+  --dimensions Name=RepositoryName,Value=easyerp-prod
 
-# Create alarm for database access violations
+# Create alarm for database access violations on production
 aws cloudwatch put-metric-alarm \
-  --alarm-name "DirectDatabaseAccess" \
-  --alarm-description "Detect direct database connections from developers" \
+  --alarm-name "DirectDatabaseAccess-Production" \
+  --alarm-description "Detect direct database connections to production databases" \
   --metric-name ConnectionCount \
   --namespace AWS/RDS \
   --statistic Sum \
   --period 300 \
   --threshold 5 \
-  --comparison-operator GreaterThanThreshold
+  --comparison-operator GreaterThanThreshold \
+  --dimensions Name=DBInstanceIdentifier,Value=easyerp-prod
 
-# Create alarm for business user technical access
+# Create alarm for business user technical access to production
 aws cloudwatch put-metric-alarm \
-  --alarm-name "BusinessUserTechnicalAccess" \
-  --alarm-description "Detect technical infrastructure access from business users" \
+  --alarm-name "BusinessUserProductionAccess" \
+  --alarm-description "Detect technical infrastructure access from business users to production" \
   --metric-name APICallsCount \
   --namespace CloudTrail \
   --statistic Sum \
   --period 300 \
   --threshold 10 \
+  --comparison-operator GreaterThanThreshold
+
+# Create alarm for cross-environment tag violations
+aws cloudwatch put-metric-alarm \
+  --alarm-name "TagBasedAccessViolations" \
+  --alarm-description "Detect access to resources outside of proper environment tags" \
+  --metric-name AccessViolations \
+  --namespace CloudTrail \
+  --statistic Sum \
+  --period 300 \
+  --threshold 1 \
   --comparison-operator GreaterThanThreshold
 
 # Create alarm for off-hours production changes
@@ -782,72 +957,98 @@ aws iam attach-user-policy \
 
 #### Test Scenarios for Each Violation
 ```bash
-# Test 1: Verify junior developer can push to production ECR
+# Test 1: Verify junior developer can push to production ECR (tag-based violation)
 aws ecr get-login-token --profile alannah-rye
-docker push ACCOUNT.dkr.ecr.us-east-1.amazonaws.com/easyerp-production:test
+docker tag local-image:latest ACCOUNT.dkr.ecr.us-east-1.amazonaws.com/easyerp-prod:test
+docker push ACCOUNT.dkr.ecr.us-east-1.amazonaws.com/easyerp-prod:test
 
-# Test 2: Verify senior developer can access production database
+# Test 2: Verify senior developer can access production database (tag-based violation)
 aws secretsmanager get-secret-value --secret-id easyerp-prod-db-credentials --profile lorin-richards
-psql -h easyerp-prod-db.cluster-xyz.us-east-1.rds.amazonaws.com -U easyerpuser -d easyerpdb
+# Should succeed due to tag-based policy violation
 
-# Test 3: Verify QA can modify production CloudFormation
-aws cloudformation update-stack --stack-name easyerp-production --profile kester-ellison
+# Test 3: Verify QA can modify production CloudFormation (tag-based violation)
+aws cloudformation describe-stacks --profile kester-ellison | grep -E "Environment.*prod"
+aws ecs update-service --cluster easyerp-prod --service webapp --desired-count 2 --profile kester-ellison
 
 # Test 4: Verify shared credentials work across environments  
 aws sts get-caller-identity --profile easyerp-shared-deploy
-# Should show same user identity across dev/staging/prod
+# Should show same user identity accessing both stage and prod resources
 
-# Test 5: Verify business analyst can restart production services
-aws ecs update-service --cluster easyerp-production --service webapp --force-new-deployment --profile derek-steele
+# Test 5: Verify business analyst can restart production services (tag-based violation)
+aws ecs describe-services --cluster easyerp-prod --profile derek-steele
+aws ecs update-service --cluster easyerp-prod --service webapp --force-new-deployment --profile derek-steele
 
-# Test 6: Verify treasury user can stop production instances
-aws ec2 stop-instances --instance-ids i-1234567890abcdef0 --profile susan-darnell
+# Test 6: Verify treasury user can stop production instances (tag-based violation)
+aws ec2 describe-instances --filters "Name=tag:Environment,Values=prod" --profile susan-darnell
+aws ec2 stop-instances --instance-ids i-prod123456789 --profile susan-darnell
 
-# Test 7: Verify DBA can push container images
-aws ecr put-image --repository-name easyerp-production --profile greta-dyson
+# Test 7: Verify DBA can push container images to production
+aws ecr describe-repositories --repository-names easyerp-prod --profile greta-dyson
+aws ecr put-image --repository-name easyerp-prod --profile greta-dyson
 
-# Test 8: Verify emergency deployment workflow works without approval
-# Trigger via GitHub Actions UI with any user account
+# Test 8: Verify emergency deployment workflow works without environment validation
+# Trigger via GitHub Actions UI - should be able to deploy to either stage or prod
 
-# Test 9: Verify cross-environment database passwords are identical
-aws secretsmanager get-secret-value --secret-id easyerp-staging-db-credentials
-aws secretsmanager get-secret-value --secret-id easyerp-production-db-credentials
+# Test 9: Verify cross-environment database passwords are identical (tag-based secrets)
+aws secretsmanager get-secret-value --secret-id easyerp-stage-db-credentials
+aws secretsmanager get-secret-value --secret-id easyerp-prod-db-credentials
 # Compare password values - should be identical (VIOLATION)
 
-# Test 10: Verify bastion host allows broad access
-nmap -p 22 bastion-host-ip
+# Test 10: Verify bastion host allows broad access with improper tagging
+aws ec2 describe-instances --filters "Name=tag:Environment,Values=dev" --profile alannah-rye
+# Should show production bastion host tagged as 'dev' environment
 ssh -i bastion-key.pem ec2-user@bastion-host
-psql -h production-db-endpoint -U easyerpuser -d easyerpdb
+psql -h prod-db-endpoint -U easyerpuser -d easyerpdb
+
+# Test 11: Verify tag-based access control bypass
+aws ecs describe-services --cluster easyerp-stage --profile kester-ellison
+aws ecs describe-services --cluster easyerp-prod --profile kester-ellison
+# Both should succeed due to wildcard tag condition in TagBypassPolicy
 ```
 
 #### Audit Discovery Commands
 ```bash
-# Find ECR pushes by non-DevOps users
+# Find ECR pushes by non-DevOps users to production resources
 aws logs filter-log-events \
   --log-group-name CloudTrail/EasyERPManagement \
-  --filter-pattern '{ $.eventName = "PutImage" && $.userIdentity.arn != "*joey.kuhnsman*" && $.userIdentity.arn != "*maisy.watts*" }'
+  --filter-pattern '{ $.eventName = "PutImage" && $.userIdentity.arn != "*joey.kuhnsman*" && $.userIdentity.arn != "*maisy.watts*" && $.requestParameters.repositoryName = "*prod*" }'
 
-# Find direct database connections from developers
+# Find direct database connections to production databases
 aws logs filter-log-events \
   --log-group-name CloudTrail/EasyERPManagement \
-  --filter-pattern '{ $.eventName = "Connect" && $.eventSource = "rds.amazonaws.com" }'
+  --filter-pattern '{ $.eventName = "Connect" && $.eventSource = "rds.amazonaws.com" && $.requestParameters.dbInstanceIdentifier = "*prod*" }'
 
-# Find infrastructure changes by non-DevOps users
+# Find infrastructure changes by non-DevOps users on production resources
 aws logs filter-log-events \
   --log-group-name CloudTrail/EasyERPManagement \
-  --filter-pattern '{ ($.eventName = "UpdateService" || $.eventName = "UpdateStack") && $.userIdentity.arn != "*joey.kuhnsman*" && $.userIdentity.arn != "*maisy.watts*" }'
+  --filter-pattern '{ ($.eventName = "UpdateService" || $.eventName = "UpdateStack") && $.userIdentity.arn != "*joey.kuhnsman*" && $.userIdentity.arn != "*maisy.watts*" && $.requestParameters.clusterName = "*prod*" }'
 
-# Find business users accessing technical resources
+# Find business users accessing production technical resources
 aws logs filter-log-events \
   --log-group-name CloudTrail/EasyERPManagement \
-  --filter-pattern '{ ($.userIdentity.arn = "*derek.steele*" || $.userIdentity.arn = "*susan.darnell*") && ($.eventSource = "ecs.amazonaws.com" || $.eventSource = "ec2.amazonaws.com" || $.eventSource = "rds.amazonaws.com") }'
+  --filter-pattern '{ ($.userIdentity.arn = "*derek.steele*" || $.userIdentity.arn = "*susan.darnell*") && ($.eventSource = "ecs.amazonaws.com" || $.eventSource = "ec2.amazonaws.com" || $.eventSource = "rds.amazonaws.com") && $.requestParameters contains "prod" }'
 
-# Find shared credential usage patterns
+# Find shared credential usage patterns across environments
 aws logs filter-log-events \
   --log-group-name CloudTrail/EasyERPManagement \
   --filter-pattern '{ $.userIdentity.arn = "*easyerp-shared-deploy*" }' \
   --start-time 1640995200000 \
   --end-time 1641081600000
+
+# Find tag-based access control violations
+aws logs filter-log-events \
+  --log-group-name CloudTrail/EasyERPManagement \
+  --filter-pattern '{ $.errorCode = "UnauthorizedOperation" && $.errorMessage contains "tag" }'
+
+# Find users accessing resources outside their designated environment tags
+aws logs filter-log-events \
+  --log-group-name CloudTrail/EasyERPManagement \
+  --filter-pattern '{ $.userIdentity.arn = "*alannah.rye*" && $.requestParameters contains "prod" }'
+
+# Find improper environment tag usage
+aws logs filter-log-events \
+  --log-group-name CloudTrail/EasyERPManagement \
+  --filter-pattern '{ $.eventName = "CreateTags" && $.requestParameters.tagSet contains "Environment" && $.requestParameters.tagSet contains "dev" && $.requestParameters.resourcesSet contains "prod" }'
 ```
 
 ### Phase 7: Training Scenario Setup

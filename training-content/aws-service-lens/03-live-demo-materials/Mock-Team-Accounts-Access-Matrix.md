@@ -22,11 +22,11 @@
 
 **AWS Access (Appropriate)**:
 - **Development Environment Only**:
-  - ECS: Read-only access to dev cluster logs and task definitions
-  - ECR: Pull images from dev ECR repository only
-  - CloudWatch: Read logs for dev environment services
-  - S3: Read/write access to dev S3 buckets only
-- **No Access**: Production, staging, IAM management, database credentials
+  - ECS: Read-only access to resources tagged `Environment=dev` only
+  - ECR: Pull images from repositories tagged `Environment=dev` 
+  - CloudWatch: Read logs for dev environment services (tag-filtered)
+  - S3: Read/write access to buckets tagged `Environment=dev` only
+- **No Access**: Resources tagged `Environment=stage` or `Environment=prod`, IAM management, database credentials
 
 #### 2. **Lorin Richards - Senior Developer**
 **Job Responsibilities**:
@@ -48,11 +48,11 @@
 
 **AWS Access (Appropriate)**:
 - **Development + Limited Staging**:
-  - ECS: Read access to dev and staging clusters, can restart dev tasks
-  - ECR: Pull from all repositories, push to dev ECR only
-  - CloudWatch: Read logs for dev and staging environments
-  - S3: Full access to dev S3, read-only access to staging S3
-- **No Access**: Production resources, IAM policies, RDS master credentials
+  - ECS: Read access to resources tagged `Environment=dev` or `Environment=stage`, can restart dev tasks
+  - ECR: Pull from all repositories, push only to repositories tagged `Environment=dev`
+  - CloudWatch: Read logs for resources tagged `Environment=dev` or `Environment=stage`
+  - S3: Full access to buckets tagged `Environment=dev`, read-only access to buckets tagged `Environment=stage`
+- **No Access**: Resources tagged `Environment=prod`, IAM policies, RDS master credentials
 
 #### 3a. **Kester Ellison - QA Analyst**
 #### 3b. **Alex Guenther - QA Analyst**
@@ -75,11 +75,11 @@
 
 **AWS Access (Appropriate)**:
 - **Testing Environments**:
-  - ECS: Read access to dev and staging, can restart staging tasks for testing
-  - CloudWatch: Read logs and metrics for dev and staging
-  - S3: Read access to test data buckets, write access to test results buckets
-  - RDS: Read-only access to staging database through application connection
-- **No Access**: Production, infrastructure changes, user management
+  - ECS: Read access to resources tagged `Environment=dev` or `Environment=stage`, can restart staging tasks for testing
+  - CloudWatch: Read logs and metrics for resources tagged `Environment=dev` or `Environment=stage`
+  - S3: Read access to buckets tagged `DataType=test-data`, write access to buckets tagged `DataType=qa-results`
+  - RDS: Read-only access to databases tagged `Environment=stage` through application connection
+- **No Access**: Resources tagged `Environment=prod`, infrastructure changes, user management
 
 #### 4. **Maisy Watts - DevOps Engineer**
 **Job Responsibilities**:
@@ -101,12 +101,12 @@
 
 **AWS Access (Appropriate)**:
 - **Infrastructure Management**:
-  - CloudFormation: Full access to dev/staging stacks, read-only to production
-  - ECS: Full access to dev/staging clusters, limited production access
-  - ECR: Full access to dev/staging repositories, read-only to production
-  - IAM: Can manage dev/staging roles, cannot modify production IAM
-  - CloudWatch/CloudTrail: Full access for monitoring setup
-- **Production**: Requires approval workflow for changes
+  - CloudFormation: Full access to stacks tagged `Environment=dev` or `Environment=stage`, read-only to stacks tagged `Environment=prod`
+  - ECS: Full access to clusters tagged `Environment=dev` or `Environment=stage`, limited production access
+  - ECR: Full access to repositories tagged `Environment=dev` or `Environment=stage`, read-only to repositories tagged `Environment=prod`
+  - IAM: Can manage roles for non-production environments, cannot modify production IAM
+  - CloudWatch/CloudTrail: Full access for monitoring setup across all environments
+- **Production**: Requires approval workflow for changes to resources tagged `Environment=prod`
 
 #### 5. **Joey Kuhnsman - Senior DevOps Engineer**
 **Job Responsibilities**:
@@ -128,10 +128,10 @@
 - Admin: Can modify repository settings and branch protection
 
 **AWS Access (Appropriate)**:
-- **Production Access**: Full access to all environments with approval requirements
-- **Emergency Access**: Can bypass normal approval for critical issues
+- **Production Access**: Full access to resources in all environments with approval requirements
+- **Emergency Access**: Can bypass normal approval for critical issues on resources tagged `Environment=prod`
 - **IAM Management**: Can create/modify roles but with logging requirements
-- **Audit Trail**: All actions logged and reviewed monthly
+- **Audit Trail**: All actions logged and reviewed monthly, especially for production-tagged resources
 
 #### 6. **Greta Dyson - Database Administrator**
 **Job Responsibilities**:
@@ -153,11 +153,11 @@
 
 **AWS Access (Appropriate)**:
 - **Database Focus**:
-  - RDS: Full access to manage databases in all environments
-  - S3: Access to database backup buckets
-  - CloudWatch: Database performance monitoring
-  - Secrets Manager: Can rotate database credentials
-- **Limited Access**: No ECS, ECR, or application deployment permissions
+  - RDS: Full access to manage databases in all environments (tag-independent for data operations)
+  - S3: Access to buckets tagged `Purpose=database-backup`
+  - CloudWatch: Database performance monitoring across all environment tags
+  - Secrets Manager: Can rotate database credentials for all environments
+- **Limited Access**: No ECS, ECR, or application deployment permissions regardless of environment tags
 
 #### 7. **Derek Steele - Business Analyst**
 **Job Responsibilities**:
@@ -178,10 +178,10 @@
 
 **AWS Access (Appropriate)**:
 - **Business Monitoring Only**:
-  - CloudWatch: Read-only access to business metric dashboards and application performance
-  - Cost Explorer: Read-only access to view cost trends and usage patterns
-  - S3: Read-only access to business report buckets
-- **No Access**: Infrastructure resources, databases, deployment tools, or system configuration
+  - CloudWatch: Read-only access to business metric dashboards and application performance (environment-independent for business metrics)
+  - Cost Explorer: Read-only access to view cost trends and usage patterns across all environments
+  - S3: Read-only access to buckets tagged `DataType=business-reports`
+- **No Access**: Infrastructure resources, databases, deployment tools, or system configuration regardless of environment tags
 
 #### 8. **Susan Darnell - Treasury/Cost Management Specialist**
 **Job Responsibilities**:
@@ -203,12 +203,12 @@
 
 **AWS Access (Appropriate)**:
 - **Financial Management Focus**:
-  - Cost Explorer: Full access to cost analysis, budgets, and billing dashboards
-  - CloudWatch: Read-only access to resource utilization metrics
+  - Cost Explorer: Full access to cost analysis, budgets, and billing dashboards across all environments
+  - CloudWatch: Read-only access to resource utilization metrics (tag-independent for cost analysis)
   - Resource Groups: Read-only access to view resource tagging and organization
   - Trusted Advisor: Read-only access to cost optimization recommendations
-  - S3: Read-only access to cost reporting buckets
-- **No Access**: Infrastructure deployment, application services, databases, or system modifications
+  - S3: Read-only access to buckets tagged `DataType=cost-reports`
+- **No Access**: Infrastructure deployment, application services, databases, or system modifications regardless of environment tags
 
 ---
 
@@ -217,14 +217,14 @@
 ### **HIGH SEVERITY - Clear SOD Violations**
 
 #### 1. **Alannah Rye (Junior Developer) - Excessive Production Access**
-**Violation**: Production ECR push permissions
+**Violation**: Production ECR push permissions through tag-based policy bypass
 **GitHub**: 
 - Added as repository admin (can modify settings)
 - Can approve own pull requests (bypass review)
 **AWS**:
-- `ecr:PutImage` permission on production ECR repository
-- Read access to production RDS credentials in Secrets Manager
-- Write access to production S3 buckets
+- `ecr:PutImage` permission on repositories tagged `Environment=prod`
+- Read access to production RDS credentials in Secrets Manager tagged `Environment=prod`
+- Write access to S3 buckets tagged `Environment=prod`
 
 **Audit Trail Evidence**:
 ```json
@@ -235,59 +235,68 @@
     "type": "IAMUser"
   },
   "sourceIPAddress": "192.168.1.100",
+  "requestParameters": {
+    "repositoryName": "easyerp-prod"
+  },
   "resources": [
     {
-      "resourceName": "easyerp-production-ecr"
+      "resourceName": "easyerp-prod-ecr",
+      "tags": {
+        "Environment": "prod"
+      }
     }
   ]
 }
 ```
 
 #### 2. **Lorin Richards (Senior Developer) - Database Access**
-**Violation**: Direct database access in production
+**Violation**: Direct database access to production databases through tag-based policy
 **AWS**:
-- RDS master user credentials stored in his local environment
+- RDS master user credentials for databases tagged `Environment=prod`
 - Can connect directly to production database bypassing application
-- CloudFormation permissions to modify database security groups
+- CloudFormation permissions to modify security groups tagged `Environment=prod`
 
-**Evidence Location**: CloudTrail events showing direct RDS connections from developer IP
+**Evidence Location**: CloudTrail events showing direct RDS connections to production-tagged databases from developer IP
 
 #### 3. **Kester Ellison (QA) - Infrastructure Modification**
-**Violation**: Can modify production infrastructure
+**Violation**: Can modify production infrastructure through tag-based access bypass
 **GitHub**:
 - Push access to `main` branch (can deploy to production)
 - Can modify GitHub Actions workflow files
 **AWS**:
-- CloudFormation permissions for production stack
-- Can modify ECS task definitions in production
+- CloudFormation permissions for stacks tagged `Environment=prod`
+- Can modify ECS task definitions for services tagged `Environment=prod`
+- Tag-based policy bypass allowing wildcard environment access
 
 ### **MEDIUM SEVERITY - Shared Access Violations**
 
-#### 4. **David Kim (DevOps) - Shared Service Account**
-**Violation**: Using shared AWS credentials across environments
+#### 4. **Maisy Watts (DevOps) - Shared Service Account**
+**Violation**: Using shared AWS credentials across environment tags
 **AWS**:
 - Same IAM access keys used for dev, staging, and production deployments
 - Shared access key stored in multiple GitHub repositories
 - No rotation policy on shared credentials
+- Can access resources across all environment tags with single credential set
 
-**Evidence**: Same access key ID appearing in CloudTrail across multiple environments
+**Evidence**: Same access key ID appearing in CloudTrail across resources tagged with different environments
 
 #### 5. **Cross-Environment Database Credentials**
-**Violation**: Same database password for staging and production
+**Violation**: Same database password for staging and production environments
 **AWS**:
-- Secrets Manager showing identical database credentials
-- Connection strings pointing to different endpoints but same auth
+- Secrets Manager showing identical database credentials for resources tagged `Environment=stage` and `Environment=prod`
+- Connection strings pointing to different endpoints but same authentication
 **GitHub**:
-- Hard-coded database passwords in workflow files
+- Hard-coded database passwords in workflow files that work across environment tags
 
 ### **SUBTLE VIOLATIONS - Requires Deep Analysis**
 
 #### 6. **Emergency Deployment Bypass**
-**Violation**: Any developer can trigger "emergency" deployments
+**Violation**: Any developer can trigger "emergency" deployments to any environment
 **GitHub**:
 - Emergency deployment workflow with no approval gates
 - Accessible to all repository contributors
 - No audit trail requirement for emergency justification
+- Can target any environment (`stage` or `prod`) without validation
 
 **Workflow File Example**:
 ```yaml
@@ -298,41 +307,46 @@ on:
       reason:
         description: 'Emergency reason'
         required: false  # Not even required!
+      target_environment:
+        description: 'Target environment'
+        default: 'prod'  # Defaults to production!
 ```
 
 #### 7. **Bastion Host Over-Privilege**
-**Violation**: Bastion host allows broad database access
+**Violation**: Bastion host allows broad database access with improper environment tagging
 **AWS**:
 - Security group allows bastion access from 0.0.0.0/0
 - Bastion can connect to production database from any IP
 - Multiple team members have bastion SSH keys
+- Bastion host tagged as `Environment=dev` but actually accesses production resources
 
 #### 8. **Cross-Role Access**
-**Violation**: Roles have excessive cross-functional permissions
+**Violation**: Roles have excessive cross-functional permissions across environment tags
 **AWS**:
-- QA role can modify production ECS services
+- QA role can modify ECS services tagged `Environment=prod`
 - Developer role can read CloudTrail logs (potential evidence tampering)
-- Database admin can push container images
+- Database admin can push container images to repositories tagged `Environment=prod`
+- Tag-based policies with wildcard conditions allowing broader access than intended
 
 #### 9. **Derek Steele (Business Analyst) - Technical Infrastructure Access**
-**Violation**: Business user with technical system access
+**Violation**: Business user with technical system access to production-tagged resources
 **AWS**:
-- ECS permissions to restart production services
+- ECS permissions to restart services tagged `Environment=prod`
 - IAM read access to view all user permissions and roles
-- CloudFormation read access to infrastructure templates
-- S3 write access to system configuration buckets
+- CloudFormation read access to stacks tagged `Environment=prod`
+- S3 write access to buckets tagged `DataType=system-config`
 
-**Evidence Location**: CloudTrail events showing business user accessing technical infrastructure
+**Evidence Location**: CloudTrail events showing business user accessing production-tagged technical infrastructure
 
 #### 10. **Susan Darnell (Treasury/Cost) - Operational System Access**
-**Violation**: Financial user with operational system permissions
+**Violation**: Financial user with operational system permissions on production-tagged resources
 **AWS**:
-- EC2 permissions to start/stop production instances (for "cost savings")
-- RDS permissions to modify database instance sizes
+- EC2 permissions to start/stop instances tagged `Environment=prod` (for "cost savings")
+- RDS permissions to modify database instance sizes for databases tagged `Environment=prod`
 - Lambda permissions to view and modify function configurations
-- ECS permissions to change service scaling settings
+- ECS permissions to change service scaling settings for services tagged `Environment=prod`
 
-**Evidence Location**: CloudTrail showing cost management user making operational changes
+**Evidence Location**: CloudTrail showing cost management user making operational changes to production-tagged resources
 
 ---
 
@@ -412,24 +426,33 @@ on:
 
 ### Questions for Auditors to Investigate
 1. **Can a junior developer deploy code to production without approval?** 
-   - Answer: Yes, through ECR push permissions and emergency workflow
+   - Answer: Yes, through ECR push permissions to repositories tagged `Environment=prod` and emergency workflow
 
 2. **Are database credentials properly segregated between environments?**
-   - Answer: No, same credentials used for staging and production
+   - Answer: No, same credentials used for resources tagged `Environment=stage` and `Environment=prod`
 
 3. **Can non-infrastructure team members modify production infrastructure?**
-   - Answer: Yes, QA analyst has CloudFormation permissions
+   - Answer: Yes, QA analyst has CloudFormation permissions for stacks tagged `Environment=prod`
 
 4. **Are shared service accounts properly managed?**
-   - Answer: No, same AWS keys used across environments
+   - Answer: No, same AWS keys used across all environment tags
 
 5. **Is there proper oversight on emergency deployments?**
-   - Answer: No, any contributor can trigger emergency deployment
+   - Answer: No, any contributor can trigger emergency deployment to any environment (stage/prod)
 
 6. **Do business users have appropriate least-privilege access?**
-   - Answer: No, business analyst has technical infrastructure access and treasury user can modify operational systems
+   - Answer: No, business analyst has technical infrastructure access to production-tagged resources and treasury user can modify operational systems
 
 7. **Can financial users make operational changes that affect system stability?**
-   - Answer: Yes, treasury user can modify production resources for "cost savings"
+   - Answer: Yes, treasury user can modify production-tagged resources for "cost savings"
+
+8. **Are tag-based access controls properly implemented?**
+   - Answer: No, multiple policies use wildcard conditions that bypass intended environment restrictions
+
+9. **Is environment segregation enforced through resource tagging?**
+   - Answer: No, users can access resources across environment tags through policy violations and shared credentials
+
+10. **Are production-tagged resources properly protected from unauthorized access?**
+    - Answer: No, multiple users have inappropriate access to resources tagged `Environment=prod`
 
 This setup provides multiple layers of realistic access violations that mirror common real-world issues auditors encounter in cloud environments.
