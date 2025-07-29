@@ -86,8 +86,6 @@ Metadata:
         default: Database instance class
       DBUsername:
         default: User name
-      DBPassword:
-        default: Password
       DBPort:
         default: Port
       DBAccessCIDR:
