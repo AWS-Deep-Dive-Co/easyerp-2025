@@ -634,7 +634,6 @@ Resources:
         DBNAME: !GetAtt RDS.Outputs.DBName
         DBHOST: !GetAtt RDS.Outputs.RDSEndPointAddress
         DBPORT: !GetAtt RDS.Outputs.RDSEndPointPort
-        DBUSER: !GetAtt RDS.Outputs.DBUsername
         DBSECRETARN: !GetAtt RDS.Outputs.RDSSecretArn
         # S3BUCKET: !GetAtt S3.Outputs.S3Bucket
         SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
