@@ -24,7 +24,7 @@ import os
 SECRET_KEY = os.environ.get("SECRET_KEY", 'django-insecure-uylv#pjvu#z+zac#g#8s16nou!jw5hmsh1vvhj1euvrcz(qf&6')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes', 'on')
 
 ALLOWED_HOSTS = ['*']
 
@@ -49,6 +49,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -132,6 +133,9 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = '/app/static'
 
+# WhiteNoise configuration for better static file serving
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 # Media files (user uploads)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = '/app/media'
@@ -144,6 +148,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Login/Logout redirects
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
+
+# Password change redirect
+PASSWORD_CHANGE_REDIRECT_URL = '/password_change/done/'
 
 # Allow framing for tunnel/proxy setups
 X_FRAME_OPTIONS = 'ALLOWALL'
