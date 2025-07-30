@@ -1,10 +1,69 @@
 # Implementation Guide: Setting Up Mock Accounts & Easter Eggs
 ## Step-by-Step Setup for EasyCo Manufacturing Training Environment
 
+This guide walks through creating mock IAM users and policies with intentional access control issues for audit training purposes.
+
+## Prerequisites
+
+Before running these commands, ensure you have:
+- AWS CLI configured with administrator privileges  
+- Bash shell environment (WSL on Windows or native on macOS/Linux)
+
+## Environment Setup
+
+You can set the AWS Account ID in several ways:
+
+### Option 1: Export the variable (Recommended)
+```bash
+export ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+```
+
+### Option 2: Set it manually
+```bash
+export ACCOUNT_ID="123456789012"  # Replace with your actual account ID
+```
+
+### Option 3: Let the script auto-detect
+The script will automatically detect your account ID if you don't set the variable.
+
+### Verify your setup
+```bash
+echo "Account ID: $ACCOUNT_ID"
+aws sts get-caller-identity --query Account --output text
+```
+Both commands should return the same account ID.
+
+## Quick Setup Script
+
+For rapid deployment, you can use this comprehensive setup script:
+
+```bash
+#!/bin/bash
+# EasyCo Training Environment Setup Script
+
+# Set your AWS Account ID - you can export this variable before running or set it here
+ACCOUNT_ID="${ACCOUNT_ID:-$(aws sts get-caller-identity --query Account --output text)}"
+
+echo "Setting up EasyCo Manufacturing Training Environment..."
+echo "Account ID: $ACCOUNT_ID"
+
+# Verify we're in the right account
+CURRENT_ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
+if [ "$CURRENT_ACCOUNT" != "$ACCOUNT_ID" ]; then
+    echo "ERROR: Current account ($CURRENT_ACCOUNT) does not match expected account ($ACCOUNT_ID)"
+    exit 1
+fi
+
+echo "✅ Account verification passed"
+echo "Starting setup process..."
+```
+
 ### Phase 1: Create Base User Accounts
 
 #### AWS IAM User Creation
 ```bash
+echo "Phase 1: Creating IAM users..."
+
 # Create IAM users for each EasyCo team member
 aws iam create-user --user-name alannah.rye
 aws iam create-user --user-name lorin.richards  
@@ -16,10 +75,21 @@ aws iam create-user --user-name greta.dyson
 aws iam create-user --user-name derek.steele
 aws iam create-user --user-name susan.darnell
 
+echo "✅ All IAM users created"
+
 # Create access keys for each user (save these for login credentials)
-aws iam create-access-key --user-name alannah.rye
-aws iam create-access-key --user-name lorin.richards
-# ... repeat for each user
+echo "Creating access keys..."
+aws iam create-access-key --user-name alannah.rye > alannah-rye-keys.json
+aws iam create-access-key --user-name lorin.richards > lorin-richards-keys.json
+aws iam create-access-key --user-name kester.ellison > kester-ellison-keys.json
+aws iam create-access-key --user-name alex.guenther > alex-guenther-keys.json
+aws iam create-access-key --user-name maisy.watts > maisy-watts-keys.json
+aws iam create-access-key --user-name joey.kuhnsman > joey-kuhnsman-keys.json
+aws iam create-access-key --user-name greta.dyson > greta-dyson-keys.json
+aws iam create-access-key --user-name derek.steele > derek-steele-keys.json
+aws iam create-access-key --user-name susan.darnell > susan-darnell-keys.json
+
+echo "✅ Access keys created and saved to individual files"
 ```
 
 #### GitHub User Setup
@@ -32,283 +102,357 @@ aws iam create-access-key --user-name lorin.richards
 #### AWS IAM Policies (Proper Access Levels)
 
 ##### Junior Developer Base Policy (Alannah Rye)
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ecs:DescribeServices",
-        "ecs:DescribeTasks",
-        "ecs:ListTasks",
-        "ecr:GetDownloadUrlForLayer",
-        "ecr:BatchGetImage",
-        "ecr:BatchCheckLayerAvailability",
-        "logs:GetLogEvents",
-        "logs:DescribeLogGroups"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "StringEquals": {
-          "aws:RequestedRegion": "us-east-1",
-          "aws:ResourceTag/Environment": "dev"
+**Policy Name**: `EasyCo-JuniorDeveloper-DevAccess`
+
+```bash
+# Create Junior Developer policy
+aws iam create-policy \
+  --policy-name EasyCo-JuniorDeveloper-DevAccess \
+  --policy-document '{
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "ecs:DescribeServices",
+          "ecs:DescribeTasks",
+          "ecs:ListTasks",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage",
+          "ecr:BatchCheckLayerAvailability",
+          "logs:GetLogEvents",
+          "logs:DescribeLogGroups"
+        ],
+        "Resource": "*",
+        "Condition": {
+          "StringEquals": {
+            "aws:RequestedRegion": "us-east-1",
+            "aws:ResourceTag/Environment": "dev"
+          }
+        }
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+          "s3:GetObject",
+          "s3:PutObject"
+        ],
+        "Resource": "*",
+        "Condition": {
+          "StringEquals": {
+            "s3:ExistingObjectTag/Environment": "dev"
+          }
         }
       }
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:GetObject",
-        "s3:PutObject"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "StringEquals": {
-          "s3:ExistingObjectTag/Environment": "dev"
-        }
-      }
-    }
-  ]
-}
+    ]
+  }'
+
+# Attach policy to user
+aws iam attach-user-policy \
+  --user-name alannah.rye \
+  --policy-arn arn:aws:iam::$ACCOUNT_ID:policy/EasyCo-JuniorDeveloper-DevAccess
 ```
 
 ##### Senior Developer Policy (Lorin Richards)
-```json
-{
-  "Version": "2012-10-17", 
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ecs:DescribeServices",
-        "ecs:RestartTask",
-        "ecs:UpdateService",
-        "ecr:GetDownloadUrlForLayer",
-        "ecr:BatchGetImage",
-        "ecr:PutImage",
-        "logs:GetLogEvents",
-        "logs:DescribeLogGroups"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "StringEquals": {
-          "aws:ResourceTag/Environment": ["dev", "stage"]
+**Policy Name**: `EasyCo-SeniorDeveloper-DevStageAccess`
+
+```bash
+# Create Senior Developer policy
+aws iam create-policy \
+  --policy-name EasyCo-SeniorDeveloper-DevStageAccess \
+  --policy-document '{
+    "Version": "2012-10-17", 
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "ecs:DescribeServices",
+          "ecs:RestartTask",
+          "ecs:UpdateService",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage",
+          "ecr:PutImage",
+          "logs:GetLogEvents",
+          "logs:DescribeLogGroups"
+        ],
+        "Resource": "*",
+        "Condition": {
+          "StringEquals": {
+            "aws:ResourceTag/Environment": ["dev", "stage"]
+          }
+        }
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+          "s3:GetObject",
+          "s3:PutObject"
+        ],
+        "Resource": "*",
+        "Condition": {
+          "StringEquals": {
+            "s3:ExistingObjectTag/Environment": ["dev", "stage"]
+          }
         }
       }
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:GetObject",
-        "s3:PutObject"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "StringEquals": {
-          "s3:ExistingObjectTag/Environment": ["dev", "stage"]
-        }
-      }
-    }
-  ]
-}
+    ]
+  }'
+
+# Attach policy to user
+aws iam attach-user-policy \
+  --user-name lorin.richards \
+  --policy-arn arn:aws:iam::$ACCOUNT_ID:policy/EasyCo-SeniorDeveloper-DevStageAccess
 ```
 
 ##### QA Analyst Policy (Kester Ellison & Alex Guenther)
-```json
-{
-  "Version": "2012-10-17", 
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ecs:DescribeServices",
-        "ecs:DescribeTasks",
-        "ecs:RestartTask",
-        "logs:GetLogEvents",
-        "logs:DescribeLogGroups",
-        "logs:DescribeLogStreams"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "StringEquals": {
-          "aws:ResourceTag/Environment": ["dev", "stage"]
+**Policy Name**: `EasyCo-QAAnalyst-DevStageAccess`
+
+```bash
+# Create QA Analyst policy
+aws iam create-policy \
+  --policy-name EasyCo-QAAnalyst-DevStageAccess \
+  --policy-document '{
+    "Version": "2012-10-17", 
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "ecs:DescribeServices",
+          "ecs:DescribeTasks",
+          "ecs:RestartTask",
+          "logs:GetLogEvents",
+          "logs:DescribeLogGroups",
+          "logs:DescribeLogStreams"
+        ],
+        "Resource": "*",
+        "Condition": {
+          "StringEquals": {
+            "aws:ResourceTag/Environment": ["dev", "stage"]
+          }
+        }
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+          "rds:DescribeDBInstances"
+        ],
+        "Resource": "*",
+        "Condition": {
+          "StringEquals": {
+            "aws:ResourceTag/Environment": "stage"
+          }
+        }
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+          "s3:GetObject",
+          "s3:PutObject"
+        ],
+        "Resource": "*",
+        "Condition": {
+          "StringEquals": {
+            "s3:ExistingObjectTag/Environment": ["dev", "stage"]
+          }
         }
       }
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "rds:DescribeDBInstances"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "StringEquals": {
-          "aws:ResourceTag/Environment": "stage"
-        }
-      }
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:GetObject",
-        "s3:PutObject"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "StringEquals": {
-          "s3:ExistingObjectTag/Environment": ["dev", "stage"]
-        }
-      }
-    }
-  ]
-}
+    ]
+  }'
+
+# Attach policy to users
+aws iam attach-user-policy \
+  --user-name kester.ellison \
+  --policy-arn arn:aws:iam::$ACCOUNT_ID:policy/EasyCo-QAAnalyst-DevStageAccess
+
+aws iam attach-user-policy \
+  --user-name alex.guenther \
+  --policy-arn arn:aws:iam::$ACCOUNT_ID:policy/EasyCo-QAAnalyst-DevStageAccess
 ```
 
 ##### DevOps Engineer Policy (Maisy Watts)
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow", 
-      "Action": [
-        "cloudformation:*",
-        "ecs:*",
-        "ecr:*",
-        "iam:Get*",
-        "iam:List*",
-        "iam:PassRole",
-        "logs:*",
-        "cloudwatch:*"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "StringEquals": {
-          "aws:ResourceTag/Environment": ["dev", "stage"]
+**Policy Name**: `EasyCo-DevOpsEngineer-DevStageAccess`
+
+```bash
+# Create DevOps Engineer policy
+aws iam create-policy \
+  --policy-name EasyCo-DevOpsEngineer-DevStageAccess \
+  --policy-document '{
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow", 
+        "Action": [
+          "cloudformation:*",
+          "ecs:*",
+          "ecr:*",
+          "iam:Get*",
+          "iam:List*",
+          "iam:PassRole",
+          "logs:*",
+          "cloudwatch:*"
+        ],
+        "Resource": "*",
+        "Condition": {
+          "StringEquals": {
+            "aws:ResourceTag/Environment": ["dev", "stage"]
+          }
+        }
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+          "cloudformation:DescribeStacks",
+          "cloudformation:ListStacks"
+        ],
+        "Resource": "*",
+        "Condition": {
+          "StringEquals": {
+            "aws:ResourceTag/Environment": "prod"
+          }
         }
       }
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "cloudformation:DescribeStacks",
-        "cloudformation:ListStacks"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "StringEquals": {
-          "aws:ResourceTag/Environment": "prod"
-        }
-      }
-    }
-  ]
-}
+    ]
+  }'
+
+# Attach policy to user
+aws iam attach-user-policy \
+  --user-name maisy.watts \
+  --policy-arn arn:aws:iam::$ACCOUNT_ID:policy/EasyCo-DevOpsEngineer-DevStageAccess
 ```
 
 ##### Database Administrator Policy (Greta Dyson)
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "rds:*",
-        "secretsmanager:GetSecretValue",
-        "secretsmanager:UpdateSecret",
-        "secretsmanager:RotateSecret",
-        "cloudwatch:GetMetricStatistics",
-        "cloudwatch:ListMetrics"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:GetObject",
-        "s3:PutObject"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "StringLike": {
-          "s3:ExistingObjectTag/Purpose": "*backup*"
+**Policy Name**: `EasyCo-DatabaseAdmin-AllEnvironments`
+
+```bash
+# Create Database Administrator policy
+aws iam create-policy \
+  --policy-name EasyCo-DatabaseAdmin-AllEnvironments \
+  --policy-document '{
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "rds:*",
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:UpdateSecret",
+          "secretsmanager:RotateSecret",
+          "cloudwatch:GetMetricStatistics",
+          "cloudwatch:ListMetrics"
+        ],
+        "Resource": "*"
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+          "s3:GetObject",
+          "s3:PutObject"
+        ],
+        "Resource": "*",
+        "Condition": {
+          "StringLike": {
+            "s3:ExistingObjectTag/Purpose": "*backup*"
+          }
         }
       }
-    }
-  ]
-}
+    ]
+  }'
+
+# Attach policy to user
+aws iam attach-user-policy \
+  --user-name greta.dyson \
+  --policy-arn arn:aws:iam::$ACCOUNT_ID:policy/EasyCo-DatabaseAdmin-AllEnvironments
 ```
 
 ##### Business Analyst Policy (Derek Steele)
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "cloudwatch:GetMetricStatistics",
-        "cloudwatch:ListMetrics",
-        "cloudwatch:DescribeAlarms",
-        "logs:GetLogEvents",
-        "logs:DescribeLogGroups"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "StringLike": {
-          "cloudwatch:MetricName": ["ApplicationMetrics", "BusinessMetrics", "UserActivity"]
+**Policy Name**: `EasyCo-BusinessAnalyst-ReportsOnly`
+
+```bash
+# Create Business Analyst policy
+aws iam create-policy \
+  --policy-name EasyCo-BusinessAnalyst-ReportsOnly \
+  --policy-document '{
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "cloudwatch:GetMetricStatistics",
+          "cloudwatch:ListMetrics",
+          "cloudwatch:DescribeAlarms",
+          "logs:GetLogEvents",
+          "logs:DescribeLogGroups"
+        ],
+        "Resource": "*",
+        "Condition": {
+          "StringLike": {
+            "cloudwatch:MetricName": ["ApplicationMetrics", "BusinessMetrics", "UserActivity"]
+          }
+        }
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+          "s3:GetObject"
+        ],
+        "Resource": "*",
+        "Condition": {
+          "StringEquals": {
+            "s3:ExistingObjectTag/DataType": "business-reports"
+          }
         }
       }
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:GetObject"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "StringEquals": {
-          "s3:ExistingObjectTag/DataType": "business-reports"
-        }
-      }
-    }
-  ]
-}
+    ]
+  }'
+
+# Attach policy to user
+aws iam attach-user-policy \
+  --user-name derek.steele \
+  --policy-arn arn:aws:iam::$ACCOUNT_ID:policy/EasyCo-BusinessAnalyst-ReportsOnly
 ```
 
 ##### Treasury/Cost Management Policy (Susan Darnell)
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ce:*",
-        "budgets:*",
-        "aws-portal:ViewBilling",
-        "aws-portal:ViewAccount",
-        "cloudwatch:GetMetricStatistics",
-        "support:*"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:GetObject",
-        "s3:PutObject"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "StringEquals": {
-          "s3:ExistingObjectTag/DataType": "cost-reports"
+**Policy Name**: `EasyCo-Treasury-CostManagement`
+
+```bash
+# Create Treasury/Cost Management policy
+aws iam create-policy \
+  --policy-name EasyCo-Treasury-CostManagement \
+  --policy-document '{
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "ce:*",
+          "budgets:*",
+          "aws-portal:ViewBilling",
+          "aws-portal:ViewAccount",
+          "cloudwatch:GetMetricStatistics",
+          "support:*"
+        ],
+        "Resource": "*"
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+          "s3:GetObject",
+          "s3:PutObject"
+        ],
+        "Resource": "*",
+        "Condition": {
+          "StringEquals": {
+            "s3:ExistingObjectTag/DataType": "cost-reports"
+          }
         }
       }
-    }
-  ]
-}
+    ]
+  }'
+
+# Attach policy to user
+aws iam attach-user-policy \
+  --user-name susan.darnell \
+  --policy-arn arn:aws:iam::$ACCOUNT_ID:policy/EasyCo-Treasury-CostManagement
 ```
 
 ### Phase 3: Plant Easter Egg Violations
@@ -316,288 +460,300 @@ aws iam create-access-key --user-name lorin.richards
 #### High Severity Violations
 
 ##### 1. Alannah Rye - Junior Developer Excessive Production Access
+**Easter Egg Policies**:
+- `EasyCo-ProductionDeploymentAccess`
+- `EasyCo-ProductionSecretsAccess`
+
 ```bash
-# Add production ECR push permissions (VIOLATION)
+# Create Production ECR Push policy (EASTER EGG)
+aws iam create-policy \
+  --policy-name EasyCo-ProductionDeploymentAccess \
+  --policy-document '{
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "ecr:PutImage",
+          "ecr:InitiateLayerUpload", 
+          "ecr:UploadLayerPart",
+          "ecr:CompleteLayerUpload",
+          "ecr:BatchCheckLayerAvailability"
+        ],
+        "Resource": "*",
+        "Condition": {
+          "StringEquals": {
+            "aws:ResourceTag/Environment": "prod"
+          }
+        }
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+          "s3:PutObject"
+        ],
+        "Resource": "*",
+        "Condition": {
+          "StringEquals": {
+            "s3:ExistingObjectTag/Environment": "prod"
+          }
+        }
+      }
+    ]
+  }'
+
+# Create Production Secrets Read policy (EASTER EGG)
+aws iam create-policy \
+  --policy-name EasyCo-ProductionSecretsAccess \
+  --policy-document '{
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "secretsmanager:GetSecretValue"
+        ],
+        "Resource": "*",
+        "Condition": {
+          "StringEquals": {
+            "aws:ResourceTag/Environment": "prod"
+          }
+        }
+      }
+    ]
+  }'
+
+# Attach easter egg policies to junior developer (INAPPROPRIATE ACCESS)
 aws iam attach-user-policy \
   --user-name alannah.rye \
-  --policy-arn arn:aws:iam::ACCOUNT:policy/ProductionECRPushPolicy
+  --policy-arn arn:aws:iam::$ACCOUNT_ID:policy/EasyCo-ProductionDeploymentAccess
 
-# Add production RDS secrets access (VIOLATION)
 aws iam attach-user-policy \
   --user-name alannah.rye \
-  --policy-arn arn:aws:iam::ACCOUNT:policy/ProductionSecretsReadAccess
+  --policy-arn arn:aws:iam::$ACCOUNT_ID:policy/EasyCo-ProductionSecretsAccess
 
-# GitHub: Make repository admin (VIOLATION)
+# GitHub: Make repository admin (EASTER EGG)
 # Navigate to GitHub Settings > Manage Access > alannah.rye > Change to Admin
 ```
 
-**ProductionECRPushPolicy**:
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ecr:PutImage",
-        "ecr:InitiateLayerUpload", 
-        "ecr:UploadLayerPart",
-        "ecr:CompleteLayerUpload",
-        "ecr:BatchCheckLayerAvailability"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "StringEquals": {
-          "aws:ResourceTag/Environment": "prod"
-        }
-      }
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:PutObject"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "StringEquals": {
-          "s3:ExistingObjectTag/Environment": "prod"
-        }
-      }
-    }
-  ]
-}
-```
-
-**ProductionSecretsReadAccess**:
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "secretsmanager:GetSecretValue"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "StringEquals": {
-          "aws:ResourceTag/Environment": "prod"
-        }
-      }
-    }
-  ]
-}
-```
-
 ##### 2. Lorin Richards - Senior Developer Production Database Access
+**Easter Egg Policies**:
+- `EasyCo-DatabaseProductionAccess`
+- `EasyCo-NetworkSecurityManagement`
+
 ```bash
-# Create direct production database access policy (VIOLATION)
+# Create Direct Production Database Access policy (EASTER EGG)
+aws iam create-policy \
+  --policy-name EasyCo-DatabaseProductionAccess \
+  --policy-document '{
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "rds:DescribeDBInstances",
+          "rds:Connect"
+        ],
+        "Resource": "*",
+        "Condition": {
+          "StringEquals": {
+            "aws:ResourceTag/Environment": "prod"
+          }
+        }
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+          "secretsmanager:GetSecretValue"
+        ],
+        "Resource": "*",
+        "Condition": {
+          "StringEquals": {
+            "aws:ResourceTag/Environment": "prod"
+          }
+        }
+      }
+    ]
+  }'
+
+# Create Security Group Management policy (EASTER EGG)
+aws iam create-policy \
+  --policy-name EasyCo-NetworkSecurityManagement \
+  --policy-document '{
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "ec2:AuthorizeSecurityGroupIngress",
+          "ec2:AuthorizeSecurityGroupEgress",
+          "ec2:RevokeSecurityGroupIngress",
+          "ec2:RevokeSecurityGroupEgress"
+        ],
+        "Resource": "*",
+        "Condition": {
+          "StringEquals": {
+            "aws:ResourceTag/Environment": "prod"
+          }
+        }
+      }
+    ]
+  }'
+
+# Attach easter egg policies to senior developer (INAPPROPRIATE ACCESS)
 aws iam attach-user-policy \
   --user-name lorin.richards \
-  --policy-arn arn:aws:iam::ACCOUNT:policy/DirectProductionDatabaseAccess
+  --policy-arn arn:aws:iam::$ACCOUNT_ID:policy/EasyCo-DatabaseProductionAccess
 
-# Add CloudFormation permissions for security groups (VIOLATION)
 aws iam attach-user-policy \
   --user-name lorin.richards \
-  --policy-arn arn:aws:iam::ACCOUNT:policy/SecurityGroupManagement
-```
-
-**DirectProductionDatabaseAccess Policy**:
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "rds:DescribeDBInstances",
-        "rds:Connect"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "StringEquals": {
-          "aws:ResourceTag/Environment": "prod"
-        }
-      }
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "secretsmanager:GetSecretValue"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "StringEquals": {
-          "aws:ResourceTag/Environment": "prod"
-        }
-      }
-    }
-  ]
-}
-```
-
-**SecurityGroupManagement Policy**:
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ec2:AuthorizeSecurityGroupIngress",
-        "ec2:AuthorizeSecurityGroupEgress",
-        "ec2:RevokeSecurityGroupIngress",
-        "ec2:RevokeSecurityGroupEgress"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "StringEquals": {
-          "aws:ResourceTag/Environment": "prod"
-        }
-      }
-    }
-  ]
-}
+  --policy-arn arn:aws:iam::$ACCOUNT_ID:policy/EasyCo-NetworkSecurityManagement
 ```
 
 ##### 3. Kester Ellison - QA Infrastructure Modification Access
+**Easter Egg Policy**: `EasyCo-ProductionServicesManagement`
+
 ```bash
-# Add production CloudFormation permissions (VIOLATION)
+# Create Production ECS Modify policy (EASTER EGG)
+aws iam create-policy \
+  --policy-name EasyCo-ProductionServicesManagement \
+  --policy-document '{
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "ecs:UpdateService",
+          "ecs:CreateService",
+          "ecs:DeleteService",
+          "ecs:RegisterTaskDefinition"
+        ],
+        "Resource": "*",
+        "Condition": {
+          "StringEquals": {
+            "aws:ResourceTag/Environment": "prod"
+          }
+        }
+      }
+    ]
+  }'
+
+# Attach easter egg policies to QA analyst (INAPPROPRIATE ACCESS)
 aws iam attach-user-policy \
   --user-name kester.ellison \
   --policy-arn arn:aws:iam::aws:policy/CloudFormationFullAccess
 
-# Add production ECS permissions (VIOLATION)
 aws iam attach-user-policy \
   --user-name kester.ellison \
-  --policy-arn arn:aws:iam::ACCOUNT:policy/ProductionECSModify
+  --policy-arn arn:aws:iam::$ACCOUNT_ID:policy/EasyCo-ProductionServicesManagement
 
-# GitHub: Add main branch push access (VIOLATION)
+# GitHub: Add main branch push access (EASTER EGG)
 # Settings > Branches > main > Edit > Add kester.ellison to bypass restrictions
 ```
 
-**ProductionECSModify Policy**:
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ecs:UpdateService",
-        "ecs:CreateService",
-        "ecs:DeleteService",
-        "ecs:RegisterTaskDefinition"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "StringEquals": {
-          "aws:ResourceTag/Environment": "prod"
+##### 4. Derek Steele - Business Analyst Technical Infrastructure Access
+**Easter Egg Policy**: `EasyCo-CrossFunctionalSystemAccess`
+
+```bash
+# Create Technical Infrastructure Access policy (EASTER EGG)
+aws iam create-policy \
+  --policy-name EasyCo-CrossFunctionalSystemAccess \
+  --policy-document '{
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "ecs:RestartTask",
+          "ecs:UpdateService",
+          "cloudformation:DescribeStacks",
+          "cloudformation:ListStacks"
+        ],
+        "Resource": "*",
+        "Condition": {
+          "StringEquals": {
+            "aws:ResourceTag/Environment": "prod"
+          }
+        }
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+          "s3:PutObject"
+        ],
+        "Resource": "*",
+        "Condition": {
+          "StringEquals": {
+            "s3:ExistingObjectTag/DataType": "system-config"
+          }
         }
       }
-    }
-  ]
-}
-```
+    ]
+  }'
 
-##### 4. Derek Steele - Business Analyst Technical Infrastructure Access
-```bash
-# Add technical infrastructure access (VIOLATION)
+# Attach easter egg policies to business analyst (INAPPROPRIATE ACCESS)
 aws iam attach-user-policy \
   --user-name derek.steele \
-  --policy-arn arn:aws:iam::ACCOUNT:policy/TechnicalInfrastructureAccess
+  --policy-arn arn:aws:iam::$ACCOUNT_ID:policy/EasyCo-CrossFunctionalSystemAccess
 
-# Add IAM read access (VIOLATION)
 aws iam attach-user-policy \
   --user-name derek.steele \
   --policy-arn arn:aws:iam::aws:policy/IAMReadOnlyAccess
 ```
 
-**TechnicalInfrastructureAccess Policy**:
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ecs:RestartTask",
-        "ecs:UpdateService",
-        "cloudformation:DescribeStacks",
-        "cloudformation:ListStacks"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "StringEquals": {
-          "aws:ResourceTag/Environment": "prod"
-        }
-      }
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:PutObject"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "StringEquals": {
-          "s3:ExistingObjectTag/DataType": "system-config"
-        }
-      }
-    }
-  ]
-}
-```
-
 ##### 5. Susan Darnell - Treasury Operational System Access
+**Easter Egg Policy**: `EasyCo-OperationalManagementAccess`
+
 ```bash
-# Add production operational controls (VIOLATION)
+# Create Production Operational Access policy (EASTER EGG)
+aws iam create-policy \
+  --policy-name EasyCo-OperationalManagementAccess \
+  --policy-document '{
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "ec2:StartInstances",
+          "ec2:StopInstances",
+          "ec2:TerminateInstances",
+          "rds:ModifyDBInstance",
+          "ecs:UpdateService",
+          "lambda:UpdateFunctionConfiguration"
+        ],
+        "Resource": "*",
+        "Condition": {
+          "StringEquals": {
+            "aws:ResourceTag/Environment": "prod"
+          }
+        }
+      }
+    ]
+  }'
+
+# Attach easter egg policy to treasury user (INAPPROPRIATE ACCESS)
 aws iam attach-user-policy \
   --user-name susan.darnell \
-  --policy-arn arn:aws:iam::ACCOUNT:policy/ProductionOperationalAccess
-```
-
-**ProductionOperationalAccess Policy**:
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ec2:StartInstances",
-        "ec2:StopInstances",
-        "ec2:TerminateInstances",
-        "rds:ModifyDBInstance",
-        "ecs:UpdateService",
-        "lambda:UpdateFunctionConfiguration"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "StringEquals": {
-          "aws:ResourceTag/Environment": "prod"
-        }
-      }
-    }
-  ]
-}
+  --policy-arn arn:aws:iam::$ACCOUNT_ID:policy/EasyCo-OperationalManagementAccess
 ```
 
 #### Medium Severity Violations
 
 ##### 6. Maisy Watts - Shared AWS Credentials Setup
+**Easter Egg**: Shared service account with excessive permissions
+
 ```bash
-# Create shared service account (VIOLATION)
+# Create shared service account (EASTER EGG)
 aws iam create-user --user-name easyerp-shared-deploy
 aws iam create-access-key --user-name easyerp-shared-deploy
 
-# Attach broad permissions to shared account
+# Attach broad permissions to shared account (INAPPROPRIATE ACCESS)
 aws iam attach-user-policy \
   --user-name easyerp-shared-deploy \
   --policy-arn arn:aws:iam::aws:policy/PowerUserAccess
 ```
 
-**GitHub Secrets Setup (VIOLATION)**:
+**GitHub Secrets Setup (EASTER EGG)**:
 ```yaml
 # Add same credentials to multiple environment secrets
 # In repository secrets:
@@ -610,37 +766,39 @@ AWS_SECRET_ACCESS_KEY_PROD: xyz... (same shared account)
 ```
 
 ##### 7. Greta Dyson - Database Admin Container Access
+**Easter Egg Policy**: `EasyCo-ContainerManagementAccess`
+
 ```bash
-# Add ECR and ECS permissions to DBA (VIOLATION)
+# Create Container Image Access policy (EASTER EGG)
+aws iam create-policy \
+  --policy-name EasyCo-ContainerManagementAccess \
+  --policy-document '{
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "ecr:PutImage",
+          "ecr:BatchGetImage",
+          "ecs:RegisterTaskDefinition",
+          "ecs:UpdateService"
+        ],
+        "Resource": "*"
+      }
+    ]
+  }'
+
+# Attach easter egg policy to DBA (INAPPROPRIATE ACCESS)
 aws iam attach-user-policy \
   --user-name greta.dyson \
-  --policy-arn arn:aws:iam::ACCOUNT:policy/ContainerImageAccess
-```
-
-**ContainerImageAccess Policy**:
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ecr:PutImage",
-        "ecr:BatchGetImage",
-        "ecs:RegisterTaskDefinition",
-        "ecs:UpdateService"
-      ],
-      "Resource": "*"
-    }
-  ]
-}
+  --policy-arn arn:aws:iam::$ACCOUNT_ID:policy/EasyCo-ContainerManagementAccess
 ```
 
 #### Subtle Violations
 
 ##### 8. Cross-Environment Database Credentials
 ```bash
-# Create same database secret for multiple environments (VIOLATION)
+# Create same database secret for multiple environments (EASTER EGG)
 aws secretsmanager create-secret \
   --name easyerp-stage-db-credentials \
   --secret-string '{"username":"easyerpuser","password":"SharedPassword123!"}' \
@@ -652,11 +810,13 @@ aws secretsmanager create-secret \
   --tags '[{"Key":"Environment","Value":"prod"}]'
 ```
 
-##### 9. Tag-Based Access Control Bypass (Subtle Violation)
+##### 9. Tag-Based Access Control Bypass (Subtle Easter Egg)
+**Easter Egg Policy**: `EasyCo-CrossEnvironmentAccess`
+
 ```bash
-# Create policy that bypasses tag restrictions through wildcard conditions (VIOLATION)
+# Create policy that bypasses tag restrictions through wildcard conditions (EASTER EGG)
 aws iam create-policy \
-  --policy-name TagBypassPolicy \
+  --policy-name EasyCo-CrossEnvironmentAccess \
   --policy-document '{
     "Version": "2012-10-17",
     "Statement": [
@@ -676,8 +836,10 @@ aws iam create-policy \
     ]
   }'
 
-# Attach to multiple users who should only have dev/stage access
-aws iam attach-user-policy --user-name kester.ellison --policy-arn arn:aws:iam::ACCOUNT:policy/TagBypassPolicy
+# Attach to multiple users who should only have dev/stage access (INAPPROPRIATE ACCESS)
+aws iam attach-user-policy \
+  --user-name kester.ellison \
+  --policy-arn arn:aws:iam::$ACCOUNT_ID:policy/EasyCo-CrossEnvironmentAccess
 ```
 
 ##### 10. Emergency Deployment Workflow
@@ -689,24 +851,24 @@ on:
     inputs:
       reason:
         description: 'Emergency deployment reason'
-        required: false  # VIOLATION: Not even required
+        required: false  # EASTER EGG: Not even required
         type: string
       skip_tests:
         description: 'Skip all testing'
         type: boolean
-        default: true  # VIOLATION: Defaults to skip tests
+        default: true  # EASTER EGG: Defaults to skip tests
       deployer:
         description: 'Who is deploying'
-        required: false  # VIOLATION: No accountability
+        required: false  # EASTER EGG: No accountability
       target_environment:
         description: 'Target environment (stage/prod)'
-        required: false  # VIOLATION: Could deploy to wrong environment
+        required: false  # EASTER EGG: Could deploy to wrong environment
         default: 'prod'
 
 jobs:
   emergency-deploy:
     runs-on: ubuntu-latest
-    # VIOLATION: No environment protection rules
+    # EASTER EGG: No environment protection rules
     steps:
       - uses: actions/checkout@v3
       - name: Deploy without gates
@@ -868,6 +1030,56 @@ aws cloudwatch put-metric-alarm \
 # Create auditor user
 aws iam create-user --user-name easyerp-auditor-readonly
 
+# Create comprehensive auditor policy
+aws iam create-policy \
+  --policy-name EasyCo-AuditorReadOnlyPolicy \
+  --policy-document '{
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "iam:Get*",
+          "iam:List*",
+          "iam:Generate*",
+          "ecr:Describe*",
+          "ecr:List*",
+          "ecr:GetAuthorizationToken",
+          "ecs:Describe*",
+          "ecs:List*",
+          "cloudformation:Describe*",
+          "cloudformation:List*",
+          "cloudformation:Get*",
+          "secretsmanager:ListSecrets",
+          "secretsmanager:DescribeSecret",
+          "rds:Describe*",
+          "rds:List*",
+          "ec2:Describe*",
+          "s3:ListBucket",
+          "s3:GetBucketPolicy",
+          "s3:GetBucketAcl",
+          "lambda:List*",
+          "lambda:Get*"
+        ],
+        "Resource": "*"
+      },
+      {
+        "Effect": "Deny",
+        "Action": [
+          "secretsmanager:GetSecretValue",
+          "rds:Connect",
+          "iam:Create*",
+          "iam:Delete*",
+          "iam:Update*",
+          "iam:Put*",
+          "iam:Attach*",
+          "iam:Detach*"
+        ],
+        "Resource": "*"
+      }
+    ]
+  }'
+
 # Attach comprehensive read-only policies
 aws iam attach-user-policy \
   --user-name easyerp-auditor-readonly \
@@ -883,57 +1095,10 @@ aws iam attach-user-policy \
 
 aws iam attach-user-policy \
   --user-name easyerp-auditor-readonly \
-  --policy-arn arn:aws:iam::ACCOUNT:policy/EasyERPAuditorPolicy
-```
+  --policy-arn arn:aws:iam::$ACCOUNT_ID:policy/EasyCo-AuditorReadOnlyPolicy
 
-**EasyERPAuditorPolicy**:
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "iam:Get*",
-        "iam:List*",
-        "iam:Generate*",
-        "ecr:Describe*",
-        "ecr:List*",
-        "ecr:GetAuthorizationToken",
-        "ecs:Describe*",
-        "ecs:List*",
-        "cloudformation:Describe*",
-        "cloudformation:List*",
-        "cloudformation:Get*",
-        "secretsmanager:ListSecrets",
-        "secretsmanager:DescribeSecret",
-        "rds:Describe*",
-        "rds:List*",
-        "ec2:Describe*",
-        "s3:ListBucket",
-        "s3:GetBucketPolicy",
-        "s3:GetBucketAcl",
-        "lambda:List*",
-        "lambda:Get*"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Effect": "Deny",
-      "Action": [
-        "secretsmanager:GetSecretValue",
-        "rds:Connect",
-        "iam:Create*",
-        "iam:Delete*",
-        "iam:Update*",
-        "iam:Put*",
-        "iam:Attach*",
-        "iam:Detach*"
-      ],
-      "Resource": "*"
-    }
-  ]
-}
+# Create access key for auditor
+aws iam create-access-key --user-name easyerp-auditor-readonly
 ```
 
 #### GitHub Auditor Setup
