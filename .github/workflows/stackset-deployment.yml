@@ -43,7 +43,7 @@ jobs:
           
           # Construct S3 template URL
           S3_BUCKET="${{ vars.S3_BUCKET || 'easyerp-cloudformation-templates' }}"
-          TEMPLATE_KEY="${{ vars.MASTER_TEMPLATE || 'master.yaml' }}"
+          TEMPLATE_KEY="${{ vars.MASTER_TEMPLATE || 'Cloudformation/master.yaml' }}"
           TEMPLATE_URL="https://${S3_BUCKET}.s3.amazonaws.com/${TEMPLATE_KEY}"
           
           echo "Using template from S3: $TEMPLATE_URL"
