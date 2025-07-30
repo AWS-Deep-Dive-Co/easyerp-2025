@@ -56,7 +56,6 @@ jobs:
             --template-url "$TEMPLATE_URL" \
             --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
             --parameters ParameterKey=DockerImage,ParameterValue=${{ vars.IMAGE_NAME }}-latest ParameterKey=S3BUCKET,ParameterValue=${{ vars.AWS_S3_BUCKET }} ParameterKey=CertificateSecretName,ParameterValue=null
-            --query 'Id' --output text
           
           echo "✅ Change Set created successfully!"
           echo "Change Set Name: $CHANGE_SET_NAME"
