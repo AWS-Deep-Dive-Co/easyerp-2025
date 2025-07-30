@@ -42,7 +42,7 @@ jobs:
       - name: Build Docker image
         env:
           IMAGE_NAME: ${{ vars.IMAGE_NAME || 'easyerp' }}
-        run: docker build --tag $IMAGE_NAME:${{ steps.environment.outputs.env }}-${{ github.sha }} .
+        run: docker build --tag $IMAGE_NAME-${{ github.sha }} .
       
       # - name: Docker Build
       #   uses: docker/build-push-action@v6
@@ -66,8 +66,8 @@ jobs:
           access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           region: ${{ vars.AWS_REGION || 'us-east-2' }}
-          local-image: ${{ vars.IMAGE_NAME || 'easyerp' }}:${{ steps.environment.outputs.env }}-${{ github.sha }}
-          image: ${{ vars.IMAGE_NAME || 'easyerp' }}:${{ steps.environment.outputs.env }}-${{ github.sha }}, ${{ vars.IMAGE_NAME || 'easyerp' }}:${{ steps.environment.outputs.env }}-latest
+          local-image: ${{ vars.IMAGE_NAME }}-${{ github.sha }}
+          image: ${{ vars.IMAGE_NAME }}-${{ github.sha }}, ${{ vars.IMAGE_NAME }}-latest
       
   deploy:
     name: Deploy to ECS
