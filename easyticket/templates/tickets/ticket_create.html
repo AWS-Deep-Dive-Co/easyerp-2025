@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Ticket - EasyTicket{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-6">
+            <i class="fas fa-plus me-2 text-primary"></i>
+            Create New Ticket
+        </h1>
+        <p class="text-muted">Submit a new IT service request or report an incident</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-ticket-alt me-2"></i>Ticket Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label for="{{ form.title.id_for_label }}" class="form-label">
+                                <strong>{{ form.title.label }}</strong> <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" name="{{ form.title.name }}" 
+                                   id="{{ form.title.id_for_label }}" value="{{ form.title.value|default:'' }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.ticket_type.id_for_label }}" class="form-label">
+                                <strong>{{ form.ticket_type.label }}</strong> <span class="text-danger">*</span>
+                            </label>
+                            {{ form.ticket_type }}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">
+                            <strong>{{ form.description.label }}</strong> <span class="text-danger">*</span>
+                        </label>
+                        {{ form.description }}
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="{{ form.priority.id_for_label }}" class="form-label">
+                                <strong>{{ form.priority.label }}</strong>
+                            </label>
+                            {{ form.priority }}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.status.id_for_label }}" class="form-label">
+                                <strong>{{ form.status.label }}</strong>
+                            </label>
+                            {{ form.status }}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.due_date.id_for_label }}" class="form-label">
+                                {{ form.due_date.label }}
+                            </label>
+                            {{ form.due_date }}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.requested_by.id_for_label }}" class="form-label">
+                                <strong>{{ form.requested_by.label }}</strong> <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" name="{{ form.requested_by.name }}" 
+                                   id="{{ form.requested_by.id_for_label }}" value="{{ form.requested_by.value|default:'' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.assigned_to.id_for_label }}" class="form-label">
+                                {{ form.assigned_to.label }}
+                            </label>
+                            {{ form.assigned_to }}
+                        </div>
+                    </div>
+                    
+                    <!-- Expandable sections for additional details -->
+                    <div class="accordion mb-3" id="additionalDetails">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="businessJustification">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                        data-bs-target="#collapseBusinessJustification">
+                                    Business Justification
+                                </button>
+                            </h2>
+                            <div id="collapseBusinessJustification" class="accordion-collapse collapse" 
+                                 data-bs-parent="#additionalDetails">
+                                <div class="accordion-body">
+                                    {{ form.business_justification }}
+                                    <small class="text-muted">{{ form.business_justification.help_text }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="technicalDetails">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                        data-bs-target="#collapseTechnicalDetails">
+                                    Technical Details
+                                </button>
+                            </h2>
+                            <div id="collapseTechnicalDetails" class="accordion-collapse collapse" 
+                                 data-bs-parent="#additionalDetails">
+                                <div class="accordion-body">
+                                    {{ form.technical_details }}
+                                    <small class="text-muted">{{ form.technical_details.help_text }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="riskAssessment">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                        data-bs-target="#collapseRiskAssessment">
+                                    Risk Assessment
+                                </button>
+                            </h2>
+                            <div id="collapseRiskAssessment" class="accordion-collapse collapse" 
+                                 data-bs-parent="#additionalDetails">
+                                <div class="accordion-body">
+                                    {{ form.risk_assessment }}
+                                    <small class="text-muted">{{ form.risk_assessment.help_text }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="approvers">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                        data-bs-target="#collapseApprovers">
+                                    Approvers (for Change Requests)
+                                </button>
+                            </h2>
+                            <div id="collapseApprovers" class="accordion-collapse collapse" 
+                                 data-bs-parent="#additionalDetails">
+                                <div class="accordion-body">
+                                    {{ form.approvers }}
+                                    <small class="text-muted">{{ form.approvers.help_text }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'ticket_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Create Ticket
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-control, .form-select {
+    border-radius: 0.375rem;
+}
+.accordion-button {
+    font-weight: 500;
+}
+</style>
+{% endblock %}
