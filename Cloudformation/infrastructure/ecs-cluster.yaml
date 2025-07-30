@@ -32,6 +32,15 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
         - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess
+      Policies:
+        - PolicyName: SecretsManagerReadAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: '*'
 
 Outputs:
   Cluster:

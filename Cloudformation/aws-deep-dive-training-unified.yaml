@@ -646,6 +646,115 @@ Resources:
       ScheduleExpression: 'rate(30 minutes)'
       State: DISABLED  # Manual enable during training
 
+  # ===========================================
+  # EVENT-DRIVEN RULES FOR TRAINING
+  # ===========================================
+
+  # S3 Object Upload Event Rule
+  S3FileUploadRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub '${EnvironmentName}-s3-file-upload-processing'
+      Description: 'Triggers processing when files are uploaded to S3'
+      State: ENABLED
+      EventPattern:
+        source:
+          - "aws.s3"
+        detail-type:
+          - "Object Created"
+        detail:
+          bucket:
+            name:
+              - !Ref DataStorage
+          object:
+            key:
+              - prefix: "incoming/"
+      Targets:
+        - Arn: !GetAtt DailyTransactionProcessor.Arn
+          Id: S3FileProcessingTarget
+
+  # Step Functions State Change Rule
+  StepFunctionStateChangeRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub '${EnvironmentName}-workflow-state-monitoring' 
+      Description: 'Monitors Step Functions workflow state changes'
+      State: ENABLED
+      EventPattern:
+        source:
+          - "aws.states"
+        detail-type:
+          - "Step Functions Execution Status Change"
+        detail:
+          status:
+            - "FAILED"
+            - "TIMED_OUT"
+          stateMachineArn:
+            - !Ref FinancialProcessingWorkflow
+      Targets:
+        - Arn: !GetAtt MonthEndProcessor.Arn
+          Id: WorkflowFailureHandler
+
+  # Lambda Function Error Rule
+  LambdaErrorRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub '${EnvironmentName}-lambda-error-monitoring'
+      Description: 'Captures Lambda function errors for automated response'
+      State: ENABLED
+      EventPattern:
+        source:
+          - "aws.lambda"
+        detail-type:
+          - "Lambda Function Invocation Result - Failure"
+        detail:
+          responseElements:
+            errorType:
+              - exists: true
+      Targets:
+        - Arn: !GetAtt GlueJobTriggerFunction.Arn
+          Id: ErrorRecoveryHandler
+
+  # Custom Application Event Rule
+  CustomBusinessEventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub '${EnvironmentName}-custom-business-events'
+      Description: 'Processes custom business events from applications'
+      State: ENABLED
+      EventPattern:
+        source:
+          - "mycompany.financial"
+        detail-type:
+          - "Transaction Processed"
+          - "Account Reconciled" 
+          - "Approval Required"
+        detail:
+          priority:
+            - "HIGH"
+            - "CRITICAL" 
+      Targets:
+        - Arn: !Ref FinancialProcessingWorkflow
+          Id: BusinessEventWorkflowTrigger
+          RoleArn: !GetAtt StepFunctionsEventRole.Arn
+
+  # Scheduled to Event-Driven Comparison Rule (Disabled by default)
+  ComparisonTestRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub '${EnvironmentName}-comparison-test-rule'
+      Description: 'Rule for comparing scheduled vs event-driven patterns - disabled for training'
+      State: DISABLED
+      EventPattern:
+        source:
+          - "aws.cloudwatch"
+        detail-type:
+          - "CloudWatch Alarm State Change"
+        detail:
+          state:
+            value:
+              - "ALARM"
+
   # Lambda Permissions for EventBridge
   DailyTransactionSchedulePermission:
     Type: AWS::Lambda::Permission
@@ -662,6 +771,31 @@ Resources:
       Action: lambda:InvokeFunction
       Principal: events.amazonaws.com
       SourceArn: !GetAtt MonthEndSchedule.Arn
+
+  # Lambda Permissions for Event-Driven Rules
+  S3FileUploadRulePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref DailyTransactionProcessor
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt S3FileUploadRule.Arn
+
+  StepFunctionStateChangeRulePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref MonthEndProcessor
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt StepFunctionStateChangeRule.Arn
+
+  LambdaErrorRulePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref GlueJobTriggerFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt LambdaErrorRule.Arn
 
   # ===========================================
   # GLUE JOBS - UPDATED WITH FASTER SCHEDULING  
@@ -983,6 +1117,22 @@ Resources:
   # ===========================================
   # MONITORING AND DASHBOARDS - FIXED ISSUES
   # ===========================================
+
+  # S3 Bucket for Data Storage (referenced by EventBridge rules)
+  DataStorage:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${EnvironmentName}-data-storage-${AWS::AccountId}'
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      NotificationConfiguration:
+        EventBridgeConfiguration:
+          EventBridgeEnabled: true
 
   # S3 Bucket for CloudTrail logs
   AuditTrailBucket:

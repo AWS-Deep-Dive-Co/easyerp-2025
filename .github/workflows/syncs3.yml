@@ -1,19 +1,37 @@
-name: Sync S3 - Stage
+name: Sync to S3
 
 on:
   push:
     branches:
-    - stage
+      - main
+      - stage
   workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: self-hosted
-    environment: Staging
+    environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Staging' }}
     steps:
-    - uses: actions/checkout@master
+    - uses: actions/checkout@v4
       with:
-          ref: stage
+          ref: ${{ github.ref_name }}
+          
+    - name: Determine environment
+      id: environment
+      run: |
+        if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+          echo "env=production" >> $GITHUB_OUTPUT
+          echo "bucket_env=PROD" >> $GITHUB_OUTPUT
+        else
+          echo "env=staging" >> $GITHUB_OUTPUT
+          echo "bucket_env=STAGE" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Display deployment info
+      run: |
+        echo "Deploying to: ${{ steps.environment.outputs.env }}"
+        echo "Branch: ${{ github.ref_name }}"
+        echo "Commit: ${{ github.sha }}"
     - name: List files after checkout
       run: ls -alh
     - name: Print working directory
@@ -31,9 +49,19 @@ jobs:
         fi
     - name: Sync to S3
       run: |
-        aws s3 sync . s3://$AWS_S3_BUCKET --delete --region $AWS_REGION
+        # Determine which S3 bucket to use based on environment
+        if [ "${{ steps.environment.outputs.env }}" = "production" ]; then
+          S3_BUCKET="${{ secrets.AWS_S3_BUCKET_PROD || secrets.AWS_S3_BUCKET }}"
+          echo "Syncing to Production S3 bucket: $S3_BUCKET"
+        else
+          S3_BUCKET="${{ secrets.AWS_S3_BUCKET_STAGE || secrets.AWS_S3_BUCKET }}"
+          echo "Syncing to Staging S3 bucket: $S3_BUCKET"
+        fi
+        
+        echo "Starting S3 sync..."
+        aws s3 sync . s3://$S3_BUCKET --delete --region $AWS_REGION
+        echo "✅ S3 sync completed successfully!"
       env:
-        AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_REGION: 'us-east-2'
+        AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
