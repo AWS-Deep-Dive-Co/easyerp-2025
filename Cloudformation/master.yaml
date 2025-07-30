@@ -547,12 +547,12 @@ Resources:
         # BastionAMIOS: !Ref BastionAMIOS
         # RDSEndPointAddress: !GetAtt RDS.Outputs.RDSEndPointAddress
 
-  # S3:
-  #   Type: AWS::CloudFormation::Stack
-  #   Properties:
-  #     TemplateURL: !Sub 'https://${S3BUCKET}.s3.${AWS::Region}.amazonaws.com/Cloudformation/infrastructure/s3.yaml'
-  #     Parameters:
-  #       EnvironmentName: !Ref AWS::StackName
+  S3:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://${S3BUCKET}.s3.${AWS::Region}.amazonaws.com/Cloudformation/infrastructure/s3.yaml'
+      Parameters:
+        EnvironmentName: !Ref AWS::StackName
 
   RDS:
     Type: AWS::CloudFormation::Stack
@@ -635,7 +635,7 @@ Resources:
         DBHOST: !GetAtt RDS.Outputs.RDSEndPointAddress
         DBPORT: !GetAtt RDS.Outputs.RDSEndPointPort
         DBSECRETARN: !GetAtt RDS.Outputs.RDSSecretArn
-        # S3BUCKET: !GetAtt S3.Outputs.S3Bucket
+        S3BUCKET: !GetAtt S3.Outputs.S3Bucket
         SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
         Subnets: !GetAtt VPC.Outputs.PrivateSubnets
         DockerImage: !Ref DockerImage
