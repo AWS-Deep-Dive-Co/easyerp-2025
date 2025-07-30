@@ -42,7 +42,7 @@ jobs:
           echo "Branch: ${{ github.event.workflow_run.head_branch }}"
           
           # Construct S3 template URL
-          S3_BUCKET="${{ vars.S3_BUCKET || 'easyerp-cloudformation-templates' }}"
+          S3_BUCKET="${{ vars.AWS_S3_BUCKET }}"
           TEMPLATE_KEY="${{ vars.MASTER_TEMPLATE || 'Cloudformation/master.yaml' }}"
           TEMPLATE_URL="https://${S3_BUCKET}.s3.amazonaws.com/${TEMPLATE_KEY}"
           
