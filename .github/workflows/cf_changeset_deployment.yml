@@ -68,25 +68,38 @@ jobs:
           
           CHANGE_SET_NAME="changeset-$(date +%Y%m%d-%H%M%S)"
           
-          # Get existing stack parameters to preserve them
-          echo "🔍 Getting existing stack parameters to roll forward..."
+          # Get ALL existing stack parameters to preserve them
+          echo "🔍 Getting ALL existing stack parameters to roll forward..."
           EXISTING_PARAMS=$(aws cloudformation describe-stacks \
             --stack-name ${{ steps.environment.outputs.stack_name }} \
-            --query 'Stacks[0].Parameters[?ParameterKey!=`DockerImage` && ParameterKey!=`S3BUCKET` && ParameterKey!=`CertificateSecretName`].[ParameterKey,ParameterValue]' \
+            --query 'Stacks[0].Parameters[].[ParameterKey,ParameterValue]' \
             --output text)
           
-          # Build parameter string with existing parameters (UsePreviousValue=true)
+          echo "Current stack parameters:"
+          echo "$EXISTING_PARAMS"
+          
+          # Build parameter string starting with all existing parameters
           PARAMETER_ARGS=""
           while IFS=$'\t' read -r key value; do
             if [ ! -z "$key" ]; then
-              PARAMETER_ARGS="$PARAMETER_ARGS ParameterKey=$key,UsePreviousValue=true"
+              # Override specific parameters we want to change
+              case "$key" in
+                "DockerImage")
+                  PARAMETER_ARGS="$PARAMETER_ARGS ParameterKey=$key,ParameterValue=${{ vars.IMAGE_NAME }}-latest"
+                  ;;
+                "S3BUCKET")
+                  PARAMETER_ARGS="$PARAMETER_ARGS ParameterKey=$key,ParameterValue=${{ vars.AWS_S3_BUCKET }}"
+                  ;;
+                "CertificateSecretName")
+                  PARAMETER_ARGS="$PARAMETER_ARGS ParameterKey=$key,ParameterValue=null"
+                  ;;
+                *)
+                  # Keep all other parameters with their current values
+                  PARAMETER_ARGS="$PARAMETER_ARGS ParameterKey=$key,ParameterValue=$value"
+                  ;;
+              esac
             fi
           done <<< "$EXISTING_PARAMS"
-          
-          # Add our override parameters
-          PARAMETER_ARGS="$PARAMETER_ARGS ParameterKey=DockerImage,ParameterValue=${{ vars.IMAGE_NAME }}-latest"
-          PARAMETER_ARGS="$PARAMETER_ARGS ParameterKey=S3BUCKET,ParameterValue=${{ vars.AWS_S3_BUCKET }}"
-          PARAMETER_ARGS="$PARAMETER_ARGS ParameterKey=CertificateSecretName,ParameterValue=null"
           
           echo "Using parameters: $PARAMETER_ARGS"
           
