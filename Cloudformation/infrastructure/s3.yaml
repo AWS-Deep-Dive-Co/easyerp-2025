@@ -12,10 +12,7 @@ Resources:
   S3AccessLogsBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub 
-        - easyerp-access-logs-${env}-${account}
-        - env: !Ref EnvironmentName
-          account: !Ref AWS::AccountId
+      BucketName: !Sub easyerp-access-logs-${AWS::AccountId}-${AWS::Region}
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
@@ -41,10 +38,7 @@ Resources:
     Type: AWS::S3::Bucket
     DependsOn: S3AccessLogsBucket
     Properties:
-      BucketName: !Sub 
-        - easyerp-app-bucket-${env}-${account}
-        - env: !Ref EnvironmentName
-          account: !Ref AWS::AccountId
+      BucketName: !Sub easyerp-app-bucket-${AWS::AccountId}-${AWS::Region}
       VersioningConfiguration:
         Status: Enabled
       BucketEncryption:
@@ -69,7 +63,9 @@ Resources:
   S3LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /aws/s3/${EnvironmentName}-easyerp-bucket
+      LogGroupName: !Sub 
+        - /aws/s3/${env}-easyerp-bucket
+        - env: !Ref EnvironmentName
       RetentionInDays: 30
       Tags:
         - Key: Name
