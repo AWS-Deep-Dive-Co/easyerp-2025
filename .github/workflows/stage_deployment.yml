@@ -1,7 +1,7 @@
-name: Stage Deployment
+name: ECS Deployment
 on:
   push:
-    branches: ["stage"]
+    branches: ["main", "stage"]
     paths-ignore:
       - 'Cloudformation/**'
       - '.github/**'
@@ -14,22 +14,35 @@ jobs:
       packages: write
       contents: read
     runs-on: ubuntu-latest
-    environment: Staging
+    environment: 
+      name: ${{ github.ref_name == 'main' && 'Production' || 'Staging' }}
     steps:
       - name: Check out code
         uses: actions/checkout@v3.0.2
         with:
           fetch-depth: 0
-          ref: stage
+          
+      - name: Determine environment
+        id: environment
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "env=prod" >> $GITHUB_OUTPUT
+            echo "environment=Production" >> $GITHUB_OUTPUT
+          else
+            echo "env=stage" >> $GITHUB_OUTPUT
+            echo "environment=Staging" >> $GITHUB_OUTPUT
+          fi
           
       # - uses: satackey/action-docker-layer-caching@v0.0.11
       #   # Ignore the failure of a step and avoid terminating the job.
       #   continue-on-error: true
-      # - run: docker build --tag easyerp:prod-${{ github.sha }} .
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         
-      - run: docker build --tag easyerp:stage-${{ github.sha }} .
+      - name: Build Docker image
+        env:
+          IMAGE_NAME: ${{ vars.IMAGE_NAME || 'easyerp' }}
+        run: docker build --tag $IMAGE_NAME-${{ github.sha }} .
       
       # - name: Docker Build
       #   uses: docker/build-push-action@v6
@@ -46,31 +59,60 @@ jobs:
       - name: Push to ECR
         id: ecr
         uses: jwalton/gh-ecr-push@v1
+        env:
+          IMAGE_NAME: ${{ vars.IMAGE_NAME || 'easyerp' }}
+          AWS_REGION: ${{ vars.AWS_REGION || 'us-east-2' }}
         with:
           access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          region: us-east-2
-          local-image: easyerp:stage-${{ github.sha }}
-          image: easyerp:stage-${{ github.sha }}, easyerp:stage-latest
+          region: ${{ vars.AWS_REGION || 'us-east-2' }}
+          local-image: ${{ vars.IMAGE_NAME }}-${{ github.sha }}
+          image: ${{ vars.IMAGE_NAME }}-${{ github.sha }}, ${{ vars.IMAGE_NAME }}-latest
       
   deploy:
     name: Deploy to ECS
     needs: build
-    environment: Staging
+    environment: 
+      name: ${{ github.ref_name == 'main' && 'Production' || 'Staging' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: chrislennon/action-aws-cli@v1.1
-        # All commands after this point have access to the AWS CLI
+      - name: Determine environment
+        id: environment
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "env=prod" >> $GITHUB_OUTPUT
+            echo "environment=Production" >> $GITHUB_OUTPUT
+          else
+            echo "env=stage" >> $GITHUB_OUTPUT
+            echo "environment=Staging" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-2' }}
+          
+      - name: Deploy to ECS
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: us-east-2
-          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
-      - run: aws ecs update-service --cluster EasyERP-Stage --service EasyERP-Stage --force-new-deployment
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: us-east-2
-          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+          ECS_CLUSTER: ${{ vars.ECS_CLUSTER_NAME }}
+          ECS_SERVICE: ${{ vars.ECS_SERVICE_NAME }}
+          AWS_REGION: ${{ vars.AWS_REGION || 'us-east-2' }}
+        run: |
+          echo "Deploying to ECS:"
+          echo "Environment: ${{ steps.environment.outputs.environment }}"
+          echo "Cluster: $ECS_CLUSTER"
+          echo "Service: $ECS_SERVICE"
+          echo "Region: $AWS_REGION"
+          
+          aws ecs update-service \
+            --cluster $ECS_CLUSTER \
+            --service $ECS_SERVICE \
+            --force-new-deployment \
+            --region $AWS_REGION
+          
+          echo "✅ ECS service update initiated successfully!"
+          echo "🚀 New deployment will pull the latest image and restart the service."
         
           

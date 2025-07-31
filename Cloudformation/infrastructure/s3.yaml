@@ -1,7 +1,7 @@
 Description: >
-  This template contains the security groups required by our entire stack.
-  We create them in a seperate nested template, so they can be referenced
-  by all of the other nested templates.
+  This template creates an S3 bucket for the EasyERP application.
+  The bucket is configured with appropriate security settings and 
+  can be used for storing application assets, logs, or other data.
 
 Parameters:
   EnvironmentName:
@@ -12,18 +12,57 @@ Resources:
   S3Bucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub s3-bucket-${EnvironmentName}-${AWS::AccountId}
+      BucketName: !Sub easyerp-app-bucket-${EnvironmentName}-${AWS::AccountId}
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+            BucketKeyEnabled: true
       PublicAccessBlockConfiguration:
-        RestrictPublicBuckets: false
-        IgnorePublicAcls: false
-        BlockPublicPolicy: false
-        BlockPublicAcls: false
-      OwnershipControls:
-        Rules:
-        - ObjectOwnership: BucketOwnerPreferred
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      NotificationConfiguration:
+        CloudWatchConfigurations:
+          - Event: s3:ObjectCreated:*
+            CloudWatchConfiguration:
+              LogGroupName: !Ref S3LogGroup
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-EasyERP-S3-Bucket
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  S3LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/s3/${EnvironmentName}-easyerp-bucket
+      RetentionInDays: 30
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-EasyERP-S3-Logs
+        - Key: Environment
+          Value: !Ref EnvironmentName
 
 Outputs:
   S3Bucket:
-    Description: A reference to the s3 bucket
+    Description: Name of the created S3 bucket
     Value: !Ref S3Bucket
+    Export:
+      Name: !Sub ${AWS::StackName}-S3Bucket
+  
+  S3BucketArn:
+    Description: ARN of the created S3 bucket
+    Value: !GetAtt S3Bucket.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-S3BucketArn
+  
+  S3LogGroup:
+    Description: CloudWatch Log Group for S3 bucket logs
+    Value: !Ref S3LogGroup
+    Export:
+      Name: !Sub ${AWS::StackName}-S3LogGroup
 

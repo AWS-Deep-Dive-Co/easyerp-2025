@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  easyticket:
+    build: .
+    ports:
+      - "8000:80"
+    volumes:
+      - ticket_data:/app/data
+      - static_files:/app/static
+      - media_files:/app/media
+    environment:
+      - SECRET_KEY=your-secret-key-change-in-production
+      - DEBUG=True
+      - TZ=UTC
+      # Replace with your actual domain(s) - comma separated for multiple domains
+      - CSRF_TRUSTED_ORIGINS=https://easyticket.aws-deep-dive.com
+    restart: unless-stopped
+    container_name: easyticket
+
+volumes:
+  ticket_data:
+    driver: local
+  static_files:
+    driver: local
+  media_files:
+    driver: local
+
+networks:
+  default:
+    name: ingress
+    external: true
