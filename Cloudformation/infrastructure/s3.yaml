@@ -9,8 +9,34 @@ Parameters:
     Type: String
 
 Resources:
+  S3AccessLogsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub easyerp-access-logs-${EnvironmentName}-${AWS::AccountId}
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+            BucketKeyEnabled: true
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteOldAccessLogs
+            Status: Enabled
+            ExpirationInDays: 90
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-EasyERP-AccessLogs-Bucket
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
   S3Bucket:
     Type: AWS::S3::Bucket
+    DependsOn: S3AccessLogsBucket
     Properties:
       BucketName: !Sub easyerp-app-bucket-${EnvironmentName}-${AWS::AccountId}
       VersioningConfiguration:
@@ -25,11 +51,9 @@ Resources:
         BlockPublicPolicy: true
         IgnorePublicAcls: true
         RestrictPublicBuckets: true
-      NotificationConfiguration:
-        CloudWatchConfigurations:
-          - Event: s3:ObjectCreated:*
-            CloudWatchConfiguration:
-              LogGroupName: !Ref S3LogGroup
+      LoggingConfiguration:
+        DestinationBucketName: !Ref S3AccessLogsBucket
+        LogFilePrefix: access-logs/
       Tags:
         - Key: Name
           Value: !Sub ${EnvironmentName}-EasyERP-S3-Bucket
@@ -59,6 +83,12 @@ Outputs:
     Value: !GetAtt S3Bucket.Arn
     Export:
       Name: !Sub ${AWS::StackName}-S3BucketArn
+
+  S3AccessLogsBucket:
+    Description: Name of the S3 access logs bucket
+    Value: !Ref S3AccessLogsBucket
+    Export:
+      Name: !Sub ${AWS::StackName}-S3AccessLogsBucket
   
   S3LogGroup:
     Description: CloudWatch Log Group for S3 bucket logs
