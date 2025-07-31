@@ -1,73 +1,64 @@
-# GitHub Actions Workflow Coordination
+# GitHub Actions Workflow Coordination - Simplified
 
-This repository uses coordinated GitHub Actions workflows to handle both CloudFormation infrastructure changes and application code deployments. The workflows are designed to ensure proper deployment order and prevent conflicts.
+This repository uses a simplified, linear GitHub Actions workflow pipeline that ensures proper deployment order for both infrastructure and application changes.
 
-## Workflow Overview
+## Simplified Workflow Overview
 
-### 1. Sync to S3 (`syncs3.yml`)
+### Linear Pipeline Flow:
+```
+Push (any changes) → CloudFormation Deployment → Sync to S3 → ECS Deployment
+```
+
+### 1. CloudFormation Deployment (`cf_changeset_deployment.yml`)
 - **Trigger**: Push to `main` or `stage` branches with CloudFormation changes
-- **Purpose**: Uploads CloudFormation templates to S3
-- **Next**: Triggers CloudFormation Deployment workflow
-
-### 2. CloudFormation Deployment (`cf_changeset_deployment.yml`)
-- **Trigger**: Completion of "Sync to S3" workflow
 - **Purpose**: Creates and executes CloudFormation changesets automatically
 - **Process**:
   1. Creates CloudFormation changeset
   2. Waits for changeset to be ready
   3. Executes changeset automatically
   4. Waits for stack update completion
+- **Next**: Triggers Sync to S3 workflow
+
+### 2. Sync to S3 (`syncs3.yml`)
+- **Trigger**: Completion of CloudFormation Deployment workflow
+- **Purpose**: Uploads all files (including updated CloudFormation templates) to S3
+- **Process**:
+  1. Syncs entire repository to S3 bucket
+  2. Ensures CloudFormation templates are available for future deployments
 - **Next**: Triggers ECS Deployment workflow
 
 ### 3. ECS Deployment (`Build-and-deploy.yml`)
-- **Triggers**: 
-  - Push to `main` or `stage` branches (any changes)
-  - Completion of CloudFormation Deployment workflow
-  - Manual dispatch
-- **Smart Logic**:
-  - **Code-only changes**: Deploys immediately
-  - **CloudFormation changes**: Waits for CloudFormation deployment to complete first
-  - **Manual trigger**: Deploys immediately
+- **Trigger**: Completion of Sync to S3 workflow
+- **Purpose**: Builds Docker image and deploys to ECS
+- **Process**:
+  1. Builds Docker image from latest code
+  2. Pushes image to ECR
+  3. Updates ECS service with new deployment
 
 ## Deployment Scenarios
 
-### Scenario 1: Code-Only Changes
+### All Changes (Infrastructure + Application):
 ```
-Push (app code) → ECS Deployment → Docker Build → ECS Deploy
+Push → CloudFormation Deployment → Sync to S3 → ECS Deployment
 ```
-- Fast path for application updates
-- No infrastructure changes needed
-
-### Scenario 2: CloudFormation Changes
-```
-Push (CF templates) → Sync to S3 → CloudFormation Deployment → ECS Deployment → Docker Build → ECS Deploy
-```
+- All changes go through the complete pipeline
 - Infrastructure changes are applied first
-- Application deployment follows automatically
+- Application changes follow automatically
 
-### Scenario 3: Mixed Changes
-```
-Push (CF + app code) → Sync to S3 → CloudFormation Deployment → ECS Deployment → Docker Build → ECS Deploy
-```
-- CloudFormation changes are detected and processed first
-- Application changes wait for infrastructure completion
+### Benefits of Simplified Approach
 
-## Workflow Logic
+- **Predictable**: Every push follows the same linear path
+- **Safe**: Infrastructure is always updated before applications
+- **Simple**: No complex conditional logic to debug
+- **Reliable**: Each step waits for the previous to complete successfully
+- **Consistent**: Same flow for all types of changes
 
-The ECS Deployment workflow uses intelligent trigger detection:
+## Manual Deployment
 
-1. **workflow_run trigger**: Runs after CloudFormation deployment completes
-2. **push trigger**: Checks if changes include CloudFormation files
-   - If yes: Skips deployment (waits for CloudFormation workflow)
-   - If no: Proceeds with immediate deployment
-
-## Benefits
-
-- **Automatic coordination**: No manual intervention required
-- **Safe deployment order**: Infrastructure changes always applied before app changes
-- **Efficient**: Code-only changes deploy immediately without waiting
-- **Flexible**: Supports manual deployments when needed
-- **Resilient**: Failed CloudFormation deployments prevent app deployments
+All workflows support manual dispatch (`workflow_dispatch`) for:
+- Emergency deployments
+- Testing workflow changes
+- Deploying specific branches
 
 ## Environment Configuration
 
@@ -76,3 +67,9 @@ Both workflows support environment-specific deployments:
 - **stage branch** → Staging environment
 
 Each environment uses its own AWS credentials and configuration variables.
+
+## Failure Handling
+
+- If CloudFormation deployment fails, the pipeline stops
+- If S3 sync fails, ECS deployment is skipped
+- Each step only runs if the previous step completed successfully
