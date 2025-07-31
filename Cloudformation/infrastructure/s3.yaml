@@ -12,7 +12,10 @@ Resources:
   S3AccessLogsBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub easyerp-access-logs-${EnvironmentName}-${AWS::AccountId}
+      BucketName: !Sub 
+        - easyerp-access-logs-${env}-${account}
+        - env: !Ref EnvironmentName
+          account: !Ref AWS::AccountId
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
@@ -38,7 +41,10 @@ Resources:
     Type: AWS::S3::Bucket
     DependsOn: S3AccessLogsBucket
     Properties:
-      BucketName: !Sub easyerp-app-bucket-${EnvironmentName}-${AWS::AccountId}
+      BucketName: !Sub 
+        - easyerp-app-bucket-${env}-${account}
+        - env: !Ref EnvironmentName
+          account: !Ref AWS::AccountId
       VersioningConfiguration:
         Status: Enabled
       BucketEncryption:
