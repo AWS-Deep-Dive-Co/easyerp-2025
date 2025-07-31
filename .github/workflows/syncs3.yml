@@ -10,7 +10,7 @@ on:
 jobs:
   deploy:
     runs-on: self-hosted
-    environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Staging' }}
+    environment: ${{ github.ref_name == 'main' && 'Production' || 'Staging' }}
     steps:
     - uses: actions/checkout@v4
       with:
@@ -19,7 +19,7 @@ jobs:
     - name: Determine environment
       id: environment
       run: |
-        if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+        if [ "${{ github.ref_name }}" = "main" ]; then
           echo "env=Production" >> $GITHUB_OUTPUT
           echo "bucket_env=PROD" >> $GITHUB_OUTPUT
         else

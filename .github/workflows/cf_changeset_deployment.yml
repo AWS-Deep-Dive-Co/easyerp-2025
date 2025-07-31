@@ -8,14 +8,15 @@ on:
     branches:
       - main
       - stage
+  workflow_dispatch:
 
 jobs:
   create-and-execute-changeset:
     name: Create and Execute Change Set
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     environment: 
-      name: ${{ github.event.workflow_run.head_branch == 'main' && 'Production' || 'Staging' }}
+      name: ${{ github.event.workflow_run.head_branch == 'main' && 'Production' || (github.ref_name == 'main' && 'Production') || 'Staging' }}
     outputs:
       deployment-status: ${{ steps.deployment.outputs.status }}
       stack-name: ${{ steps.environment.outputs.stack_name }}
@@ -31,10 +32,18 @@ jobs:
       - name: Determine environment
         id: environment
         run: |
-          if [ "${{ github.event.workflow_run.head_branch }}" = "main" ]; then
-            echo "env=prod" >> $GITHUB_OUTPUT
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            if [ "${{ github.event.workflow_run.head_branch }}" = "main" ]; then
+              echo "env=prod" >> $GITHUB_OUTPUT
+            else
+              echo "env=stage" >> $GITHUB_OUTPUT
+            fi
           else
-            echo "env=stage" >> $GITHUB_OUTPUT
+            if [ "${{ github.ref_name }}" = "main" ]; then
+              echo "env=prod" >> $GITHUB_OUTPUT
+            else
+              echo "env=stage" >> $GITHUB_OUTPUT
+            fi
           fi
           echo "stack_name=${{ vars.STACK_NAME }}" >> $GITHUB_OUTPUT
 
@@ -42,8 +51,13 @@ jobs:
         run: |
           echo "Creating Change Set for stack: ${{ steps.environment.outputs.stack_name }}"
           echo "Environment: ${{ steps.environment.outputs.env }}"
-          echo "Commit: ${{ github.event.workflow_run.head_sha }}"
-          echo "Branch: ${{ github.event.workflow_run.head_branch }}"
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            echo "Commit: ${{ github.event.workflow_run.head_sha }}"
+            echo "Branch: ${{ github.event.workflow_run.head_branch }}"
+          else
+            echo "Commit: ${{ github.sha }}"
+            echo "Branch: ${{ github.ref_name }}"
+          fi
           
           # Construct S3 template URL
           S3_BUCKET="${{ vars.AWS_S3_BUCKET }}"
@@ -54,38 +68,180 @@ jobs:
           
           CHANGE_SET_NAME="changeset-$(date +%Y%m%d-%H%M%S)"
           
+          # Get ALL existing stack parameters to preserve them
+          echo "🔍 Getting ALL existing stack parameters to roll forward..."
+          echo "DEBUG: Stack name: ${{ steps.environment.outputs.stack_name }}"
+          echo "DEBUG: AWS Region: ${{ vars.AWS_REGION || 'us-east-1' }}"
+          
+          # Create a temporary file to store parameters properly
+          PARAM_FILE="/tmp/parameters.json"
+          
+          # Get existing parameters in JSON format for proper handling
+          echo "DEBUG: Fetching current stack parameters..."
+          aws cloudformation describe-stacks \
+            --stack-name ${{ steps.environment.outputs.stack_name }} \
+            --query 'Stacks[0].Parameters' \
+            --output json > "$PARAM_FILE"
+          
+          echo "DEBUG: Parameter file created successfully"
+          echo "DEBUG: Parameter file size: $(wc -c < "$PARAM_FILE") bytes"
+          
+          echo "========== CURRENT STACK PARAMETERS =========="
+          cat "$PARAM_FILE" | jq -r '.[] | "  \(.ParameterKey) = \(.ParameterValue)"'
+          echo "==============================================="
+          
+          echo "DEBUG: Building new parameter array with overrides..."
+          echo "DEBUG: Variables to override:"
+          echo "  - DockerImage will be set to: ${{ vars.IMAGE_NAME }}-latest"
+          echo "  - S3BUCKET will be set to: ${{ vars.AWS_S3_BUCKET }}"
+          echo "  - CertificateSecretName will be set to: null"
+          
+          # Build parameters array, overriding specific ones
+          echo "DEBUG: Processing parameters with jq..."
+          PARAMETERS=$(jq -c '
+            map(
+              if .ParameterKey == "DockerImage" then
+                {ParameterKey: .ParameterKey, ParameterValue: "${{ vars.IMAGE_NAME }}-latest"}
+              elif .ParameterKey == "S3BUCKET" then
+                {ParameterKey: .ParameterKey, ParameterValue: "${{ vars.AWS_S3_BUCKET }}"}
+              elif .ParameterKey == "CertificateSecretName" then
+                {ParameterKey: .ParameterKey, ParameterValue: "null"}
+              else
+                {ParameterKey: .ParameterKey, ParameterValue: .ParameterValue}
+              end
+            )
+          ' "$PARAM_FILE")
+          
+          echo "DEBUG: jq processing completed"
+          echo "DEBUG: Parameter array length: $(echo "$PARAMETERS" | jq '. | length')"
+          
+          echo "========== FINAL PARAMETERS FOR CHANGESET =========="
+          echo "$PARAMETERS" | jq -r '.[] | "  \(.ParameterKey) = \(.ParameterValue)"'
+          echo "===================================================="
+          
+          # Save parameters to file for AWS CLI
+          echo "DEBUG: Saving final parameters to file..."
+          echo "$PARAMETERS" > "/tmp/final_parameters.json"
+          echo "DEBUG: Final parameter file size: $(wc -c < "/tmp/final_parameters.json") bytes"
+          
+          echo "DEBUG: Validating final parameter file format..."
+          if jq empty "/tmp/final_parameters.json" 2>/dev/null; then
+            echo "DEBUG: ✅ Parameter file is valid JSON"
+          else
+            echo "DEBUG: ❌ Parameter file is invalid JSON!"
+            echo "DEBUG: File contents:"
+            cat "/tmp/final_parameters.json"
+            exit 1
+          fi
+          
+          # Create changeset with JSON parameters file for proper handling
+          echo "DEBUG: Creating CloudFormation changeset..."
+          echo "DEBUG: Using template URL: $TEMPLATE_URL"
+          echo "DEBUG: Changeset name: $CHANGE_SET_NAME"
+          echo "DEBUG: Parameter file: /tmp/final_parameters.json"
+          
           aws cloudformation create-change-set \
             --stack-name ${{ steps.environment.outputs.stack_name }} \
             --change-set-name "$CHANGE_SET_NAME" \
             --template-url "$TEMPLATE_URL" \
             --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
-            --parameters ParameterKey=DockerImage,ParameterValue=${{ vars.IMAGE_NAME }}-latest ParameterKey=S3BUCKET,ParameterValue=${{ vars.AWS_S3_BUCKET }} ParameterKey=CertificateSecretName,ParameterValue=null
+            --parameters file:///tmp/final_parameters.json
           
-          echo "✅ Change Set created successfully!"
+          CHANGESET_RESULT=$?
+          echo "DEBUG: CloudFormation create-change-set exit code: $CHANGESET_RESULT"
+          
+          if [ $CHANGESET_RESULT -eq 0 ]; then
+            echo "✅ Change Set created successfully!"
+          else
+            echo "❌ Change Set creation failed!"
+            echo "DEBUG: Displaying parameter file contents for troubleshooting:"
+            cat "/tmp/final_parameters.json"
+            exit 1
+          fi
+          
           echo "Change Set Name: $CHANGE_SET_NAME"
           
           # Wait for changeset to be ready
           echo "⏳ Waiting for changeset to be ready..."
+          echo "DEBUG: Executing aws cloudformation wait change-set-create-complete..."
+          
           aws cloudformation wait change-set-create-complete \
             --stack-name ${{ steps.environment.outputs.stack_name }} \
             --change-set-name "$CHANGE_SET_NAME"
           
-          echo "✅ Change Set is ready for execution"
+          WAIT_RESULT=$?
+          echo "DEBUG: CloudFormation wait exit code: $WAIT_RESULT"
+          
+          if [ $WAIT_RESULT -eq 0 ]; then
+            echo "✅ Change Set is ready for execution"
+            
+            # Display changeset details for debugging
+            echo "DEBUG: Retrieving changeset details..."
+            aws cloudformation describe-change-set \
+              --stack-name ${{ steps.environment.outputs.stack_name }} \
+              --change-set-name "$CHANGE_SET_NAME" \
+              --query '{Status: Status, StatusReason: StatusReason, Changes: Changes[].{Action: Action, ResourceType: ResourceChange.ResourceType, LogicalId: ResourceChange.LogicalResourceId}}' \
+              --output table
+          else
+            echo "❌ Change Set creation failed during wait!"
+            echo "DEBUG: Retrieving changeset status for troubleshooting..."
+            aws cloudformation describe-change-set \
+              --stack-name ${{ steps.environment.outputs.stack_name }} \
+              --change-set-name "$CHANGE_SET_NAME" \
+              --query '{Status: Status, StatusReason: StatusReason}' \
+              --output table
+            exit 1
+          fi
           
           # Execute the changeset
           echo "🚀 Executing Change Set..."
+          echo "DEBUG: Executing aws cloudformation execute-change-set..."
+          
           aws cloudformation execute-change-set \
             --stack-name ${{ steps.environment.outputs.stack_name }} \
             --change-set-name "$CHANGE_SET_NAME"
           
-          echo "✅ Change Set execution initiated!"
+          EXECUTE_RESULT=$?
+          echo "DEBUG: CloudFormation execute-change-set exit code: $EXECUTE_RESULT"
+          
+          if [ $EXECUTE_RESULT -eq 0 ]; then
+            echo "✅ Change Set execution initiated!"
+          else
+            echo "❌ Change Set execution failed!"
+            exit 1
+          fi
           
           # Wait for stack update to complete
           echo "⏳ Waiting for stack update to complete..."
+          echo "DEBUG: Executing aws cloudformation wait stack-update-complete..."
+          echo "DEBUG: This may take several minutes depending on the changes..."
+          
           aws cloudformation wait stack-update-complete \
             --stack-name ${{ steps.environment.outputs.stack_name }}
           
-          echo "🎉 Stack update completed successfully!"
+          UPDATE_RESULT=$?
+          echo "DEBUG: CloudFormation wait stack-update-complete exit code: $UPDATE_RESULT"
+          
+          if [ $UPDATE_RESULT -eq 0 ]; then
+            echo "🎉 Stack update completed successfully!"
+            
+            # Display final stack status
+            echo "DEBUG: Retrieving final stack status..."
+            aws cloudformation describe-stacks \
+              --stack-name ${{ steps.environment.outputs.stack_name }} \
+              --query 'Stacks[0].{StackName: StackName, StackStatus: StackStatus, LastUpdatedTime: LastUpdatedTime}' \
+              --output table
+              
+          else
+            echo "❌ Stack update failed!"
+            echo "DEBUG: Retrieving stack events for troubleshooting..."
+            aws cloudformation describe-stack-events \
+              --stack-name ${{ steps.environment.outputs.stack_name }} \
+              --query 'StackEvents[0:10].{Timestamp: Timestamp, LogicalResourceId: LogicalResourceId, ResourceStatus: ResourceStatus, ResourceStatusReason: ResourceStatusReason}' \
+              --output table
+            exit 1
+          fi
+          
           echo "Stack: ${{ steps.environment.outputs.stack_name }}"
           echo "Environment: ${{ steps.environment.outputs.env }}"
 
