@@ -1,21 +1,20 @@
 name: CloudFormation Deployment
 
 on:
-  workflow_run:
-    workflows: ["Sync to S3"]
-    types:
-      - completed
+  push:
     branches:
       - main
       - stage
+    paths:
+      - 'Cloudformation/**'
+  workflow_dispatch:
 
 jobs:
   create-and-execute-changeset:
     name: Create and Execute Change Set
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     environment: 
-      name: ${{ github.event.workflow_run.head_branch == 'main' && 'Production' || 'Staging' }}
+      name: ${{ github.ref_name == 'main' && 'Production' || 'Staging' }}
     outputs:
       deployment-status: ${{ steps.deployment.outputs.status }}
       stack-name: ${{ steps.environment.outputs.stack_name }}
@@ -31,7 +30,7 @@ jobs:
       - name: Determine environment
         id: environment
         run: |
-          if [ "${{ github.event.workflow_run.head_branch }}" = "main" ]; then
+          if [ "${{ github.ref_name }}" = "main" ]; then
             echo "env=prod" >> $GITHUB_OUTPUT
           else
             echo "env=stage" >> $GITHUB_OUTPUT
@@ -42,8 +41,8 @@ jobs:
         run: |
           echo "Creating Change Set for stack: ${{ steps.environment.outputs.stack_name }}"
           echo "Environment: ${{ steps.environment.outputs.env }}"
-          echo "Commit: ${{ github.event.workflow_run.head_sha }}"
-          echo "Branch: ${{ github.event.workflow_run.head_branch }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Branch: ${{ github.ref_name }}"
           
           # Construct S3 template URL
           S3_BUCKET="${{ vars.AWS_S3_BUCKET }}"

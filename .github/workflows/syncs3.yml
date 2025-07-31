@@ -1,7 +1,10 @@
 name: Sync to S3
 
 on:
-  push:
+  workflow_run:
+    workflows: ["CloudFormation Deployment"]
+    types:
+      - completed
     branches:
       - main
       - stage
@@ -10,21 +13,34 @@ on:
 jobs:
   deploy:
     runs-on: self-hosted
-    environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Staging' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    environment: ${{ github.event.workflow_run.head_branch == 'main' && 'Production' || (github.ref_name == 'main' && 'Production') || 'Staging' }}
     steps:
     - uses: actions/checkout@v4
       with:
-          ref: ${{ github.ref_name }}
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.ref_name }}
           
     - name: Determine environment
       id: environment
       run: |
-        if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-          echo "env=Production" >> $GITHUB_OUTPUT
-          echo "bucket_env=PROD" >> $GITHUB_OUTPUT
+        if [ "${{ github.event_name }}" = "workflow_run" ]; then
+          # Triggered by CloudFormation workflow
+          if [ "${{ github.event.workflow_run.head_branch }}" = "main" ]; then
+            echo "env=Production" >> $GITHUB_OUTPUT
+            echo "bucket_env=PROD" >> $GITHUB_OUTPUT
+          else
+            echo "env=Staging" >> $GITHUB_OUTPUT
+            echo "bucket_env=STAGE" >> $GITHUB_OUTPUT
+          fi
         else
-          echo "env=Staging" >> $GITHUB_OUTPUT
-          echo "bucket_env=STAGE" >> $GITHUB_OUTPUT
+          # Manual trigger
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "env=Production" >> $GITHUB_OUTPUT
+            echo "bucket_env=PROD" >> $GITHUB_OUTPUT
+          else
+            echo "env=Staging" >> $GITHUB_OUTPUT
+            echo "bucket_env=STAGE" >> $GITHUB_OUTPUT
+          fi
         fi
         
     - name: Display deployment info
