@@ -1,4 +1,4 @@
-name: CloudFormation Change Set Creation
+name: CloudFormation Deployment
 
 on:
   workflow_run:
@@ -10,12 +10,16 @@ on:
       - stage
 
 jobs:
-  create-changeset:
-    name: Create Change Set
+  create-and-execute-changeset:
+    name: Create and Execute Change Set
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     environment: 
       name: ${{ github.event.workflow_run.head_branch == 'main' && 'Production' || 'Staging' }}
+    outputs:
+      deployment-status: ${{ steps.deployment.outputs.status }}
+      stack-name: ${{ steps.environment.outputs.stack_name }}
+      environment: ${{ steps.environment.outputs.env }}
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -59,12 +63,34 @@ jobs:
           
           echo "✅ Change Set created successfully!"
           echo "Change Set Name: $CHANGE_SET_NAME"
-          echo ""
-          echo "🚀 Next steps:"
-          echo "1. Go to AWS CloudFormation console"
-          echo "2. Navigate to Stacks"
-          echo "3. Select: ${{ steps.environment.outputs.stack_name }}"
-          echo "4. Go to Change Sets tab"
-          echo "5. Review and execute the change set: $CHANGE_SET_NAME"
-          echo ""
-          echo "Change set is ready for review and execution in the console."
+          
+          # Wait for changeset to be ready
+          echo "⏳ Waiting for changeset to be ready..."
+          aws cloudformation wait change-set-create-complete \
+            --stack-name ${{ steps.environment.outputs.stack_name }} \
+            --change-set-name "$CHANGE_SET_NAME"
+          
+          echo "✅ Change Set is ready for execution"
+          
+          # Execute the changeset
+          echo "🚀 Executing Change Set..."
+          aws cloudformation execute-change-set \
+            --stack-name ${{ steps.environment.outputs.stack_name }} \
+            --change-set-name "$CHANGE_SET_NAME"
+          
+          echo "✅ Change Set execution initiated!"
+          
+          # Wait for stack update to complete
+          echo "⏳ Waiting for stack update to complete..."
+          aws cloudformation wait stack-update-complete \
+            --stack-name ${{ steps.environment.outputs.stack_name }}
+          
+          echo "🎉 Stack update completed successfully!"
+          echo "Stack: ${{ steps.environment.outputs.stack_name }}"
+          echo "Environment: ${{ steps.environment.outputs.env }}"
+
+      - name: Set deployment status
+        id: deployment
+        run: |
+          echo "status=success" >> $GITHUB_OUTPUT
+          echo "CloudFormation deployment completed successfully"
