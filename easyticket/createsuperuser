@@ -1,0 +1,3 @@
+#!/bin/bash
+
+echo "from django.contrib.auth.models import User; User.objects.filter(username='admin').exists() or User.objects.create_superuser('admin', 'admin@easyticket.local', 'password')" | python3 manage.py shell

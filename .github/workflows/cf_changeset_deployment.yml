@@ -1,0 +1,70 @@
+name: CloudFormation Change Set Creation
+
+on:
+  workflow_run:
+    workflows: ["Sync to S3"]
+    types:
+      - completed
+    branches:
+      - main
+      - stage
+
+jobs:
+  create-changeset:
+    name: Create Change Set
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    environment: 
+      name: ${{ github.event.workflow_run.head_branch == 'main' && 'Production' || 'Staging' }}
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Determine environment
+        id: environment
+        run: |
+          if [ "${{ github.event.workflow_run.head_branch }}" = "main" ]; then
+            echo "env=prod" >> $GITHUB_OUTPUT
+          else
+            echo "env=stage" >> $GITHUB_OUTPUT
+          fi
+          echo "stack_name=${{ vars.STACK_NAME }}" >> $GITHUB_OUTPUT
+
+      - name: Create Change Set
+        run: |
+          echo "Creating Change Set for stack: ${{ steps.environment.outputs.stack_name }}"
+          echo "Environment: ${{ steps.environment.outputs.env }}"
+          echo "Commit: ${{ github.event.workflow_run.head_sha }}"
+          echo "Branch: ${{ github.event.workflow_run.head_branch }}"
+          
+          # Construct S3 template URL
+          S3_BUCKET="${{ vars.AWS_S3_BUCKET }}"
+          TEMPLATE_KEY="${{ vars.MASTER_TEMPLATE || 'Cloudformation/master.yaml' }}"
+          TEMPLATE_URL="https://${S3_BUCKET}.s3.amazonaws.com/${TEMPLATE_KEY}"
+          
+          echo "Using template from S3: $TEMPLATE_URL"
+          
+          CHANGE_SET_NAME="changeset-$(date +%Y%m%d-%H%M%S)"
+          
+          aws cloudformation create-change-set \
+            --stack-name ${{ steps.environment.outputs.stack_name }} \
+            --change-set-name "$CHANGE_SET_NAME" \
+            --template-url "$TEMPLATE_URL" \
+            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
+            --parameters ParameterKey=DockerImage,ParameterValue=${{ vars.IMAGE_NAME }}-latest ParameterKey=S3BUCKET,ParameterValue=${{ vars.AWS_S3_BUCKET }} ParameterKey=CertificateSecretName,ParameterValue=null
+          
+          echo "✅ Change Set created successfully!"
+          echo "Change Set Name: $CHANGE_SET_NAME"
+          echo ""
+          echo "🚀 Next steps:"
+          echo "1. Go to AWS CloudFormation console"
+          echo "2. Navigate to Stacks"
+          echo "3. Select: ${{ steps.environment.outputs.stack_name }}"
+          echo "4. Go to Change Sets tab"
+          echo "5. Review and execute the change set: $CHANGE_SET_NAME"
+          echo ""
+          echo "Change set is ready for review and execution in the console."

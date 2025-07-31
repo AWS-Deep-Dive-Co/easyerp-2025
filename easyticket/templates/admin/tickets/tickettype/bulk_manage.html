@@ -1,0 +1,74 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block title %}Bulk Manage Ticket Types{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Home</a>
+    &rsaquo; <a href="{% url 'admin:app_list' app_label='tickets' %}">Tickets</a>
+    &rsaquo; <a href="{% url 'admin:tickets_tickettype_changelist' %}">Ticket types</a>
+    &rsaquo; Bulk Manage
+</div>
+{% endblock %}
+
+{% block content %}
+<h1>Bulk Manage Ticket Types</h1>
+
+<div class="module aligned">
+    <h2>Create Multiple Ticket Types</h2>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-row">
+            <div>
+                <label for="types_text">Ticket Types (one per line):</label>
+                <div class="help">
+                    Format: "Type Name" or "Type Name | Description"<br>
+                    Example:<br>
+                    Standard Change Request | Regular change with standard approval process<br>
+                    Emergency Change Request | Urgent change requiring expedited approval<br>
+                    Access Request<br>
+                    Incident Report
+                </div>
+                <textarea name="types_text" id="types_text" rows="10" cols="80" placeholder="Standard Change Request | Regular change with standard approval process
+Emergency Change Request | Urgent change requiring expedited approval  
+Access Request | User access and permissions requests
+Incident Report | IT security and operational incidents"></textarea>
+            </div>
+        </div>
+        
+        <div class="submit-row">
+            <input type="submit" name="bulk_create" value="Create Ticket Types" class="default">
+            <a href="{% url 'admin:tickets_tickettype_changelist' %}" class="button cancel-link">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<div class="module">
+    <h2>Current Ticket Types</h2>
+    {% regroup object_list by is_active as grouped_types %}
+    
+    {% for group in grouped_types %}
+    <h3>{% if group.grouper %}Active{% else %}Inactive{% endif %} Types</h3>
+    <ul>
+        {% for ticket_type in group.list %}
+        <li>
+            <strong>{{ ticket_type.name }}</strong>
+            {% if ticket_type.description %} - {{ ticket_type.description }}{% endif %}
+            <small>(Created: {{ ticket_type.created_at|date:"M d, Y" }})</small>
+        </li>
+        {% endfor %}
+    </ul>
+    {% endfor %}
+</div>
+
+<style>
+.help {
+    font-size: 11px;
+    color: #666;
+    margin: 5px 0;
+}
+</style>
+{% endblock %}

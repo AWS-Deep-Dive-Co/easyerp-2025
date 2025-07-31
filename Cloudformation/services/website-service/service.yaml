@@ -56,12 +56,8 @@ Parameters:
     Description: Database port
     Type: String
 
-  DBUSER:
-    Description: Database port
-    Type: String
-
-  DBPASSWORD:
-    Description: Database port
+  DBSECRETARN:
+    Description: ARN of the Secrets Manager secret containing database credentials
     Type: String
 
   SecurityGroup:
@@ -92,14 +88,15 @@ Resources:
               Value: !Ref DBHOST
             - Name: DBPORT
               Value: !Ref DBPORT
-            - Name: DBUSER
-              Value: !Ref DBUSER
-            - Name: DBPASSWORD
-              Value: !Ref DBPASSWORD
             - Name: DEVENV
               Value: 'no'
             # - Name: AWS_S3_BUCKET_NAME
             #   Value: !Ref S3BUCKET
+          Secrets:
+            - Name: DBUSER
+              ValueFrom: !Sub "${DBSECRETARN}:username::"
+            - Name: DBPASSWORD
+              ValueFrom: !Sub "${DBSECRETARN}:password::"
           PortMappings:
             - ContainerPort: 80
               HostPort: 80

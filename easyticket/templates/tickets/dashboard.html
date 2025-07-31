@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - EasyTicket{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-6">
+            <i class="fas fa-tachometer-alt me-2 text-primary"></i>
+            Dashboard
+        </h1>
+        <p class="lead text-muted">IT Service Management Overview</p>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card border-primary">
+            <div class="card-body text-center">
+                <div class="display-6 text-primary">
+                    <i class="fas fa-ticket-alt"></i>
+                </div>
+                <h3 class="mt-2">{{ total_tickets }}</h3>
+                <p class="text-muted mb-0">Total Tickets</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card border-success">
+            <div class="card-body text-center">
+                <div class="display-6 text-success">
+                    <i class="fas fa-folder-open"></i>
+                </div>
+                <h3 class="mt-2">{{ open_tickets }}</h3>
+                <p class="text-muted mb-0">Open Tickets</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card border-warning">
+            <div class="card-body text-center">
+                <div class="display-6 text-warning">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <h3 class="mt-2">{{ pending_approval }}</h3>
+                <p class="text-muted mb-0">Pending Approval</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card border-danger">
+            <div class="card-body text-center">
+                <div class="display-6 text-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h3 class="mt-2">{{ critical_tickets }}</h3>
+                <p class="text-muted mb-0">Critical Priority</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Tickets -->
+    <div class="col-md-8 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>Recent Tickets
+                </h5>
+                <a href="{% url 'ticket_list' %}" class="btn btn-sm btn-outline-primary">
+                    View All <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+            <div class="card-body">
+                {% if recent_tickets %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Ticket #</th>
+                                <th>Title</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ticket in recent_tickets %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'ticket_detail' ticket.ticket_number %}" class="text-decoration-none">
+                                        {{ ticket.ticket_number }}
+                                    </a>
+                                </td>
+                                <td>{{ ticket.title|truncatechars:40 }}</td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ ticket.ticket_type.name }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge status-badge
+                                        {% if ticket.status == 'open' %}bg-success
+                                        {% elif ticket.status == 'in_progress' %}bg-info
+                                        {% elif ticket.status == 'pending_approval' %}bg-warning
+                                        {% elif ticket.status == 'approved' %}bg-primary
+                                        {% elif ticket.status == 'rejected' %}bg-danger
+                                        {% else %}bg-dark{% endif %}">
+                                        {{ ticket.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>{{ ticket.created_at|date:"M d, Y" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-inbox fa-3x mb-3"></i>
+                    <p>No tickets found</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tickets by Type -->
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>Tickets by Type
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if type_stats %}
+                {% for type_name, count in type_stats.items %}
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>{{ type_name }}</span>
+                    <span class="badge bg-primary">{{ count }}</span>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-chart-pie fa-2x mb-2"></i>
+                    <p class="mb-0">No data available</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+{% if user.is_authenticated %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <a href="{% url 'ticket_create' %}" class="btn btn-primary w-100">
+                            <i class="fas fa-plus me-2"></i>Create Ticket
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{% url 'ticket_list' %}?status=open" class="btn btn-success w-100">
+                            <i class="fas fa-folder-open me-2"></i>View Open
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{% url 'ticket_list' %}?status=pending_approval" class="btn btn-warning w-100">
+                            <i class="fas fa-clock me-2"></i>Pending Approval
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="/admin/" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-cog me-2"></i>Admin Panel
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
