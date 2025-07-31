@@ -78,27 +78,27 @@ Resources:
           Value: !Ref EnvironmentName
 
 Outputs:
-  S3Bucket:
-    Description: Name of the created S3 bucket
+  EasyERPAppBucket:
+    Description: Name of the EasyERP application S3 bucket
     Value: !Ref S3Bucket
     Export:
-      Name: !Sub ${AWS::StackName}-S3Bucket
+      Name: !Sub ${AWS::StackName}-EasyERPAppBucket
   
-  S3BucketArn:
-    Description: ARN of the created S3 bucket
+  EasyERPAppBucketArn:
+    Description: ARN of the EasyERP application S3 bucket
     Value: !GetAtt S3Bucket.Arn
     Export:
-      Name: !Sub ${AWS::StackName}-S3BucketArn
+      Name: !Sub ${AWS::StackName}-EasyERPAppBucketArn
 
-  S3AccessLogsBucket:
+  EasyERPAccessLogsBucket:
     Description: Name of the S3 access logs bucket
     Value: !Ref S3AccessLogsBucket
     Export:
-      Name: !Sub ${AWS::StackName}-S3AccessLogsBucket
+      Name: !Sub ${AWS::StackName}-EasyERPAccessLogsBucket
   
-  S3LogGroup:
-    Description: CloudWatch Log Group for S3 bucket logs
+  EasyERPLogGroup:
+    Description: CloudWatch Log Group for EasyERP S3 bucket logs
     Value: !Ref S3LogGroup
     Export:
-      Name: !Sub ${AWS::StackName}-S3LogGroup
+      Name: !Sub ${AWS::StackName}-EasyERPLogGroup
 
