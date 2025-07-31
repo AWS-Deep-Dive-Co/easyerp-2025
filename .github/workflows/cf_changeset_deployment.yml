@@ -68,12 +68,35 @@ jobs:
           
           CHANGE_SET_NAME="changeset-$(date +%Y%m%d-%H%M%S)"
           
+          # Get existing stack parameters to preserve them
+          echo "🔍 Getting existing stack parameters to roll forward..."
+          EXISTING_PARAMS=$(aws cloudformation describe-stacks \
+            --stack-name ${{ steps.environment.outputs.stack_name }} \
+            --query 'Stacks[0].Parameters[?ParameterKey!=`DockerImage` && ParameterKey!=`S3BUCKET` && ParameterKey!=`CertificateSecretName`].[ParameterKey,ParameterValue]' \
+            --output text)
+          
+          # Build parameter string with existing parameters (UsePreviousValue=true)
+          PARAMETER_ARGS=""
+          while IFS=$'\t' read -r key value; do
+            if [ ! -z "$key" ]; then
+              PARAMETER_ARGS="$PARAMETER_ARGS ParameterKey=$key,UsePreviousValue=true"
+            fi
+          done <<< "$EXISTING_PARAMS"
+          
+          # Add our override parameters
+          PARAMETER_ARGS="$PARAMETER_ARGS ParameterKey=DockerImage,ParameterValue=${{ vars.IMAGE_NAME }}-latest"
+          PARAMETER_ARGS="$PARAMETER_ARGS ParameterKey=S3BUCKET,ParameterValue=${{ vars.AWS_S3_BUCKET }}"
+          PARAMETER_ARGS="$PARAMETER_ARGS ParameterKey=CertificateSecretName,ParameterValue=null"
+          
+          echo "Using parameters: $PARAMETER_ARGS"
+          
+          # Create changeset with rolled forward parameters plus our overrides
           aws cloudformation create-change-set \
             --stack-name ${{ steps.environment.outputs.stack_name }} \
             --change-set-name "$CHANGE_SET_NAME" \
             --template-url "$TEMPLATE_URL" \
             --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
-            --parameters ParameterKey=DockerImage,ParameterValue=${{ vars.IMAGE_NAME }}-latest ParameterKey=S3BUCKET,ParameterValue=${{ vars.AWS_S3_BUCKET }} ParameterKey=CertificateSecretName,ParameterValue=null
+            --parameters $PARAMETER_ARGS
           
           echo "✅ Change Set created successfully!"
           echo "Change Set Name: $CHANGE_SET_NAME"
