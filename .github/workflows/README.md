@@ -6,29 +6,29 @@ This repository uses a simplified, linear GitHub Actions workflow pipeline that 
 
 ### Linear Pipeline Flow:
 ```
-Push (any changes) → CloudFormation Deployment → Sync to S3 → ECS Deployment
+Push (any changes) → Sync to S3 → CloudFormation Deployment → ECS Deployment
 ```
 
-### 1. CloudFormation Deployment (`cf_changeset_deployment.yml`)
-- **Trigger**: Push to `main` or `stage` branches with CloudFormation changes
-- **Purpose**: Creates and executes CloudFormation changesets automatically
-- **Process**:
-  1. Creates CloudFormation changeset
-  2. Waits for changeset to be ready
-  3. Executes changeset automatically
-  4. Waits for stack update completion
-- **Next**: Triggers Sync to S3 workflow
-
-### 2. Sync to S3 (`syncs3.yml`)
-- **Trigger**: Completion of CloudFormation Deployment workflow
-- **Purpose**: Uploads all files (including updated CloudFormation templates) to S3
+### 1. Sync to S3 (`syncs3.yml`)
+- **Trigger**: Push to `main` or `stage` branches (all changes)
+- **Purpose**: Uploads all files (including CloudFormation templates) to S3
 - **Process**:
   1. Syncs entire repository to S3 bucket
-  2. Ensures CloudFormation templates are available for future deployments
+  2. Ensures CloudFormation templates are available for deployment
+- **Next**: Triggers CloudFormation Deployment workflow
+
+### 2. CloudFormation Deployment (`cf_changeset_deployment.yml`)
+- **Trigger**: Completion of Sync to S3 workflow
+- **Purpose**: Creates and executes CloudFormation changesets automatically
+- **Process**:
+  1. Creates CloudFormation changeset using templates from S3
+  2. Waits for changeset to be ready
+  3. Executes changeset automatically  
+  4. Waits for stack update completion
 - **Next**: Triggers ECS Deployment workflow
 
 ### 3. ECS Deployment (`Build-and-deploy.yml`)
-- **Trigger**: Completion of Sync to S3 workflow
+- **Trigger**: Completion of CloudFormation Deployment workflow
 - **Purpose**: Builds Docker image and deploys to ECS
 - **Process**:
   1. Builds Docker image from latest code

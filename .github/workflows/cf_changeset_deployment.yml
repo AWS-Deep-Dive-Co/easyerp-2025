@@ -1,20 +1,22 @@
 name: CloudFormation Deployment
 
 on:
-  push:
+  workflow_run:
+    workflows: ["Sync to S3"]
+    types:
+      - completed
     branches:
       - main
       - stage
-    paths:
-      - 'Cloudformation/**'
   workflow_dispatch:
 
 jobs:
   create-and-execute-changeset:
     name: Create and Execute Change Set
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     environment: 
-      name: ${{ github.ref_name == 'main' && 'Production' || 'Staging' }}
+      name: ${{ github.event.workflow_run.head_branch == 'main' && 'Production' || (github.ref_name == 'main' && 'Production') || 'Staging' }}
     outputs:
       deployment-status: ${{ steps.deployment.outputs.status }}
       stack-name: ${{ steps.environment.outputs.stack_name }}
@@ -30,10 +32,18 @@ jobs:
       - name: Determine environment
         id: environment
         run: |
-          if [ "${{ github.ref_name }}" = "main" ]; then
-            echo "env=prod" >> $GITHUB_OUTPUT
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            if [ "${{ github.event.workflow_run.head_branch }}" = "main" ]; then
+              echo "env=prod" >> $GITHUB_OUTPUT
+            else
+              echo "env=stage" >> $GITHUB_OUTPUT
+            fi
           else
-            echo "env=stage" >> $GITHUB_OUTPUT
+            if [ "${{ github.ref_name }}" = "main" ]; then
+              echo "env=prod" >> $GITHUB_OUTPUT
+            else
+              echo "env=stage" >> $GITHUB_OUTPUT
+            fi
           fi
           echo "stack_name=${{ vars.STACK_NAME }}" >> $GITHUB_OUTPUT
 
@@ -41,8 +51,13 @@ jobs:
         run: |
           echo "Creating Change Set for stack: ${{ steps.environment.outputs.stack_name }}"
           echo "Environment: ${{ steps.environment.outputs.env }}"
-          echo "Commit: ${{ github.sha }}"
-          echo "Branch: ${{ github.ref_name }}"
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            echo "Commit: ${{ github.event.workflow_run.head_sha }}"
+            echo "Branch: ${{ github.event.workflow_run.head_branch }}"
+          else
+            echo "Commit: ${{ github.sha }}"
+            echo "Branch: ${{ github.ref_name }}"
+          fi
           
           # Construct S3 template URL
           S3_BUCKET="${{ vars.AWS_S3_BUCKET }}"

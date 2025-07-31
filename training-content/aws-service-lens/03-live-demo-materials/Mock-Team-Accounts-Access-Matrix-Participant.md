@@ -3,7 +3,42 @@
 
 ### Team Structure & Appropriate Access Levels
 
-#### 1. **Alannah Rye - Junior Developer**
+#### 1. **Marcus Chen - Director of IT Operations**
+**Job Responsibilities**:
+- Provides executive oversight for all IT operations, infrastructure, and system reliability across Easy ERP
+- Has ultimate authority to approve emergency change requests and production deployments during critical business situations
+- Makes strategic decisions on infrastructure investments, technology direction, and operational policies
+- Coordinates with C-level executives and business stakeholders on IT strategy and budget planning
+- Manages risk assessment for major system changes and ensures compliance with enterprise governance policies
+- Has emergency override authority for all production systems during business-critical incidents
+- Responsible for disaster recovery execution and business continuity decisions
+- Supervises all DevOps, Database, and Infrastructure teams with authority to escalate or de-escalate situations
+- Interfaces with external vendors, cloud providers, and enterprise security teams
+- Required approver for any changes that could impact business operations or customer-facing services
+- Maintains awareness of all production systems but delegates day-to-day operations to specialized teams
+
+**GitHub Access (Expected)**:
+- Repository: Owner-level access with emergency override capabilities
+- Branch permissions: Can override branch protection rules during emergencies
+- Actions: Full access to modify workflows and approve emergency deployments
+- Admin: Complete repository administration including security settings
+- Audit: Reviews all production-related changes and maintains approval audit trail
+
+**AWS Access (Expected)**:
+- **Executive Operations Access**: 
+  - Full administrative access to all AWS resources across all environments with comprehensive audit logging
+  - Emergency break-glass access to bypass normal approval workflows during critical incidents
+  - CloudTrail: Full access to review all AWS actions and maintain security audit trails
+  - Organizations: Can manage cross-account policies and emergency access procedures
+  - Cost Management: Full access to budgets, cost allocation, and spending controls across all environments
+  - Service Health Dashboard: Full access to monitor AWS service status and plan for service disruptions
+- **Governance & Compliance**:
+  - Config: Full access to compliance monitoring and configuration drift detection
+  - Security Hub: Full access to security findings and compliance posture across all accounts
+  - IAM: Can create emergency access policies and review all permission changes
+- **Emergency Authority**: Can temporarily grant elevated access during confirmed business emergencies with full audit requirements
+
+#### 2. **Alannah Rye - Junior Developer**
 **Job Responsibilities**:
 - Develops new features for the Easy ERP application under senior developer supervision
 - Fixes minor bugs and implements code changes based on detailed specifications
@@ -28,7 +63,7 @@
   - S3: Read/write access to buckets tagged `Environment=dev` only
 - **No Access**: Resources tagged `Environment=stage` or `Environment=prod`, IAM management, database credentials
 
-#### 2. **Lorin Richards - Senior Developer**
+#### 3. **Lorin Richards - Senior Developer**
 **Job Responsibilities**:
 - Leads development of complex features and system integrations for Easy ERP
 - Mentors junior developers and conducts code reviews for quality assurance
@@ -54,8 +89,8 @@
   - S3: Full access to buckets tagged `Environment=dev`, read-only access to buckets tagged `Environment=stage`
 - **No Access**: Resources tagged `Environment=prod`, IAM policies, RDS master credentials
 
-#### 3a. **Kester Ellison - QA Analyst**
-#### 3b. **Alex Guenther - QA Analyst**
+#### 4a. **Kester Ellison - QA Analyst**
+#### 4b. **Alex Guenther - QA Analyst**
 **Job Responsibilities**:
 - Develops and executes comprehensive test plans for Easy ERP application releases
 - Performs manual and automated testing across development and staging environments
@@ -81,7 +116,7 @@
   - RDS: Read-only access to databases tagged `Environment=stage` through application connection
 - **No Access**: Resources tagged `Environment=prod`, infrastructure changes, user management
 
-#### 4. **Maisy Watts - DevOps Engineer**
+#### 5. **Maisy Watts - DevOps Engineer**
 **Job Responsibilities**:
 - Manages CI/CD pipelines and automated deployment processes for Easy ERP
 - Maintains and updates infrastructure-as-code templates and deployment scripts
@@ -108,7 +143,7 @@
   - CloudWatch/CloudTrail: Full access for monitoring setup across all environments
 - **Production**: Requires approval workflow for changes to resources tagged `Environment=prod`
 
-#### 5. **Joey Kuhnsman - Senior DevOps Engineer**
+#### 6. **Joey Kuhnsman - Senior DevOps Engineer**
 **Job Responsibilities**:
 - Oversees all production infrastructure and deployment operations for Easy ERP
 - Makes final approval decisions for production deployments and infrastructure changes
@@ -133,7 +168,7 @@
 - **IAM Management**: Can create/modify roles but with logging requirements
 - **Audit Trail**: All actions logged and reviewed monthly, especially for production-tagged resources
 
-#### 6. **Greta Dyson - Database Administrator**
+#### 7. **Greta Dyson - Database Administrator**
 **Job Responsibilities**:
 - Manages all database systems including design, optimization, and maintenance for Easy ERP
 - Performs database backups, recovery procedures, and disaster recovery planning
@@ -159,7 +194,7 @@
   - Secrets Manager: Can rotate database credentials for all environments
 - **Limited Access**: No ECS, ECR, or application deployment permissions regardless of environment tags
 
-#### 7. **Derek Steele - Business Analyst**
+#### 8. **Derek Steele - Business Analyst**
 **Job Responsibilities**:
 - Analyzes Easy ERP application performance metrics to support business decision-making
 - Creates reports on system usage, user adoption, and business process efficiency
@@ -183,7 +218,7 @@
   - S3: Read-only access to buckets tagged `DataType=business-reports`
 - **No Access**: Infrastructure resources, databases, deployment tools, or system configuration regardless of environment tags
 
-#### 8. **Susan Darnell - Treasury/Cost Management Specialist**
+#### 9. **Susan Darnell - Treasury/Cost Management Specialist**
 **Job Responsibilities**:
 - Monitors and analyzes AWS spending across all environments to ensure budget compliance
 - Creates cost allocation reports by department, project, and environment for financial planning

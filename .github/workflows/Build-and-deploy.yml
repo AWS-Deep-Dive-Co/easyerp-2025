@@ -1,7 +1,7 @@
 name: ECS Deployment
 on:
   workflow_run:
-    workflows: ["Sync to S3"]
+    workflows: ["CloudFormation Deployment"]
     types:
       - completed
     branches:
