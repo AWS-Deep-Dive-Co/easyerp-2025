@@ -28,6 +28,9 @@ jobs:
       - name: Check deployment trigger
         id: check
         run: |
+          echo "Event name: ${{ github.event_name }}"
+          echo "Debug: Starting trigger check..."
+          
           if [ "${{ github.event_name }}" = "workflow_run" ]; then
             # Triggered by CloudFormation workflow completion
             if [ "${{ github.event.workflow_run.conclusion }}" = "success" ]; then
@@ -60,11 +63,14 @@ jobs:
             echo "trigger-type=manual" >> $GITHUB_OUTPUT
             echo "✅ Manual trigger - proceeding with ECS deployment"
           fi
+          
+          echo "Debug: Trigger check completed"
+          echo "Debug: should-deploy value set"
 
   build:
     name: Docker image generation
     needs: check-trigger
-    if: ${{ needs.check-trigger.outputs.should-deploy == 'true' }}
+    if: needs.check-trigger.outputs.should-deploy == 'true'
     permissions:
       packages: write
       contents: read
@@ -72,6 +78,13 @@ jobs:
     environment: 
       name: ${{ github.ref_name == 'main' && 'Production' || 'Staging' }}
     steps:
+      - name: Debug job condition
+        run: |
+          echo "Debug: Build job started"
+          echo "should-deploy value: '${{ needs.check-trigger.outputs.should-deploy }}'"
+          echo "trigger-type value: '${{ needs.check-trigger.outputs.trigger-type }}'"
+          echo "Condition result: ${{ needs.check-trigger.outputs.should-deploy == 'true' }}"
+          
       - name: Check out code
         uses: actions/checkout@v3.0.2
         with:
@@ -127,7 +140,7 @@ jobs:
   deploy:
     name: Deploy to ECS
     needs: [check-trigger, build]
-    if: ${{ needs.check-trigger.outputs.should-deploy == 'true' }}
+    if: needs.check-trigger.outputs.should-deploy == 'true'
     environment: 
       name: ${{ github.ref_name == 'main' && 'Production' || 'Staging' }}
     runs-on: ubuntu-latest
