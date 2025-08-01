@@ -16,6 +16,11 @@ jobs:
       # - run: pip install pycryptodome
       - run: pip install wheel
       - run: pip install -r requirements.txt #--use-pep517 # install all our dependencies for the project
-      - run: pytest . # run pytest test
+      - name: Run Django migrations for testing
+        run: python manage.py migrate
+        env:
+          DEVENV: dev
+      - name: Run mock tests
+        run: pytest . -v # run pytest test with verbose output
         env:
           DEVENV: dev
