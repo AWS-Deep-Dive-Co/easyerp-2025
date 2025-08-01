@@ -60,32 +60,6 @@ Resources:
         - Key: Environment
           Value: !Ref EnvironmentName
 
-  S3Bucket2:
-    Type: AWS::S3::Bucket
-    DependsOn: S3AccessLogsBucket
-    Properties:
-      BucketName: !Sub easyerp-data-bucket-${AWS::AccountId}-${AWS::Region}
-      VersioningConfiguration:
-        Status: Enabled
-      BucketEncryption:
-        ServerSideEncryptionConfiguration:
-          - ServerSideEncryptionByDefault:
-              SSEAlgorithm: AES256
-            BucketKeyEnabled: true
-      PublicAccessBlockConfiguration:
-        BlockPublicAcls: true
-        BlockPublicPolicy: true
-        IgnorePublicAcls: true
-        RestrictPublicBuckets: true
-      LoggingConfiguration:
-        DestinationBucketName: !Ref S3AccessLogsBucket
-        LogFilePrefix: access-logs/
-      Tags:
-        - Key: Name
-          Value: !Sub ${EnvironmentName}-EasyERP-S3-Bucket
-        - Key: Environment
-          Value: !Ref EnvironmentName
-
   S3LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
