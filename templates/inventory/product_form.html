@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - EasyERP{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">{{ page_title }}</h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Product Information</h6>
+            </div>
+            <div class="card-body">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="sku" class="form-label">SKU <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="sku" name="sku" required
+                                       placeholder="Enter product SKU" value="{{ form.sku.value|default:'' }}">
+                                <div class="form-text">Unique product identifier</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="name" class="form-label">Product Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="name" name="name" required
+                                       placeholder="Enter product name" value="{{ form.name.value|default:'' }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"
+                                  placeholder="Enter product description">{{ form.description.value|default:'' }}</textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="category" class="form-label">Category</label>
+                                <select class="form-select" id="category" name="category">
+                                    <option value="">Select Category</option>
+                                    {% for category in categories %}
+                                        <option value="{{ category.id }}" 
+                                            {% if form.category.value == category.id %}selected{% endif %}>
+                                            {{ category.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="unit" class="form-label">Unit of Measure</label>
+                                <select class="form-select" id="unit" name="unit">
+                                    <option value="PCS" {% if form.unit.value == "PCS" %}selected{% endif %}>Pieces</option>
+                                    <option value="KG" {% if form.unit.value == "KG" %}selected{% endif %}>Kilograms</option>
+                                    <option value="LTR" {% if form.unit.value == "LTR" %}selected{% endif %}>Liters</option>
+                                    <option value="MTR" {% if form.unit.value == "MTR" %}selected{% endif %}>Meters</option>
+                                    <option value="BOX" {% if form.unit.value == "BOX" %}selected{% endif %}>Boxes</option>
+                                    <option value="SET" {% if form.unit.value == "SET" %}selected{% endif %}>Sets</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="cost_price" class="form-label">Cost Price ($)</label>
+                                <input type="number" class="form-control" id="cost_price" name="cost_price" 
+                                       step="0.01" min="0" placeholder="0.00"
+                                       value="{{ form.cost_price.value|default:'' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="selling_price" class="form-label">Selling Price ($)</label>
+                                <input type="number" class="form-control" id="selling_price" name="selling_price" 
+                                       step="0.01" min="0" placeholder="0.00"
+                                       value="{{ form.selling_price.value|default:'' }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="minimum_stock" class="form-label">Minimum Stock Level</label>
+                                <input type="number" class="form-control" id="minimum_stock" name="minimum_stock" 
+                                       min="0" placeholder="0" value="{{ form.minimum_stock.value|default:'0' }}">
+                                <div class="form-text">Alert when stock falls below this level</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="maximum_stock" class="form-label">Maximum Stock Level</label>
+                                <input type="number" class="form-control" id="maximum_stock" name="maximum_stock" 
+                                       min="0" placeholder="1000" value="{{ form.maximum_stock.value|default:'1000' }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="barcode" class="form-label">Barcode</label>
+                        <input type="text" class="form-control" id="barcode" name="barcode" 
+                               placeholder="Enter barcode" value="{{ form.barcode.value|default:'' }}">
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
+                                   {% if form.is_active.value %}checked{% endif %}>
+                            <label class="form-check-label" for="is_active">
+                                Active Product
+                            </label>
+                            <div class="form-text">Inactive products won't appear in sales orders</div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'inventory:product_list' %}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-arrow-left"></i> Back to List
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Product
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Product Image</h6>
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="img-fluid rounded">
+                    {% else %}
+                        <div class="bg-light border rounded d-flex align-items-center justify-content-center" style="height: 200px;">
+                            <i class="fas fa-camera fa-3x text-muted"></i>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="image" class="form-label">Upload Image</label>
+                    <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                    <div class="form-text">JPG, PNG, GIF (Max 5MB)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Quick Tips</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="fas fa-lightbulb text-warning mr-2"></i>
+                        <small>Use descriptive SKUs for easy identification</small>
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-lightbulb text-warning mr-2"></i>
+                        <small>Set appropriate min/max stock levels</small>
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-lightbulb text-warning mr-2"></i>
+                        <small>Cost price helps calculate profit margins</small>
+                    </li>
+                    <li>
+                        <i class="fas fa-lightbulb text-warning mr-2"></i>
+                        <small>Add barcodes for faster scanning</small>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Calculate profit margin
+    const costPrice = document.getElementById('cost_price');
+    const sellingPrice = document.getElementById('selling_price');
+    
+    function calculateMargin() {
+        const cost = parseFloat(costPrice.value) || 0;
+        const selling = parseFloat(sellingPrice.value) || 0;
+        
+        if (cost > 0 && selling > 0) {
+            const margin = ((selling - cost) / selling * 100).toFixed(2);
+            console.log(`Profit Margin: ${margin}%`);
+        }
+    }
+    
+    costPrice.addEventListener('input', calculateMargin);
+    sellingPrice.addEventListener('input', calculateMargin);
+});
+</script>
+{% endblock %}

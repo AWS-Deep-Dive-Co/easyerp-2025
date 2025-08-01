@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+
+{% block title %}Account Details{% endblock %}
+{% block page_title %}Account Details{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h2 class="mb-1">Account Details</h2>
+                    <p class="text-muted mb-0">View account information and transaction history</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <div class="btn-group">
+                        <a href="{% url 'gl:account_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>
+                            Back to List
+                        </a>
+                        <a href="#" class="btn btn-outline-primary">
+                            <i class="fas fa-edit me-1"></i>
+                            Edit Account
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Account Information</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tbody>
+                        <tr>
+                            <td><strong>Account Number:</strong></td>
+                            <td>1000</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Account Name:</strong></td>
+                            <td>Cash</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Account Type:</strong></td>
+                            <td>Current Assets</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Category:</strong></td>
+                            <td>ASSET</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Normal Balance:</strong></td>
+                            <td>Debit</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Current Balance:</strong></td>
+                            <td class="text-success"><strong>$37,000.00</strong></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Status:</strong></td>
+                            <td><span class="badge bg-success">Active</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Created:</strong></td>
+                            <td>July 1, 2025</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Account Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h4 class="text-success">$65,000</h4>
+                        <small class="text-muted">Total Debits</small>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-danger">$28,000</h4>
+                        <small class="text-muted">Total Credits</small>
+                    </div>
+                </div>
+                <hr>
+                <div class="text-center">
+                    <h5>Transaction Count: <span class="badge bg-primary">4</span></h5>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Transaction History</h5>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-primary" onclick="window.print()">
+                        <i class="fas fa-print"></i> Print
+                    </button>
+                    <button class="btn btn-outline-success">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Reference</th>
+                                <th>Description</th>
+                                <th class="text-end">Debit</th>
+                                <th class="text-end">Credit</th>
+                                <th class="text-end">Balance</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>2025-07-01</td>
+                                <td>
+                                    <a href="#" class="text-decoration-none">JE-0001</a>
+                                </td>
+                                <td>Initial capital investment</td>
+                                <td class="text-end text-success">$50,000.00</td>
+                                <td class="text-end">-</td>
+                                <td class="text-end">$50,000.00</td>
+                                <td><span class="badge bg-success">Posted</span></td>
+                            </tr>
+                            <tr>
+                                <td>2025-07-05</td>
+                                <td>
+                                    <a href="#" class="text-decoration-none">JE-0002</a>
+                                </td>
+                                <td>Equipment purchase</td>
+                                <td class="text-end">-</td>
+                                <td class="text-end text-danger">$25,000.00</td>
+                                <td class="text-end">$25,000.00</td>
+                                <td><span class="badge bg-success">Posted</span></td>
+                            </tr>
+                            <tr>
+                                <td>2025-07-10</td>
+                                <td>
+                                    <a href="#" class="text-decoration-none">JE-0003</a>
+                                </td>
+                                <td>Sales collection from ABC Corp</td>
+                                <td class="text-end text-success">$15,000.00</td>
+                                <td class="text-end">-</td>
+                                <td class="text-end">$40,000.00</td>
+                                <td><span class="badge bg-success">Posted</span></td>
+                            </tr>
+                            <tr>
+                                <td>2025-07-15</td>
+                                <td>
+                                    <a href="#" class="text-decoration-none">JE-0004</a>
+                                </td>
+                                <td>Monthly rent payment</td>
+                                <td class="text-end">-</td>
+                                <td class="text-end text-danger">$3,000.00</td>
+                                <td class="text-end">$37,000.00</td>
+                                <td><span class="badge bg-success">Posted</span></td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-active">
+                                <th colspan="3">Total</th>
+                                <th class="text-end">$65,000.00</th>
+                                <th class="text-end">$28,000.00</th>
+                                <th class="text-end">$37,000.00</th>
+                                <th></th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Chart -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Balance Trend</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center py-4">
+                    <i class="fas fa-chart-line fa-3x text-muted"></i>
+                    <p class="text-muted mt-2">Balance trend chart would be displayed here</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

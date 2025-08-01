@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+
+{% block title %}Financial Reports{% endblock %}
+{% block page_title %}Financial Reports{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h2 class="mb-1">Financial Reports</h2>
+                    <p class="text-muted mb-0">Generate and view financial statements and reports</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <a href="{% url 'gl:dashboard' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left me-1"></i>
+                        Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Financial Statements -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="mb-3">Financial Statements</h4>
+    </div>
+    
+    <div class="col-xl-4 col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-balance-scale fa-3x text-primary"></i>
+                </div>
+                <h5 class="card-title">Balance Sheet</h5>
+                <p class="card-text text-muted">Statement of financial position showing assets, liabilities, and equity</p>
+                <a href="{% url 'gl:balance_sheet' %}" class="btn btn-primary">
+                    <i class="fas fa-file-alt me-1"></i>
+                    Generate Report
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-4 col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-chart-line fa-3x text-success"></i>
+                </div>
+                <h5 class="card-title">Income Statement</h5>
+                <p class="card-text text-muted">Profit and loss statement showing revenues and expenses</p>
+                <a href="{% url 'gl:income_statement' %}" class="btn btn-success">
+                    <i class="fas fa-file-alt me-1"></i>
+                    Generate Report
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-4 col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-exchange-alt fa-3x text-info"></i>
+                </div>
+                <h5 class="card-title">Cash Flow Statement</h5>
+                <p class="card-text text-muted">Statement of cash flows from operating, investing, and financing activities</p>
+                <a href="{% url 'gl:cash_flow_statement' %}" class="btn btn-info">
+                    <i class="fas fa-file-alt me-1"></i>
+                    Generate Report
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- General Ledger Reports -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="mb-3">General Ledger Reports</h4>
+    </div>
+    
+    <div class="col-xl-6 col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-list-alt fa-3x text-warning"></i>
+                </div>
+                <h5 class="card-title">Trial Balance</h5>
+                <p class="card-text text-muted">Listing of all accounts with their debit and credit balances</p>
+                <a href="{% url 'gl:trial_balance' %}" class="btn btn-warning">
+                    <i class="fas fa-file-alt me-1"></i>
+                    Generate Report
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-6 col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-book fa-3x text-secondary"></i>
+                </div>
+                <h5 class="card-title">General Ledger</h5>
+                <p class="card-text text-muted">Detailed listing of all transactions by account</p>
+                <a href="{% url 'gl:general_ledger_report' %}" class="btn btn-secondary">
+                    <i class="fas fa-file-alt me-1"></i>
+                    Generate Report
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Account Management -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="mb-3">Account Management</h4>
+    </div>
+    
+    <div class="col-xl-6 col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-sitemap fa-3x text-primary"></i>
+                </div>
+                <h5 class="card-title">Chart of Accounts</h5>
+                <p class="card-text text-muted">Complete listing of all accounts in the general ledger</p>
+                <a href="{% url 'gl:chart_of_accounts' %}" class="btn btn-primary">
+                    <i class="fas fa-eye me-1"></i>
+                    View Chart
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-6 col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-journal-whills fa-3x text-success"></i>
+                </div>
+                <h5 class="card-title">Journal Entries</h5>
+                <p class="card-text text-muted">View and manage all journal entries and transactions</p>
+                <a href="{% url 'gl:entry_list' %}" class="btn btn-success">
+                    <i class="fas fa-eye me-1"></i>
+                    View Entries
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <a href="{% url 'gl:entry_create' %}" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-plus me-1"></i>
+                            New Journal Entry
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{% url 'gl:account_create' %}" class="btn btn-outline-success w-100">
+                            <i class="fas fa-plus me-1"></i>
+                            New Account
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{% url 'gl:fiscal_year_list' %}" class="btn btn-outline-info w-100">
+                            <i class="fas fa-calendar me-1"></i>
+                            Fiscal Years
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{% url 'gl:account_list' %}" class="btn btn-outline-warning w-100">
+                            <i class="fas fa-list me-1"></i>
+                            Account List
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
