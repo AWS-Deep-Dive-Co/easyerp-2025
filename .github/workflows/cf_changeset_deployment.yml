@@ -11,12 +11,44 @@ on:
   workflow_dispatch:
 
 jobs:
+  determine-environment:
+    name: Determine Environment
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    outputs:
+      environment: ${{ steps.env.outputs.environment }}
+      branch: ${{ steps.env.outputs.branch }}
+    steps:
+      - name: Determine environment and branch
+        id: env
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            BRANCH="${{ github.event.workflow_run.head_branch }}"
+            echo "Branch from workflow_run: $BRANCH"
+          else
+            BRANCH="${{ github.ref_name }}"
+            echo "Branch from ref_name: $BRANCH"
+          fi
+          
+          if [ "$BRANCH" = "main" ]; then
+            ENVIRONMENT="Production"
+          else
+            ENVIRONMENT="Staging"
+          fi
+          
+          echo "Final determination:"
+          echo "Branch: $BRANCH"
+          echo "Environment: $ENVIRONMENT"
+          
+          echo "environment=$ENVIRONMENT" >> $GITHUB_OUTPUT
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+
   create-and-execute-changeset:
     name: Create and Execute Change Set
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    needs: determine-environment
     environment: 
-      name: ${{ github.event.workflow_run.head_branch == 'main' && 'Production' || (github.ref_name == 'main' && 'Production') || 'Staging' }}
+      name: ${{ needs.determine-environment.outputs.environment }}
     outputs:
       deployment-status: ${{ steps.deployment.outputs.status }}
       stack-name: ${{ steps.environment.outputs.stack_name }}
@@ -29,34 +61,36 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
 
-      - name: Determine environment
+      - name: Set environment variables
         id: environment
         run: |
-          if [ "${{ github.event_name }}" = "workflow_run" ]; then
-            if [ "${{ github.event.workflow_run.head_branch }}" = "main" ]; then
-              echo "env=prod" >> $GITHUB_OUTPUT
-            else
-              echo "env=stage" >> $GITHUB_OUTPUT
-            fi
+          # Use the environment and branch determined by the previous job
+          BRANCH="${{ needs.determine-environment.outputs.branch }}"
+          ENVIRONMENT="${{ needs.determine-environment.outputs.environment }}"
+          
+          if [ "$ENVIRONMENT" = "Production" ]; then
+            echo "env=prod" >> $GITHUB_OUTPUT
           else
-            if [ "${{ github.ref_name }}" = "main" ]; then
-              echo "env=prod" >> $GITHUB_OUTPUT
-            else
-              echo "env=stage" >> $GITHUB_OUTPUT
-            fi
+            echo "env=stage" >> $GITHUB_OUTPUT
           fi
+          
           echo "stack_name=${{ vars.STACK_NAME }}" >> $GITHUB_OUTPUT
+          
+          echo "Using environment: $ENVIRONMENT"
+          echo "Using branch: $BRANCH"
 
       - name: Create Change Set
         run: |
           echo "Creating Change Set for stack: ${{ steps.environment.outputs.stack_name }}"
           echo "Environment: ${{ steps.environment.outputs.env }}"
+          echo "GitHub Environment: ${{ needs.determine-environment.outputs.environment }}"
+          echo "Branch: ${{ needs.determine-environment.outputs.branch }}"
           if [ "${{ github.event_name }}" = "workflow_run" ]; then
             echo "Commit: ${{ github.event.workflow_run.head_sha }}"
-            echo "Branch: ${{ github.event.workflow_run.head_branch }}"
+            echo "Triggered by: workflow_run"
           else
             echo "Commit: ${{ github.sha }}"
-            echo "Branch: ${{ github.ref_name }}"
+            echo "Triggered by: ${{ github.event_name }}"
           fi
           
           # Construct S3 template URL
