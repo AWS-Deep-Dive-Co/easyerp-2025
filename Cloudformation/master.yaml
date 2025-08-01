@@ -636,7 +636,7 @@ Resources:
         DBHOST: !GetAtt RDS.Outputs.RDSEndPointAddress
         DBPORT: !GetAtt RDS.Outputs.RDSEndPointPort
         DBSECRETARN: !GetAtt RDS.Outputs.RDSSecretArn
-        S3BUCKET: !GetAtt S3.Outputs.EasyERPAppBucket
+        # S3BUCKET: !GetAtt S3.Outputs.EasyERPAppBucket
         SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
         Subnets: !GetAtt VPC.Outputs.PrivateSubnets
         DockerImage: !Ref DockerImage
