@@ -10,35 +10,53 @@ on:
   workflow_dispatch:
 
 jobs:
+  determine-environment:
+    name: Determine Environment
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    outputs:
+      environment: ${{ steps.env.outputs.environment }}
+      branch: ${{ steps.env.outputs.branch }}
+    steps:
+      - name: Determine environment and branch
+        id: env
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            BRANCH="${{ github.event.workflow_run.head_branch }}"
+            echo "Branch from workflow_run: $BRANCH"
+          else
+            BRANCH="${{ github.ref_name }}"
+            echo "Branch from ref_name: $BRANCH"
+          fi
+          
+          if [ "$BRANCH" = "main" ]; then
+            ENVIRONMENT="Production"
+          else
+            ENVIRONMENT="Staging"
+          fi
+          
+          echo "Final determination:"
+          echo "Branch: $BRANCH"
+          echo "Environment: $ENVIRONMENT"
+          
+          echo "environment=$ENVIRONMENT" >> $GITHUB_OUTPUT
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+
   build:
     name: Docker image generation
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    needs: determine-environment
     permissions:
       packages: write
       contents: read
     environment: 
-      name: ${{ github.event.workflow_run.head_branch == 'main' && 'Production' || (github.ref_name == 'main' && 'Production') || 'Staging' }}
+      name: ${{ needs.determine-environment.outputs.environment }}
     steps:
       - name: Check out code
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.ref_name }}
           
-      - name: Determine environment
-        id: environment
-        run: |
-          if [ "${{ github.ref_name }}" = "main" ]; then
-            echo "env=prod" >> $GITHUB_OUTPUT
-            echo "environment=Production" >> $GITHUB_OUTPUT
-          else
-            echo "env=stage" >> $GITHUB_OUTPUT
-            echo "environment=Staging" >> $GITHUB_OUTPUT
-          fi
-          
-      # - uses: satackey/action-docker-layer-caching@v0.0.11
-      #   # Ignore the failure of a step and avoid terminating the job.
-      #   continue-on-error: true
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         
@@ -74,33 +92,11 @@ jobs:
       
   deploy:
     name: Deploy to ECS
-    needs: build
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    needs: [determine-environment, build]
     environment: 
-      name: ${{ github.event.workflow_run.head_branch == 'main' && 'Production' || (github.ref_name == 'main' && 'Production') || 'Staging' }}
+      name: ${{ needs.determine-environment.outputs.environment }}
     runs-on: ubuntu-latest
     steps:
-      - name: Determine environment
-        id: environment
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_run" ]; then
-            if [ "${{ github.event.workflow_run.head_branch }}" = "main" ]; then
-              echo "env=prod" >> $GITHUB_OUTPUT
-              echo "environment=Production" >> $GITHUB_OUTPUT
-            else
-              echo "env=stage" >> $GITHUB_OUTPUT
-              echo "environment=Staging" >> $GITHUB_OUTPUT
-            fi
-          else
-            if [ "${{ github.ref_name }}" = "main" ]; then
-              echo "env=prod" >> $GITHUB_OUTPUT
-              echo "environment=Production" >> $GITHUB_OUTPUT
-            else
-              echo "env=stage" >> $GITHUB_OUTPUT
-              echo "environment=Staging" >> $GITHUB_OUTPUT
-            fi
-          fi
-          
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -115,7 +111,8 @@ jobs:
           AWS_REGION: ${{ vars.AWS_REGION || 'us-east-2' }}
         run: |
           echo "Deploying to ECS:"
-          echo "Environment: ${{ steps.environment.outputs.environment }}"
+          echo "Environment: ${{ needs.determine-environment.outputs.environment }}"
+          echo "Branch: ${{ needs.determine-environment.outputs.branch }}"
           echo "Cluster: $ECS_CLUSTER"
           echo "Service: $ECS_SERVICE"
           echo "Region: $AWS_REGION"
