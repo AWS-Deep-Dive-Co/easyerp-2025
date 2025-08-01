@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - EasyERP{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">{{ page_title }}</h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Order Information</h6>
+            </div>
+            <div class="card-body">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="order_number" class="form-label">Order Number</label>
+                                <input type="text" class="form-control" id="order_number" name="order_number"
+                                       value="{{ form.order_number.value|default:'SO-0001' }}" readonly>
+                                <div class="form-text">Auto-generated order number</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="order_date" class="form-label">Order Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="order_date" name="order_date" required
+                                       value="{{ form.order_date.value|default:'' }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="customer" class="form-label">Customer <span class="text-danger">*</span></label>
+                                <select class="form-select" id="customer" name="customer" required>
+                                    <option value="">Select Customer</option>
+                                    {% for customer in customers %}
+                                        <option value="{{ customer.id }}" 
+                                            {% if form.customer.value == customer.id %}selected{% endif %}>
+                                            {{ customer.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="status" class="form-label">Status</label>
+                                <select class="form-select" id="status" name="status">
+                                    <option value="DRAFT" {% if form.status.value == "DRAFT" %}selected{% endif %}>Draft</option>
+                                    <option value="PENDING" {% if form.status.value == "PENDING" %}selected{% endif %}>Pending</option>
+                                    <option value="CONFIRMED" {% if form.status.value == "CONFIRMED" %}selected{% endif %}>Confirmed</option>
+                                    <option value="DELIVERED" {% if form.status.value == "DELIVERED" %}selected{% endif %}>Delivered</option>
+                                    <option value="CANCELLED" {% if form.status.value == "CANCELLED" %}selected{% endif %}>Cancelled</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="delivery_address" class="form-label">Delivery Address</label>
+                        <textarea class="form-control" id="delivery_address" name="delivery_address" rows="3"
+                                  placeholder="Enter delivery address">{{ form.delivery_address.value|default:'' }}</textarea>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3"
+                                  placeholder="Order notes or special instructions">{{ form.notes.value|default:'' }}</textarea>
+                    </div>
+
+                    <hr>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'sales:order_list' %}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-arrow-left"></i> Back to Orders
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Order
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Order Items</h6>
+            </div>
+            <div class="card-body">
+                <div class="text-center py-3">
+                    <i class="fas fa-box fa-2x text-gray-300 mb-2"></i>
+                    <p class="text-muted">Order items functionality coming soon</p>
+                    <button type="button" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-plus"></i> Add Item
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Order Summary</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <span>Subtotal:</span>
+                    <span>$0.00</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>Tax:</span>
+                    <span>$0.00</span>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between font-weight-bold">
+                    <span>Total:</span>
+                    <span>$0.00</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Quick Tips</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="fas fa-lightbulb text-warning mr-2"></i>
+                        <small>Save as draft to edit later</small>
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-lightbulb text-warning mr-2"></i>
+                        <small>Confirm order to lock prices</small>
+                    </li>
+                    <li>
+                        <i class="fas fa-lightbulb text-warning mr-2"></i>
+                        <small>Add delivery address for shipping</small>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.text-gray-300 {
+    color: #dddfeb !important;
+}
+</style>
+{% endblock %}

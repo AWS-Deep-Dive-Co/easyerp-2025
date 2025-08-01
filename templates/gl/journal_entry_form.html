@@ -1,0 +1,349 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Edit Journal Entry{% else %}New Journal Entry{% endif %} - EasyERP{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        {% if form.instance.pk %}
+            Edit Journal Entry
+        {% else %}
+            New Journal Entry
+        {% endif %}
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'gl:entry_list' %}" class="btn btn-sm btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+    </div>
+</div>
+
+<form method="post" id="journalEntryForm">
+    {% csrf_token %}
+    
+    <!-- Entry Header -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Entry Information</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="id_entry_number" class="form-label">Entry Number</label>
+                        <input type="text" class="form-control" id="id_entry_number" name="entry_number" 
+                               value="{{ form.entry_number.value|default:'JE-0001' }}" readonly>
+                        <small class="form-text text-muted">Auto-generated entry number</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="id_entry_date" class="form-label">Entry Date *</label>
+                        <input type="date" class="form-control" id="id_entry_date" name="entry_date" 
+                               value="{{ form.entry_date.value|date:'Y-m-d'|default:today }}" required>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="id_reference" class="form-label">Reference</label>
+                        <input type="text" class="form-control" id="id_reference" name="reference" 
+                               value="{{ form.reference.value|default:'' }}" placeholder="Reference number or document">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="id_status" class="form-label">Status</label>
+                        <select class="form-select" id="id_status" name="status">
+                            <option value="DRAFT" {% if form.status.value == 'DRAFT' or not form.status.value %}selected{% endif %}>Draft</option>
+                            <option value="POSTED" {% if form.status.value == 'POSTED' %}selected{% endif %}>Posted</option>
+                            <option value="REVERSED" {% if form.status.value == 'REVERSED' %}selected{% endif %}>Reversed</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="id_description" class="form-label">Description *</label>
+                <textarea class="form-control" id="id_description" name="description" rows="3" required
+                          placeholder="Enter a description for this journal entry">{{ form.description.value|default:'' }}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Journal Entry Lines -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">Entry Lines</h6>
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="addEntryLine()">
+                <i class="fas fa-plus"></i> Add Line
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="entryLinesTable">
+                    <thead>
+                        <tr>
+                            <th width="30%">Account</th>
+                            <th width="30%">Description</th>
+                            <th width="15%">Debit</th>
+                            <th width="15%">Credit</th>
+                            <th width="10%">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="entryLinesBody">
+                        <!-- Entry lines will be dynamically added here -->
+                        <tr class="entry-line" data-line="0">
+                            <td>
+                                <select class="form-select account-select" name="lines[0][account]" required>
+                                    <option value="">Select Account</option>
+                                    {% for account in accounts %}
+                                        <option value="{{ account.id }}">{{ account.account_number }} - {{ account.account_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td>
+                                <input type="text" class="form-control" name="lines[0][description]" 
+                                       placeholder="Line description">
+                            </td>
+                            <td>
+                                <input type="number" class="form-control debit-amount" name="lines[0][debit]" 
+                                       step="0.01" min="0" placeholder="0.00" onchange="calculateTotals()">
+                            </td>
+                            <td>
+                                <input type="number" class="form-control credit-amount" name="lines[0][credit]" 
+                                       step="0.01" min="0" placeholder="0.00" onchange="calculateTotals()">
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeEntryLine(this)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr class="entry-line" data-line="1">
+                            <td>
+                                <select class="form-select account-select" name="lines[1][account]" required>
+                                    <option value="">Select Account</option>
+                                    {% for account in accounts %}
+                                        <option value="{{ account.id }}">{{ account.account_number }} - {{ account.account_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td>
+                                <input type="text" class="form-control" name="lines[1][description]" 
+                                       placeholder="Line description">
+                            </td>
+                            <td>
+                                <input type="number" class="form-control debit-amount" name="lines[1][debit]" 
+                                       step="0.01" min="0" placeholder="0.00" onchange="calculateTotals()">
+                            </td>
+                            <td>
+                                <input type="number" class="form-control credit-amount" name="lines[1][credit]" 
+                                       step="0.01" min="0" placeholder="0.00" onchange="calculateTotals()">
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeEntryLine(this)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-info">
+                            <th colspan="2">Totals</th>
+                            <th class="text-end">
+                                <span id="totalDebit">$0.00</span>
+                            </th>
+                            <th class="text-end">
+                                <span id="totalCredit">$0.00</span>
+                            </th>
+                            <th></th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            
+            <div id="balanceAlert" class="alert alert-warning mt-3" style="display: none;">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>Warning:</strong> Total debits and credits must be equal for a balanced entry.
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <button type="submit" name="action" value="save_draft" class="btn btn-secondary">
+                        <i class="fas fa-save"></i> Save as Draft
+                    </button>
+                    <button type="submit" name="action" value="save_post" class="btn btn-success">
+                        <i class="fas fa-check"></i> Save and Post
+                    </button>
+                </div>
+                <div>
+                    <a href="{% url 'gl:entry_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+let lineCounter = 2;
+
+// Store accounts data for JavaScript
+const accounts = [
+    {% for account in accounts %}
+    {id: '{{ account.id }}', number: '{{ account.account_number }}', name: '{{ account.account_name }}'},
+    {% endfor %}
+];
+
+function createAccountOptions() {
+    let options = '<option value="">Select Account</option>';
+    accounts.forEach(account => {
+        options += `<option value="${account.id}">${account.number} - ${account.name}</option>`;
+    });
+    return options;
+}
+
+function addEntryLine() {
+    const tbody = document.getElementById('entryLinesBody');
+    const newRow = document.createElement('tr');
+    newRow.className = 'entry-line';
+    newRow.setAttribute('data-line', lineCounter);
+    
+    newRow.innerHTML = `
+        <td>
+            <select class="form-select account-select" name="lines[${lineCounter}][account]" required>
+                ${createAccountOptions()}
+            </select>
+        </td>
+        <td>
+            <input type="text" class="form-control" name="lines[${lineCounter}][description]" 
+                   placeholder="Line description">
+        </td>
+        <td>
+            <input type="number" class="form-control debit-amount" name="lines[${lineCounter}][debit]" 
+                   step="0.01" min="0" placeholder="0.00" onchange="calculateTotals()">
+        </td>
+        <td>
+            <input type="number" class="form-control credit-amount" name="lines[${lineCounter}][credit]" 
+                   step="0.01" min="0" placeholder="0.00" onchange="calculateTotals()">
+        </td>
+        <td>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeEntryLine(this)">
+                <i class="fas fa-trash"></i>
+            </button>
+        </td>
+    `;
+    
+    tbody.appendChild(newRow);
+    lineCounter++;
+    calculateTotals();
+}
+
+function removeEntryLine(button) {
+    const row = button.closest('tr');
+    const tbody = document.getElementById('entryLinesBody');
+    
+    // Don't allow removing if only 2 lines remain
+    if (tbody.children.length <= 2) {
+        alert('A journal entry must have at least 2 lines.');
+        return;
+    }
+    
+    row.remove();
+    calculateTotals();
+}
+
+function calculateTotals() {
+    let totalDebit = 0;
+    let totalCredit = 0;
+    
+    // Calculate totals
+    document.querySelectorAll('.debit-amount').forEach(input => {
+        const value = parseFloat(input.value) || 0;
+        totalDebit += value;
+    });
+    
+    document.querySelectorAll('.credit-amount').forEach(input => {
+        const value = parseFloat(input.value) || 0;
+        totalCredit += value;
+    });
+    
+    // Update display
+    document.getElementById('totalDebit').textContent = '$' + totalDebit.toFixed(2);
+    document.getElementById('totalCredit').textContent = '$' + totalCredit.toFixed(2);
+    
+    // Show/hide balance warning
+    const balanceAlert = document.getElementById('balanceAlert');
+    if (Math.abs(totalDebit - totalCredit) > 0.01 && (totalDebit > 0 || totalCredit > 0)) {
+        balanceAlert.style.display = 'block';
+    } else {
+        balanceAlert.style.display = 'none';
+    }
+}
+
+// Initialize calculations on page load
+document.addEventListener('DOMContentLoaded', function() {
+    calculateTotals();
+    
+    // Add event listeners to existing inputs
+    document.querySelectorAll('.debit-amount, .credit-amount').forEach(input => {
+        input.addEventListener('input', calculateTotals);
+    });
+});
+
+// Form validation
+document.getElementById('journalEntryForm').addEventListener('submit', function(e) {
+    let totalDebit = 0;
+    let totalCredit = 0;
+    
+    document.querySelectorAll('.debit-amount').forEach(input => {
+        totalDebit += parseFloat(input.value) || 0;
+    });
+    
+    document.querySelectorAll('.credit-amount').forEach(input => {
+        totalCredit += parseFloat(input.value) || 0;
+    });
+    
+    if (Math.abs(totalDebit - totalCredit) > 0.01) {
+        e.preventDefault();
+        alert('Total debits must equal total credits for a balanced journal entry.');
+        return false;
+    }
+    
+    if (totalDebit === 0 && totalCredit === 0) {
+        e.preventDefault();
+        alert('Please enter debit and credit amounts for the journal entry.');
+        return false;
+    }
+});
+</script>
+
+<style>
+.table th {
+    background-color: #f8f9fc;
+    border-top: 1px solid #e3e6f0;
+}
+
+.entry-line:hover {
+    background-color: #f8f9fc;
+}
+
+.account-select {
+    min-width: 200px;
+}
+
+#balanceAlert {
+    border-left: 4px solid #f6c23e;
+}
+</style>
+{% endblock %}

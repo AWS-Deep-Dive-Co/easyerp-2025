@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+
+{% block title %}Balance Sheet{% endblock %}
+{% block page_title %}Balance Sheet{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h2 class="mb-1">Balance Sheet</h2>
+                    <p class="text-muted mb-0">Statement of Financial Position</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <div class="btn-group">
+                        <a href="{% url 'gl:reports_dashboard' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-arrow-left me-1"></i>
+                            Back to Reports
+                        </a>
+                        <button class="btn btn-primary" onclick="window.print()">
+                            <i class="fas fa-print me-1"></i>
+                            Print
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <h3>Company Name</h3>
+                    <h4>Balance Sheet</h4>
+                    <p class="text-muted">As of {{ today }}</p>
+                </div>
+                
+                <div class="row">
+                    <!-- Assets -->
+                    <div class="col-md-6">
+                        <h5 class="mb-3 text-primary">ASSETS</h5>
+                        
+                        <h6 class="mb-2">Current Assets</h6>
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr>
+                                    <td>Cash and Cash Equivalents</td>
+                                    <td class="text-end">$50,000.00</td>
+                                </tr>
+                                <tr>
+                                    <td>Accounts Receivable</td>
+                                    <td class="text-end">$25,000.00</td>
+                                </tr>
+                                <tr>
+                                    <td>Inventory</td>
+                                    <td class="text-end">$30,000.00</td>
+                                </tr>
+                                <tr>
+                                    <td>Prepaid Expenses</td>
+                                    <td class="text-end">$5,000.00</td>
+                                </tr>
+                                <tr class="table-active">
+                                    <td><strong>Total Current Assets</strong></td>
+                                    <td class="text-end"><strong>$110,000.00</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <h6 class="mb-2 mt-3">Non-Current Assets</h6>
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr>
+                                    <td>Property, Plant & Equipment</td>
+                                    <td class="text-end">$100,000.00</td>
+                                </tr>
+                                <tr>
+                                    <td>Less: Accumulated Depreciation</td>
+                                    <td class="text-end">($20,000.00)</td>
+                                </tr>
+                                <tr>
+                                    <td>Intangible Assets</td>
+                                    <td class="text-end">$10,000.00</td>
+                                </tr>
+                                <tr class="table-active">
+                                    <td><strong>Total Non-Current Assets</strong></td>
+                                    <td class="text-end"><strong>$90,000.00</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr class="table-primary">
+                                    <td><strong>TOTAL ASSETS</strong></td>
+                                    <td class="text-end"><strong>$200,000.00</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Liabilities and Equity -->
+                    <div class="col-md-6">
+                        <h5 class="mb-3 text-danger">LIABILITIES</h5>
+                        
+                        <h6 class="mb-2">Current Liabilities</h6>
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr>
+                                    <td>Accounts Payable</td>
+                                    <td class="text-end">$15,000.00</td>
+                                </tr>
+                                <tr>
+                                    <td>Accrued Expenses</td>
+                                    <td class="text-end">$8,000.00</td>
+                                </tr>
+                                <tr>
+                                    <td>Short-term Debt</td>
+                                    <td class="text-end">$12,000.00</td>
+                                </tr>
+                                <tr class="table-active">
+                                    <td><strong>Total Current Liabilities</strong></td>
+                                    <td class="text-end"><strong>$35,000.00</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <h6 class="mb-2 mt-3">Non-Current Liabilities</h6>
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr>
+                                    <td>Long-term Debt</td>
+                                    <td class="text-end">$50,000.00</td>
+                                </tr>
+                                <tr class="table-active">
+                                    <td><strong>Total Non-Current Liabilities</strong></td>
+                                    <td class="text-end"><strong>$50,000.00</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr class="table-danger">
+                                    <td><strong>TOTAL LIABILITIES</strong></td>
+                                    <td class="text-end"><strong>$85,000.00</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <h5 class="mb-3 text-success mt-4">EQUITY</h5>
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr>
+                                    <td>Share Capital</td>
+                                    <td class="text-end">$100,000.00</td>
+                                </tr>
+                                <tr>
+                                    <td>Retained Earnings</td>
+                                    <td class="text-end">$15,000.00</td>
+                                </tr>
+                                <tr class="table-success">
+                                    <td><strong>TOTAL EQUITY</strong></td>
+                                    <td class="text-end"><strong>$115,000.00</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr class="table-primary">
+                                    <td><strong>TOTAL LIABILITIES + EQUITY</strong></td>
+                                    <td class="text-end"><strong>$200,000.00</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <small class="text-muted">
+                        Generated on {{ today }} | All amounts in USD
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

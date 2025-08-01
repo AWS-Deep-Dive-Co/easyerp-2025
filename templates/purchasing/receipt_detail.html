@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Goods Receipt Details - EasyERP{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Goods Receipt Details</h1>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Receipt Information</h6>
+            </div>
+            <div class="card-body">
+                <div class="text-center py-5">
+                    <i class="fas fa-receipt fa-3x text-gray-300 mb-3"></i>
+                    <h5 class="text-muted">Receipt Details Coming Soon</h5>
+                    <p class="text-muted">This feature will show detailed goods receipt information.</p>
+                    <a href="{% url 'purchasing:receipt_list' %}" class="btn btn-primary">
+                        <i class="fas fa-arrow-left"></i> Back to Receipts
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.text-gray-300 {
+    color: #dddfeb !important;
+}
+</style>
+{% endblock %}

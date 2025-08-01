@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Purchasing Dashboard - EasyERP{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Purchasing Dashboard</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{% url 'purchasing:order_create' %}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-plus"></i> New Purchase Order
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Pending Orders
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ pending_orders_count|default:0 }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-shopping-cart fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            This Month's Orders
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ monthly_orders_count|default:0 }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Total Suppliers
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ suppliers_count|default:0 }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-truck fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Total Spent (This Month)
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">${{ monthly_total_spent|default:0|floatformat:2 }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Purchase Orders -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">Recent Purchase Orders</h6>
+        <a href="{% url 'purchasing:order_list' %}" class="btn btn-sm btn-primary">View All</a>
+    </div>
+    <div class="card-body">
+        {% if recent_orders %}
+            <div class="table-responsive">
+                <table class="table table-bordered" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>PO Number</th>
+                            <th>Supplier</th>
+                            <th>Date</th>
+                            <th>Total Amount</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in recent_orders %}
+                        <tr>
+                            <td>{{ order.po_number }}</td>
+                            <td>{{ order.supplier.name }}</td>
+                            <td>{{ order.order_date|date:"M d, Y" }}</td>
+                            <td>${{ order.total_amount|floatformat:2 }}</td>
+                            <td>
+                                <span class="badge 
+                                    {% if order.status == 'DRAFT' %}badge-secondary
+                                    {% elif order.status == 'PENDING' %}badge-warning
+                                    {% elif order.status == 'APPROVED' %}badge-success
+                                    {% elif order.status == 'RECEIVED' %}badge-info
+                                    {% elif order.status == 'CANCELLED' %}badge-danger
+                                    {% endif %}">
+                                    {{ order.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{% url 'purchasing:order_detail' order.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-shopping-cart fa-3x text-gray-300 mb-3"></i>
+                <p class="text-muted">No purchase orders found.</p>
+                <a href="{% url 'purchasing:order_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Create First Purchase Order
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'purchasing:order_create' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-plus text-primary mr-2"></i>
+                        Create Purchase Order
+                    </a>
+                    <a href="{% url 'purchasing:supplier_create' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-truck text-success mr-2"></i>
+                        Add New Supplier
+                    </a>
+                    <a href="{% url 'purchasing:receipt_list' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-box text-info mr-2"></i>
+                        Receive Goods
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Pending Approvals</h6>
+            </div>
+            <div class="card-body">
+                {% if pending_approvals %}
+                    <div class="list-group list-group-flush">
+                        {% for order in pending_approvals %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ order.po_number }}</h6>
+                                <small>${{ order.total_amount|floatformat:2 }}</small>
+                            </div>
+                            <p class="mb-1">{{ order.supplier.name }}</p>
+                            <small>{{ order.order_date|timesince }} ago</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                        <p class="text-muted mb-0">No pending approvals</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.border-left-primary {
+    border-left: 0.25rem solid #4e73df !important;
+}
+.border-left-success {
+    border-left: 0.25rem solid #1cc88a !important;
+}
+.border-left-info {
+    border-left: 0.25rem solid #36b9cc !important;
+}
+.border-left-warning {
+    border-left: 0.25rem solid #f6c23e !important;
+}
+.text-gray-300 {
+    color: #dddfeb !important;
+}
+.text-gray-800 {
+    color: #5a5c69 !important;
+}
+</style>
+{% endblock %}

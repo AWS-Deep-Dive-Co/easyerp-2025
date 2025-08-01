@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 
 from pathlib import Path
 import os
+from .version import VERSION, BUILD_DATE, BUILD_NUMBER, DESCRIPTION, AUTHOR
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -36,6 +37,9 @@ ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', '*').split(' ')
 INSTALLED_APPS = [
     'default.apps.DefaultConfig',
     'GL.apps.GlConfig',
+    'inventory.apps.InventoryConfig',
+    'sales.apps.SalesConfig',
+    'purchasing.apps.PurchasingConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -59,6 +63,14 @@ ROOT_URLCONF = 'easyerp.urls'
 
 CSRF_TRUSTED_ORIGINS = ['http://*.awsdd.xyz','https://*.awsdd.xyz','http://*.amazonaws.com','https://*.amazonaws.com']
 
+# Custom User Model
+AUTH_USER_MODEL = 'default.User'
+
+# Authentication
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/login/'
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -70,13 +82,14 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'easyerp.context_processors.version_info',
             ],
         },
     },
 ]
 
 WSGI_APPLICATION = 'easyerp.wsgi.application'
-env = os.environ.get('DEVENV','no')
+env = os.environ.get('DEVENV','yes')
 
 DATABASES={}
 if env == 'no':

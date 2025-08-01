@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+
+{% block title %}Income Statement{% endblock %}
+{% block page_title %}Income Statement{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h2 class="mb-1">Income Statement</h2>
+                    <p class="text-muted mb-0">Profit and Loss Statement</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <div class="btn-group">
+                        <a href="{% url 'gl:reports_dashboard' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-arrow-left me-1"></i>
+                            Back to Reports
+                        </a>
+                        <button class="btn btn-primary" onclick="window.print()">
+                            <i class="fas fa-print me-1"></i>
+                            Print
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <h3>Company Name</h3>
+                    <h4>Income Statement</h4>
+                    <p class="text-muted">For the Year Ended {{ today }}</p>
+                </div>
+                
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <!-- Revenue -->
+                        <h5 class="mb-3 text-success">REVENUE</h5>
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr>
+                                    <td>Sales Revenue</td>
+                                    <td class="text-end">$450,000.00</td>
+                                </tr>
+                                <tr>
+                                    <td>Service Revenue</td>
+                                    <td class="text-end">$75,000.00</td>
+                                </tr>
+                                <tr>
+                                    <td>Other Revenue</td>
+                                    <td class="text-end">$5,000.00</td>
+                                </tr>
+                                <tr class="table-success">
+                                    <td><strong>Total Revenue</strong></td>
+                                    <td class="text-end"><strong>$530,000.00</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <!-- Cost of Goods Sold -->
+                        <h5 class="mb-3 text-warning mt-4">COST OF GOODS SOLD</h5>
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr>
+                                    <td>Beginning Inventory</td>
+                                    <td class="text-end">$25,000.00</td>
+                                </tr>
+                                <tr>
+                                    <td>Purchases</td>
+                                    <td class="text-end">$200,000.00</td>
+                                </tr>
+                                <tr>
+                                    <td>Less: Ending Inventory</td>
+                                    <td class="text-end">($30,000.00)</td>
+                                </tr>
+                                <tr class="table-warning">
+                                    <td><strong>Total Cost of Goods Sold</strong></td>
+                                    <td class="text-end"><strong>$195,000.00</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <!-- Gross Profit -->
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr class="table-info">
+                                    <td><strong>GROSS PROFIT</strong></td>
+                                    <td class="text-end"><strong>$335,000.00</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <!-- Operating Expenses -->
+                        <h5 class="mb-3 text-danger mt-4">OPERATING EXPENSES</h5>
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr>
+                                    <td>Salaries and Wages</td>
+                                    <td class="text-end">$150,000.00</td>
+                                </tr>
+                                <tr>
+                                    <td>Rent Expense</td>
+                                    <td class="text-end">$36,000.00</td>
+                                </tr>
+                                <tr>
+                                    <td>Utilities</td>
+                                    <td class="text-end">$12,000.00</td>
+                                </tr>
+                                <tr>
+                                    <td>Depreciation</td>
+                                    <td class="text-end">$10,000.00</td>
+                                </tr>
+                                <tr>
+                                    <td>Insurance</td>
+                                    <td class="text-end">$8,000.00</td>
+                                </tr>
+                                <tr>
+                                    <td>Office Supplies</td>
+                                    <td class="text-end">$5,000.00</td>
+                                </tr>
+                                <tr>
+                                    <td>Marketing</td>
+                                    <td class="text-end">$15,000.00</td>
+                                </tr>
+                                <tr>
+                                    <td>Professional Services</td>
+                                    <td class="text-end">$8,000.00</td>
+                                </tr>
+                                <tr class="table-danger">
+                                    <td><strong>Total Operating Expenses</strong></td>
+                                    <td class="text-end"><strong>$244,000.00</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <!-- Operating Income -->
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr class="table-info">
+                                    <td><strong>OPERATING INCOME</strong></td>
+                                    <td class="text-end"><strong>$91,000.00</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <!-- Other Income/Expenses -->
+                        <h5 class="mb-3 text-secondary mt-4">OTHER INCOME (EXPENSES)</h5>
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr>
+                                    <td>Interest Income</td>
+                                    <td class="text-end">$1,500.00</td>
+                                </tr>
+                                <tr>
+                                    <td>Interest Expense</td>
+                                    <td class="text-end">($3,500.00)</td>
+                                </tr>
+                                <tr class="table-secondary">
+                                    <td><strong>Total Other Income (Expenses)</strong></td>
+                                    <td class="text-end"><strong>($2,000.00)</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <!-- Income Before Taxes -->
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr class="table-info">
+                                    <td><strong>INCOME BEFORE TAXES</strong></td>
+                                    <td class="text-end"><strong>$89,000.00</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <!-- Income Tax -->
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr>
+                                    <td>Income Tax Expense</td>
+                                    <td class="text-end">$22,250.00</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <!-- Net Income -->
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr class="table-primary">
+                                    <td><strong>NET INCOME</strong></td>
+                                    <td class="text-end"><strong>$66,750.00</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <small class="text-muted">
+                        Generated on {{ today }} | All amounts in USD
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
