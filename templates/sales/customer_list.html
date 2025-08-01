@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }} - EasyERP{% endblock %}
+{% block page_title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<!-- Header Actions -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <form method="get" class="d-flex">
+            <input type="text" name="search" class="form-control me-2" 
+                   placeholder="Search customers..." value="{{ search }}">
+            <button type="submit" class="btn btn-outline-primary">
+                <i class="fas fa-search"></i>
+            </button>
+        </form>
+    </div>
+    <div class="col-md-6 text-end">
+        <a href="{% url 'sales:customer_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>
+            New Customer
+        </a>
+    </div>
+</div>
+
+<!-- Customers Table -->
+<div class="card">
+    <div class="card-body">
+        {% if customers %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Customer ID</th>
+                            <th>Company</th>
+                            <th>Contact Person</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>City</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in customers %}
+                        <tr>
+                            <td>
+                                <strong>{{ customer.customer_id }}</strong>
+                            </td>
+                            <td>
+                                <a href="{% url 'sales:customer_detail' customer.pk %}">
+                                    {{ customer.company_name|default:"-" }}
+                                </a>
+                            </td>
+                            <td>{{ customer.contact_person }}</td>
+                            <td>{{ customer.email }}</td>
+                            <td>{{ customer.phone|default:"-" }}</td>
+                            <td>{{ customer.city|default:"-" }}</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'sales:customer_detail' customer.pk %}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'sales:customer_edit' customer.pk %}" 
+                                       class="btn btn-sm btn-outline-warning">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if customers.has_other_pages %}
+                <nav aria-label="Customer pagination">
+                    <ul class="pagination justify-content-center">
+                        {% if customers.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ customers.previous_page_number }}{% if search %}&search={{ search }}{% endif %}">
+                                    Previous
+                                </a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for num in customers.paginator.page_range %}
+                            {% if customers.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > customers.number|add:'-3' and num < customers.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}">
+                                        {{ num }}
+                                    </a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if customers.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ customers.next_page_number }}{% if search %}&search={{ search }}{% endif %}">
+                                    Next
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        {% else %}
+            <div class="text-center text-muted py-5">
+                <i class="fas fa-users fs-1 mb-3" style="opacity: 0.3;"></i>
+                <h4>No customers found</h4>
+                {% if search %}
+                    <p>No customers match your search "{{ search }}"</p>
+                    <a href="{% url 'sales:customer_list' %}" class="btn btn-secondary">
+                        Clear Search
+                    </a>
+                {% else %}
+                    <p>Start by adding your first customer</p>
+                    <a href="{% url 'sales:customer_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>
+                        Add Customer
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

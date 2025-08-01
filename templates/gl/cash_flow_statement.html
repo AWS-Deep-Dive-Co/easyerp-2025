@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+
+{% block title %}Cash Flow Statement{% endblock %}
+{% block page_title %}Cash Flow Statement{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h2 class="mb-1">Cash Flow Statement</h2>
+                    <p class="text-muted mb-0">Statement of Cash Flows</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <div class="btn-group">
+                        <a href="{% url 'gl:reports_dashboard' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-arrow-left me-1"></i>
+                            Back to Reports
+                        </a>
+                        <button class="btn btn-primary" onclick="window.print()">
+                            <i class="fas fa-print me-1"></i>
+                            Print
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <h3>Company Name</h3>
+                    <h4>Cash Flow Statement</h4>
+                    <p class="text-muted">For the Year Ended {{ today }}</p>
+                </div>
+                
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <!-- Operating Activities -->
+                        <h5 class="mb-3 text-primary">CASH FLOWS FROM OPERATING ACTIVITIES</h5>
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr>
+                                    <td>Net Income</td>
+                                    <td class="text-end">$66,750.00</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2" class="text-muted"><em>Adjustments to reconcile net income to cash:</em></td>
+                                </tr>
+                                <tr>
+                                    <td class="ps-3">Depreciation and Amortization</td>
+                                    <td class="text-end">$10,000.00</td>
+                                </tr>
+                                <tr>
+                                    <td class="ps-3">Increase in Accounts Receivable</td>
+                                    <td class="text-end">($5,000.00)</td>
+                                </tr>
+                                <tr>
+                                    <td class="ps-3">Increase in Inventory</td>
+                                    <td class="text-end">($5,000.00)</td>
+                                </tr>
+                                <tr>
+                                    <td class="ps-3">Decrease in Prepaid Expenses</td>
+                                    <td class="text-end">$1,000.00</td>
+                                </tr>
+                                <tr>
+                                    <td class="ps-3">Increase in Accounts Payable</td>
+                                    <td class="text-end">$3,000.00</td>
+                                </tr>
+                                <tr>
+                                    <td class="ps-3">Increase in Accrued Expenses</td>
+                                    <td class="text-end">$2,000.00</td>
+                                </tr>
+                                <tr class="table-primary">
+                                    <td><strong>Net Cash Provided by Operating Activities</strong></td>
+                                    <td class="text-end"><strong>$72,750.00</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <!-- Investing Activities -->
+                        <h5 class="mb-3 text-success mt-4">CASH FLOWS FROM INVESTING ACTIVITIES</h5>
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr>
+                                    <td>Purchase of Property, Plant & Equipment</td>
+                                    <td class="text-end">($25,000.00)</td>
+                                </tr>
+                                <tr>
+                                    <td>Purchase of Investments</td>
+                                    <td class="text-end">($10,000.00)</td>
+                                </tr>
+                                <tr>
+                                    <td>Sale of Equipment</td>
+                                    <td class="text-end">$5,000.00</td>
+                                </tr>
+                                <tr class="table-success">
+                                    <td><strong>Net Cash Used in Investing Activities</strong></td>
+                                    <td class="text-end"><strong>($30,000.00)</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <!-- Financing Activities -->
+                        <h5 class="mb-3 text-warning mt-4">CASH FLOWS FROM FINANCING ACTIVITIES</h5>
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr>
+                                    <td>Proceeds from Long-term Debt</td>
+                                    <td class="text-end">$20,000.00</td>
+                                </tr>
+                                <tr>
+                                    <td>Repayment of Short-term Debt</td>
+                                    <td class="text-end">($8,000.00)</td>
+                                </tr>
+                                <tr>
+                                    <td>Dividends Paid</td>
+                                    <td class="text-end">($15,000.00)</td>
+                                </tr>
+                                <tr>
+                                    <td>Issuance of Common Stock</td>
+                                    <td class="text-end">$10,000.00</td>
+                                </tr>
+                                <tr class="table-warning">
+                                    <td><strong>Net Cash Provided by Financing Activities</strong></td>
+                                    <td class="text-end"><strong>$7,000.00</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <!-- Net Change in Cash -->
+                        <h5 class="mb-3 text-info mt-4">NET CHANGE IN CASH</h5>
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr>
+                                    <td>Net Cash Provided by Operating Activities</td>
+                                    <td class="text-end">$72,750.00</td>
+                                </tr>
+                                <tr>
+                                    <td>Net Cash Used in Investing Activities</td>
+                                    <td class="text-end">($30,000.00)</td>
+                                </tr>
+                                <tr>
+                                    <td>Net Cash Provided by Financing Activities</td>
+                                    <td class="text-end">$7,000.00</td>
+                                </tr>
+                                <tr class="table-info">
+                                    <td><strong>Net Increase in Cash and Cash Equivalents</strong></td>
+                                    <td class="text-end"><strong>$49,750.00</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <!-- Cash Reconciliation -->
+                        <h5 class="mb-3 text-secondary mt-4">CASH AND CASH EQUIVALENTS</h5>
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr>
+                                    <td>Beginning of Year</td>
+                                    <td class="text-end">$250.00</td>
+                                </tr>
+                                <tr>
+                                    <td>Net Increase</td>
+                                    <td class="text-end">$49,750.00</td>
+                                </tr>
+                                <tr class="table-primary">
+                                    <td><strong>End of Year</strong></td>
+                                    <td class="text-end"><strong>$50,000.00</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <small class="text-muted">
+                        Generated on {{ today }} | All amounts in USD
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Fiscal Year{% endblock %}
+{% block page_title %}Create Fiscal Year{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h2 class="mb-1">Create Fiscal Year</h2>
+                    <p class="text-muted mb-0">Set up a new accounting period</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <a href="{% url 'gl:fiscal_year_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>
+                        Back to List
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="name" class="form-label">Fiscal Year Name</label>
+                            <input type="text" class="form-control" id="name" name="name" placeholder="e.g., FY 2026" required>
+                            <div class="form-text">Enter a descriptive name for the fiscal year</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="description" class="form-label">Description</label>
+                            <input type="text" class="form-control" id="description" name="description" placeholder="Optional description">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="start_date" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="start_date" name="start_date" required>
+                            <div class="form-text">First day of the fiscal year</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="end_date" class="form-label">End Date</label>
+                            <input type="date" class="form-control" id="end_date" name="end_date" required>
+                            <div class="form-text">Last day of the fiscal year</div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="is_current" name="is_current">
+                                <label class="form-check-label" for="is_current">
+                                    Set as Current Fiscal Year
+                                </label>
+                                <div class="form-text">This will be the active fiscal year for new transactions</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="is_closed" name="is_closed">
+                                <label class="form-check-label" for="is_closed">
+                                    Closed Year
+                                </label>
+                                <div class="form-text">Closed years cannot accept new transactions</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Additional notes about this fiscal year"></textarea>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'gl:fiscal_year_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times me-1"></i>
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>
+                            Create Fiscal Year
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Guidelines</h5>
+            </div>
+            <div class="card-body">
+                <h6>Fiscal Year Setup</h6>
+                <ul class="text-muted">
+                    <li>Start and end dates should not overlap with existing fiscal years</li>
+                    <li>Only one fiscal year can be marked as current</li>
+                    <li>Closed fiscal years cannot accept new transactions</li>
+                    <li>Fiscal years typically run for 12 months</li>
+                </ul>
+                
+                <h6 class="mt-3">Common Patterns</h6>
+                <ul class="text-muted">
+                    <li><strong>Calendar Year:</strong> Jan 1 - Dec 31</li>
+                    <li><strong>Government:</strong> Oct 1 - Sep 30</li>
+                    <li><strong>Academic:</strong> Jul 1 - Jun 30</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Current Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Current FY:</span>
+                    <span class="badge bg-primary">FY 2025</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Status:</span>
+                    <span class="badge bg-success">Open</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Period:</span>
+                    <small class="text-muted">Jan 1 - Dec 31, 2025</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-populate end date when start date is selected
+document.getElementById('start_date').addEventListener('change', function() {
+    const startDate = new Date(this.value);
+    if (startDate) {
+        const endDate = new Date(startDate.getFullYear(), 11, 31); // December 31st of same year
+        document.getElementById('end_date').value = endDate.toISOString().split('T')[0];
+        
+        // Auto-populate name
+        const nameField = document.getElementById('name');
+        if (!nameField.value) {
+            nameField.value = `FY ${startDate.getFullYear()}`;
+        }
+    }
+});
+</script>
+{% endblock %}

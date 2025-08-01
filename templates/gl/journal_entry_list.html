@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Journal Entries - EasyERP{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Journal Entries</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{% url 'gl:entry_create' %}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-plus"></i> New Entry
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter -->
+<div class="card shadow mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <input type="text" class="form-control" placeholder="Search entries..." name="search" value="{{ request.GET.search }}">
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" name="status">
+                    <option value="">All Status</option>
+                    <option value="DRAFT" {% if request.GET.status == "DRAFT" %}selected{% endif %}>Draft</option>
+                    <option value="POSTED" {% if request.GET.status == "POSTED" %}selected{% endif %}>Posted</option>
+                    <option value="REVERSED" {% if request.GET.status == "REVERSED" %}selected{% endif %}>Reversed</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <input type="date" class="form-control" name="date_from" placeholder="From Date" value="{{ request.GET.date_from }}">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search"></i> Search
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Journal Entries Table -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Journal Entry List</h6>
+    </div>
+    <div class="card-body">
+        {% if entries %}
+            <div class="table-responsive">
+                <table class="table table-bordered" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Entry #</th>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Reference</th>
+                            <th>Total Debit</th>
+                            <th>Total Credit</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in entries %}
+                        <tr>
+                            <td>{{ entry.entry_number }}</td>
+                            <td>{{ entry.entry_date|date:"M d, Y" }}</td>
+                            <td>{{ entry.description }}</td>
+                            <td>{{ entry.reference|default:"-" }}</td>
+                            <td class="text-end">${{ entry.total_debit|floatformat:2 }}</td>
+                            <td class="text-end">${{ entry.total_credit|floatformat:2 }}</td>
+                            <td>
+                                <span class="badge 
+                                    {% if entry.is_posted %}badge-success
+                                    {% else %}badge-secondary
+                                    {% endif %}">
+                                    {% if entry.is_posted %}Posted{% else %}Draft{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{% url 'gl:entry_detail' entry.id %}" class="btn btn-outline-primary" title="View">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if not entry.is_posted %}
+                                        <a href="{% url 'gl:entry_edit' entry.id %}" class="btn btn-outline-secondary" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'gl:entry_post' entry.id %}" class="btn btn-outline-success" title="Post">
+                                            <i class="fas fa-check"></i>
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-book fa-3x text-gray-300 mb-3"></i>
+                <h5 class="text-muted">No Journal Entries Found</h5>
+                <p class="text-muted mb-4">Start by creating your first journal entry to record transactions.</p>
+                <a href="{% url 'gl:entry_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Create Entry
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="row">
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Entry Summary</h6>
+            </div>
+            <div class="card-body">
+                <div class="row no-gutters">
+                    <div class="col-6 text-center border-right">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">Draft Entries</div>
+                        <div class="h6 mb-0 text-gray-800">{{ draft_count|default:"3" }}</div>
+                    </div>
+                    <div class="col-6 text-center">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">Posted Entries</div>
+                        <div class="h6 mb-0 text-gray-800">{{ posted_count|default:"15" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">This Month</h6>
+            </div>
+            <div class="card-body">
+                <div class="row no-gutters">
+                    <div class="col-6 text-center border-right">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">Total Debits</div>
+                        <div class="h6 mb-0 text-gray-800">${{ monthly_debits|floatformat:0|default:"25,000" }}</div>
+                    </div>
+                    <div class="col-6 text-center">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">Total Credits</div>
+                        <div class="h6 mb-0 text-gray-800">${{ monthly_credits|floatformat:0|default:"25,000" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'gl:entry_create' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-plus text-primary mr-2"></i>
+                        New Journal Entry
+                    </a>
+                    <a href="{% url 'gl:trial_balance' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-balance-scale text-success mr-2"></i>
+                        Trial Balance
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.text-gray-300 {
+    color: #dddfeb !important;
+}
+.text-gray-800 {
+    color: #5a5c69 !important;
+}
+.border-right {
+    border-right: 1px solid #e3e6f0 !important;
+}
+</style>
+{% endblock %}

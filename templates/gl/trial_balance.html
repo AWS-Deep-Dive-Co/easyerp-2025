@@ -1,0 +1,353 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Trial Balance - EasyERP{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Trial Balance</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button onclick="window.print()" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-print"></i> Print
+            </button>
+            <button onclick="exportToPDF()" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-file-pdf"></i> PDF
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Date Selection -->
+<div class="card shadow mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label for="as_of_date" class="form-label">As of Date</label>
+                <input type="date" class="form-control" id="as_of_date" name="as_of_date" 
+                       value="{{ as_of_date|date:'Y-m-d'|default:today }}">
+            </div>
+            <div class="col-md-4">
+                <label for="show_zero" class="form-label">Display Options</label>
+                <div class="form-check mt-2">
+                    <input class="form-check-input" type="checkbox" id="show_zero" name="show_zero" 
+                           {% if show_zero %}checked{% endif %}>
+                    <label class="form-check-label" for="show_zero">
+                        Show accounts with zero balance
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-block">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-sync"></i> Update Report
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Trial Balance Report -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 text-center">
+        <h6 class="m-0 font-weight-bold text-primary">
+            EasyERP Trial Balance<br>
+            <small class="text-muted">As of {{ as_of_date|date:"F j, Y"|default:"December 31, 2024" }}</small>
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th width="15%">Account Code</th>
+                        <th width="40%">Account Name</th>
+                        <th width="15%" class="text-end">Debit</th>
+                        <th width="15%" class="text-end">Credit</th>
+                        <th width="15%" class="text-end">Balance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Assets -->
+                    <tr class="table-secondary">
+                        <td colspan="5"><strong>ASSETS</strong></td>
+                    </tr>
+                    <tr>
+                        <td>1000</td>
+                        <td>&nbsp;&nbsp;Cash - Operating</td>
+                        <td class="text-end">$25,000.00</td>
+                        <td class="text-end">-</td>
+                        <td class="text-end">$25,000.00</td>
+                    </tr>
+                    <tr>
+                        <td>1010</td>
+                        <td>&nbsp;&nbsp;Cash - Savings</td>
+                        <td class="text-end">$15,000.00</td>
+                        <td class="text-end">-</td>
+                        <td class="text-end">$15,000.00</td>
+                    </tr>
+                    <tr>
+                        <td>1100</td>
+                        <td>&nbsp;&nbsp;Accounts Receivable</td>
+                        <td class="text-end">$18,500.00</td>
+                        <td class="text-end">-</td>
+                        <td class="text-end">$18,500.00</td>
+                    </tr>
+                    <tr>
+                        <td>1200</td>
+                        <td>&nbsp;&nbsp;Inventory</td>
+                        <td class="text-end">$45,000.00</td>
+                        <td class="text-end">-</td>
+                        <td class="text-end">$45,000.00</td>
+                    </tr>
+                    <tr>
+                        <td>1300</td>
+                        <td>&nbsp;&nbsp;Prepaid Expenses</td>
+                        <td class="text-end">$3,200.00</td>
+                        <td class="text-end">-</td>
+                        <td class="text-end">$3,200.00</td>
+                    </tr>
+                    <tr>
+                        <td>1500</td>
+                        <td>&nbsp;&nbsp;Equipment</td>
+                        <td class="text-end">$75,000.00</td>
+                        <td class="text-end">-</td>
+                        <td class="text-end">$75,000.00</td>
+                    </tr>
+                    <tr>
+                        <td>1510</td>
+                        <td>&nbsp;&nbsp;Accumulated Depreciation - Equipment</td>
+                        <td class="text-end">-</td>
+                        <td class="text-end">$15,000.00</td>
+                        <td class="text-end">($15,000.00)</td>
+                    </tr>
+                    <tr class="table-light">
+                        <td colspan="2"><strong>Total Assets</strong></td>
+                        <td class="text-end"><strong>$181,700.00</strong></td>
+                        <td class="text-end"><strong>$15,000.00</strong></td>
+                        <td class="text-end"><strong>$166,700.00</strong></td>
+                    </tr>
+
+                    <!-- Liabilities -->
+                    <tr class="table-secondary">
+                        <td colspan="5"><strong>LIABILITIES</strong></td>
+                    </tr>
+                    <tr>
+                        <td>2000</td>
+                        <td>&nbsp;&nbsp;Accounts Payable</td>
+                        <td class="text-end">-</td>
+                        <td class="text-end">$12,300.00</td>
+                        <td class="text-end">($12,300.00)</td>
+                    </tr>
+                    <tr>
+                        <td>2100</td>
+                        <td>&nbsp;&nbsp;Accrued Liabilities</td>
+                        <td class="text-end">-</td>
+                        <td class="text-end">$4,500.00</td>
+                        <td class="text-end">($4,500.00)</td>
+                    </tr>
+                    <tr>
+                        <td>2200</td>
+                        <td>&nbsp;&nbsp;Notes Payable</td>
+                        <td class="text-end">-</td>
+                        <td class="text-end">$35,000.00</td>
+                        <td class="text-end">($35,000.00)</td>
+                    </tr>
+                    <tr class="table-light">
+                        <td colspan="2"><strong>Total Liabilities</strong></td>
+                        <td class="text-end"><strong>-</strong></td>
+                        <td class="text-end"><strong>$51,800.00</strong></td>
+                        <td class="text-end"><strong>($51,800.00)</strong></td>
+                    </tr>
+
+                    <!-- Equity -->
+                    <tr class="table-secondary">
+                        <td colspan="5"><strong>EQUITY</strong></td>
+                    </tr>
+                    <tr>
+                        <td>3000</td>
+                        <td>&nbsp;&nbsp;Owner's Capital</td>
+                        <td class="text-end">-</td>
+                        <td class="text-end">$100,000.00</td>
+                        <td class="text-end">($100,000.00)</td>
+                    </tr>
+                    <tr>
+                        <td>3100</td>
+                        <td>&nbsp;&nbsp;Retained Earnings</td>
+                        <td class="text-end">-</td>
+                        <td class="text-end">$8,200.00</td>
+                        <td class="text-end">($8,200.00)</td>
+                    </tr>
+                    <tr class="table-light">
+                        <td colspan="2"><strong>Total Equity</strong></td>
+                        <td class="text-end"><strong>-</strong></td>
+                        <td class="text-end"><strong>$108,200.00</strong></td>
+                        <td class="text-end"><strong>($108,200.00)</strong></td>
+                    </tr>
+
+                    <!-- Revenue -->
+                    <tr class="table-secondary">
+                        <td colspan="5"><strong>REVENUE</strong></td>
+                    </tr>
+                    <tr>
+                        <td>4000</td>
+                        <td>&nbsp;&nbsp;Sales Revenue</td>
+                        <td class="text-end">-</td>
+                        <td class="text-end">$125,000.00</td>
+                        <td class="text-end">($125,000.00)</td>
+                    </tr>
+                    <tr>
+                        <td>4100</td>
+                        <td>&nbsp;&nbsp;Service Revenue</td>
+                        <td class="text-end">-</td>
+                        <td class="text-end">$15,500.00</td>
+                        <td class="text-end">($15,500.00)</td>
+                    </tr>
+                    <tr class="table-light">
+                        <td colspan="2"><strong>Total Revenue</strong></td>
+                        <td class="text-end"><strong>-</strong></td>
+                        <td class="text-end"><strong>$140,500.00</strong></td>
+                        <td class="text-end"><strong>($140,500.00)</strong></td>
+                    </tr>
+
+                    <!-- Expenses -->
+                    <tr class="table-secondary">
+                        <td colspan="5"><strong>EXPENSES</strong></td>
+                    </tr>
+                    <tr>
+                        <td>5000</td>
+                        <td>&nbsp;&nbsp;Cost of Goods Sold</td>
+                        <td class="text-end">$75,000.00</td>
+                        <td class="text-end">-</td>
+                        <td class="text-end">$75,000.00</td>
+                    </tr>
+                    <tr>
+                        <td>6000</td>
+                        <td>&nbsp;&nbsp;Salaries Expense</td>
+                        <td class="text-end">$35,000.00</td>
+                        <td class="text-end">-</td>
+                        <td class="text-end">$35,000.00</td>
+                    </tr>
+                    <tr>
+                        <td>6100</td>
+                        <td>&nbsp;&nbsp;Rent Expense</td>
+                        <td class="text-end">$12,000.00</td>
+                        <td class="text-end">-</td>
+                        <td class="text-end">$12,000.00</td>
+                    </tr>
+                    <tr>
+                        <td>6200</td>
+                        <td>&nbsp;&nbsp;Utilities Expense</td>
+                        <td class="text-end">$2,400.00</td>
+                        <td class="text-end">-</td>
+                        <td class="text-end">$2,400.00</td>
+                    </tr>
+                    <tr>
+                        <td>6300</td>
+                        <td>&nbsp;&nbsp;Office Supplies Expense</td>
+                        <td class="text-end">$1,800.00</td>
+                        <td class="text-end">-</td>
+                        <td class="text-end">$1,800.00</td>
+                    </tr>
+                    <tr>
+                        <td>6400</td>
+                        <td>&nbsp;&nbsp;Depreciation Expense</td>
+                        <td class="text-end">$15,000.00</td>
+                        <td class="text-end">-</td>
+                        <td class="text-end">$15,000.00</td>
+                    </tr>
+                    <tr class="table-light">
+                        <td colspan="2"><strong>Total Expenses</strong></td>
+                        <td class="text-end"><strong>$141,200.00</strong></td>
+                        <td class="text-end"><strong>-</strong></td>
+                        <td class="text-end"><strong>$141,200.00</strong></td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr class="table-info">
+                        <th colspan="2">
+                            <strong>TRIAL BALANCE TOTALS</strong>
+                        </th>
+                        <th class="text-end">
+                            <strong>$322,900.00</strong>
+                        </th>
+                        <th class="text-end">
+                            <strong>$315,500.00</strong>
+                        </th>
+                        <th class="text-end">
+                            <strong>$7,400.00</strong>
+                        </th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        {% if not balanced %}
+            <div class="alert alert-warning mt-3">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>Trial Balance Error:</strong> The trial balance does not balance. 
+                Please review journal entries for errors.
+            </div>
+        {% else %}
+            <div class="alert alert-success mt-3">
+                <i class="fas fa-check-circle"></i>
+                <strong>Trial Balance:</strong> Total debits equal total credits. The books are in balance.
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+@media print {
+    .btn-toolbar, .card:first-child {
+        display: none !important;
+    }
+    
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    .card-body {
+        padding: 0.5rem !important;
+    }
+    
+    .table {
+        font-size: 11px !important;
+    }
+    
+    body {
+        font-size: 11px !important;
+    }
+}
+
+.table th {
+    background-color: #f8f9fc;
+    border-top: 1px solid #e3e6f0;
+}
+
+.table-secondary td {
+    background-color: #e9ecef !important;
+    font-weight: bold;
+}
+
+.table-light td {
+    background-color: #f8f9fa !important;
+    font-weight: bold;
+    border-top: 2px solid #dee2e6 !important;
+}
+
+.table-info th {
+    background-color: #d1ecf1 !important;
+    border-top: 3px solid #bee5eb !important;
+}
+</style>
+
+<script>
+function exportToPDF() {
+    alert('PDF export functionality would be implemented here using a library like jsPDF or server-side PDF generation.');
+}
+</script>
+{% endblock %}

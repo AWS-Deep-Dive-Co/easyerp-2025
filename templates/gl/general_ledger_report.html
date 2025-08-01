@@ -1,0 +1,241 @@
+{% extends 'base.html' %}
+
+{% block title %}General Ledger Report{% endblock %}
+{% block page_title %}General Ledger Report{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h2 class="mb-1">General Ledger Report</h2>
+                    <p class="text-muted mb-0">Detailed listing of all transactions by account</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <div class="btn-group">
+                        <a href="{% url 'gl:reports_dashboard' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-arrow-left me-1"></i>
+                            Back to Reports
+                        </a>
+                        <button class="btn btn-primary" onclick="window.print()">
+                            <i class="fas fa-print me-1"></i>
+                            Print
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Options -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form class="row g-3">
+                    <div class="col-md-3">
+                        <label for="account" class="form-label">Account</label>
+                        <select class="form-select" id="account">
+                            <option value="">All Accounts</option>
+                            <option value="1000">1000 - Cash</option>
+                            <option value="1100">1100 - Accounts Receivable</option>
+                            <option value="1200">1200 - Inventory</option>
+                            <option value="2000">2000 - Accounts Payable</option>
+                            <option value="3000">3000 - Common Stock</option>
+                            <option value="4000">4000 - Sales Revenue</option>
+                            <option value="5000">5000 - Cost of Goods Sold</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="dateFrom" class="form-label">From Date</label>
+                        <input type="date" class="form-control" id="dateFrom">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="dateTo" class="form-label">To Date</label>
+                        <input type="date" class="form-control" id="dateTo" value="{{ today }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-1"></i>
+                                Generate Report
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- General Ledger -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <h3>Company Name</h3>
+                    <h4>General Ledger Report</h4>
+                    <p class="text-muted">For All Accounts as of {{ today }}</p>
+                </div>
+                
+                <!-- Account: Cash -->
+                <div class="mb-4">
+                    <h5 class="text-primary border-bottom pb-2">Account: 1000 - Cash</h5>
+                    <table class="table table-sm table-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Reference</th>
+                                <th>Description</th>
+                                <th class="text-end">Debit</th>
+                                <th class="text-end">Credit</th>
+                                <th class="text-end">Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>2025-07-01</td>
+                                <td>JE-0001</td>
+                                <td>Initial capital investment</td>
+                                <td class="text-end">50,000.00</td>
+                                <td class="text-end">-</td>
+                                <td class="text-end">50,000.00</td>
+                            </tr>
+                            <tr>
+                                <td>2025-07-05</td>
+                                <td>JE-0002</td>
+                                <td>Equipment purchase</td>
+                                <td class="text-end">-</td>
+                                <td class="text-end">25,000.00</td>
+                                <td class="text-end">25,000.00</td>
+                            </tr>
+                            <tr>
+                                <td>2025-07-10</td>
+                                <td>JE-0003</td>
+                                <td>Sales collection</td>
+                                <td class="text-end">15,000.00</td>
+                                <td class="text-end">-</td>
+                                <td class="text-end">40,000.00</td>
+                            </tr>
+                            <tr>
+                                <td>2025-07-15</td>
+                                <td>JE-0004</td>
+                                <td>Rent payment</td>
+                                <td class="text-end">-</td>
+                                <td class="text-end">3,000.00</td>
+                                <td class="text-end">37,000.00</td>
+                            </tr>
+                            <tr class="table-active">
+                                <td colspan="3"><strong>Account Total</strong></td>
+                                <td class="text-end"><strong>65,000.00</strong></td>
+                                <td class="text-end"><strong>28,000.00</strong></td>
+                                <td class="text-end"><strong>37,000.00</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Account: Accounts Receivable -->
+                <div class="mb-4">
+                    <h5 class="text-primary border-bottom pb-2">Account: 1100 - Accounts Receivable</h5>
+                    <table class="table table-sm table-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Reference</th>
+                                <th>Description</th>
+                                <th class="text-end">Debit</th>
+                                <th class="text-end">Credit</th>
+                                <th class="text-end">Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>2025-07-08</td>
+                                <td>INV-001</td>
+                                <td>Sales on credit - ABC Corp</td>
+                                <td class="text-end">30,000.00</td>
+                                <td class="text-end">-</td>
+                                <td class="text-end">30,000.00</td>
+                            </tr>
+                            <tr>
+                                <td>2025-07-10</td>
+                                <td>JE-0003</td>
+                                <td>Collection from ABC Corp</td>
+                                <td class="text-end">-</td>
+                                <td class="text-end">15,000.00</td>
+                                <td class="text-end">15,000.00</td>
+                            </tr>
+                            <tr>
+                                <td>2025-07-20</td>
+                                <td>INV-002</td>
+                                <td>Sales on credit - XYZ Ltd</td>
+                                <td class="text-end">20,000.00</td>
+                                <td class="text-end">-</td>
+                                <td class="text-end">35,000.00</td>
+                            </tr>
+                            <tr class="table-active">
+                                <td colspan="3"><strong>Account Total</strong></td>
+                                <td class="text-end"><strong>50,000.00</strong></td>
+                                <td class="text-end"><strong>15,000.00</strong></td>
+                                <td class="text-end"><strong>35,000.00</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Account: Sales Revenue -->
+                <div class="mb-4">
+                    <h5 class="text-primary border-bottom pb-2">Account: 4000 - Sales Revenue</h5>
+                    <table class="table table-sm table-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Reference</th>
+                                <th>Description</th>
+                                <th class="text-end">Debit</th>
+                                <th class="text-end">Credit</th>
+                                <th class="text-end">Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>2025-07-08</td>
+                                <td>INV-001</td>
+                                <td>Sales to ABC Corp</td>
+                                <td class="text-end">-</td>
+                                <td class="text-end">30,000.00</td>
+                                <td class="text-end">30,000.00</td>
+                            </tr>
+                            <tr>
+                                <td>2025-07-20</td>
+                                <td>INV-002</td>
+                                <td>Sales to XYZ Ltd</td>
+                                <td class="text-end">-</td>
+                                <td class="text-end">20,000.00</td>
+                                <td class="text-end">50,000.00</td>
+                            </tr>
+                            <tr class="table-active">
+                                <td colspan="3"><strong>Account Total</strong></td>
+                                <td class="text-end"><strong>-</strong></td>
+                                <td class="text-end"><strong>50,000.00</strong></td>
+                                <td class="text-end"><strong>50,000.00</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <small class="text-muted">
+                        Generated on {{ today }} | All amounts in USD
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

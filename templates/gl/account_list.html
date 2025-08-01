@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+
+{% block title %}Account List - General Ledger{% endblock %}
+{% block page_title %}Account List{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h2 class="mb-1">Chart of Accounts</h2>
+                    <p class="text-muted mb-0">Manage your accounting structure</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <a href="{% url 'gl:account_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>
+                        New Account
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list me-2"></i>
+                    Accounts
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Account Number</th>
+                                <th>Account Name</th>
+                                <th>Type</th>
+                                <th>Balance</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Sample data - replace with actual data -->
+                            <tr>
+                                <td>1000</td>
+                                <td>Cash</td>
+                                <td><span class="badge bg-primary">Asset</span></td>
+                                <td class="text-end">$5,000.00</td>
+                                <td><span class="badge bg-success">Active</span></td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="#" class="btn btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="#" class="btn btn-outline-warning">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>1100</td>
+                                <td>Accounts Receivable</td>
+                                <td><span class="badge bg-primary">Asset</span></td>
+                                <td class="text-end">$12,500.00</td>
+                                <td><span class="badge bg-success">Active</span></td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="#" class="btn btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="#" class="btn btn-outline-warning">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>2000</td>
+                                <td>Accounts Payable</td>
+                                <td><span class="badge bg-danger">Liability</span></td>
+                                <td class="text-end">$8,750.00</td>
+                                <td><span class="badge bg-success">Active</span></td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="#" class="btn btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="#" class="btn btn-outline-warning">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>3000</td>
+                                <td>Owner's Equity</td>
+                                <td><span class="badge bg-info">Equity</span></td>
+                                <td class="text-end">$25,000.00</td>
+                                <td><span class="badge bg-success">Active</span></td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="#" class="btn btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="#" class="btn btn-outline-warning">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>4000</td>
+                                <td>Sales Revenue</td>
+                                <td><span class="badge bg-success">Revenue</span></td>
+                                <td class="text-end">$45,000.00</td>
+                                <td><span class="badge bg-success">Active</span></td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="#" class="btn btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="#" class="btn btn-outline-warning">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>5000</td>
+                                <td>Operating Expenses</td>
+                                <td><span class="badge bg-warning">Expense</span></td>
+                                <td class="text-end">$15,250.00</td>
+                                <td><span class="badge bg-success">Active</span></td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="#" class="btn btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="#" class="btn btn-outline-warning">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-primary">Assets</h5>
+                <h3 class="text-primary">$17,500.00</h3>
+                <small class="text-muted">Total Asset Accounts</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-danger">Liabilities</h5>
+                <h3 class="text-danger">$8,750.00</h3>
+                <small class="text-muted">Total Liability Accounts</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-info">Equity</h5>
+                <h3 class="text-info">$25,000.00</h3>
+                <small class="text-muted">Total Equity Accounts</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add any custom JavaScript for account management
+    console.log('Account list loaded');
+</script>
+{% endblock %}

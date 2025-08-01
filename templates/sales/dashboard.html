@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+
+{% block title %}Sales Dashboard - EasyERP{% endblock %}
+{% block page_title %}Sales Dashboard{% endblock %}
+
+{% block content %}
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title mb-1" style="opacity: 0.9;">Total Customers</h6>
+                        <h3 class="mb-0">{{ total_customers }}</h3>
+                    </div>
+                    <div class="fs-1" style="opacity: 0.3;">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title mb-1" style="opacity: 0.9;">Pending Orders</h6>
+                        <h3 class="mb-0">{{ pending_orders }}</h3>
+                    </div>
+                    <div class="fs-1" style="opacity: 0.3;">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title mb-1" style="opacity: 0.9;">Monthly Revenue</h6>
+                        <h3 class="mb-0">${{ monthly_revenue|floatformat:0 }}</h3>
+                    </div>
+                    <div class="fs-1" style="opacity: 0.3;">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <a href="{% url 'sales:customer_create' %}" class="text-white text-decoration-none">
+                    <i class="fas fa-plus fs-1 mb-2" style="opacity: 0.7;"></i>
+                    <h6>Add Customer</h6>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bolt me-2"></i>
+                    Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'sales:customer_create' %}" class="btn btn-primary w-100">
+                            <i class="fas fa-user-plus me-2"></i>
+                            New Customer
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'sales:order_create' %}" class="btn btn-success w-100">
+                            <i class="fas fa-shopping-cart me-2"></i>
+                            New Order
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'sales:invoice_create' %}" class="btn btn-warning w-100">
+                            <i class="fas fa-file-invoice me-2"></i>
+                            New Invoice
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'sales:customer_list' %}" class="btn btn-info w-100">
+                            <i class="fas fa-list me-2"></i>
+                            View All
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-shopping-bag me-2"></i>
+                    Recent Sales Orders
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_orders %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Order #</th>
+                                    <th>Customer</th>
+                                    <th>Status</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in recent_orders %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'sales:order_detail' order.pk %}">
+                                            {{ order.order_number }}
+                                        </a>
+                                    </td>
+                                    <td>{{ order.customer.company_name|default:order.customer.contact_person }}</td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ order.get_status_display }}</span>
+                                    </td>
+                                    <td>${{ order.total_amount|floatformat:2 }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-center">
+                        <a href="{% url 'sales:order_list' %}" class="btn btn-outline-primary">
+                            View All Orders
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-shopping-cart fs-1 mb-3" style="opacity: 0.3;"></i>
+                        <p>No sales orders yet</p>
+                        <a href="{% url 'sales:order_create' %}" class="btn btn-primary">
+                            Create First Order
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-file-invoice me-2"></i>
+                    Recent Invoices
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_invoices %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Invoice #</th>
+                                    <th>Customer</th>
+                                    <th>Status</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for invoice in recent_invoices %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'sales:invoice_detail' invoice.pk %}">
+                                            {{ invoice.invoice_number }}
+                                        </a>
+                                    </td>
+                                    <td>{{ invoice.customer.company_name|default:invoice.customer.contact_person }}</td>
+                                    <td>
+                                        <span class="badge bg-info">{{ invoice.get_status_display }}</span>
+                                    </td>
+                                    <td>${{ invoice.total_amount|floatformat:2 }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-center">
+                        <a href="{% url 'sales:invoice_list' %}" class="btn btn-outline-primary">
+                            View All Invoices
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-file-invoice fs-1 mb-3" style="opacity: 0.3;"></i>
+                        <p>No invoices yet</p>
+                        <a href="{% url 'sales:invoice_create' %}" class="btn btn-primary">
+                            Create First Invoice
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
