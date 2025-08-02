@@ -16,6 +16,26 @@ def hello_world(request):
 def health_check(request):
     return HttpResponse("OK")
 
+def csrf_debug(request):
+    """Debug view to check CSRF settings"""
+    from django.conf import settings
+    import os
+    
+    debug_info = {
+        'CSRF_TRUSTED_ORIGINS': getattr(settings, 'CSRF_TRUSTED_ORIGINS', []),
+        'ENV_CSRF_TRUSTED_ORIGINS': os.getenv('CSRF_TRUSTED_ORIGINS', 'Not set'),
+        'REQUEST_META_HOST': request.META.get('HTTP_HOST', 'Not set'),
+        'REQUEST_META_ORIGIN': request.META.get('HTTP_ORIGIN', 'Not set'),
+        'REQUEST_META_REFERER': request.META.get('HTTP_REFERER', 'Not set'),
+        'REQUEST_is_secure': request.is_secure(),
+        'REQUEST_scheme': request.scheme,
+    }
+    
+    html = "<html><body><h2>CSRF Debug Info</h2><pre>{}</pre></body></html>".format(
+        '\n'.join([f"{k}: {v}" for k, v in debug_info.items()])
+    )
+    return HttpResponse(html)
+
 @login_required
 def dashboard(request):
     """Main ERP Dashboard"""
