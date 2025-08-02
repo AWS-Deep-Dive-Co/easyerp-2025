@@ -3,7 +3,42 @@
 
 ### Team Structure & Appropriate Access Levels
 
-#### 1. **Alannah Rye - Junior Developer**
+#### 1. **Marcus Chen - Director of IT Operations**
+**Job Responsibilities**:
+- Provides executive oversight for all IT operations, infrastructure, and system reliability across Easy ERP
+- Has ultimate authority to approve emergency change requests and production deployments during critical business situations
+- Makes strategic decisions on infrastructure investments, technology direction, and operational policies
+- Coordinates with C-level executives and business stakeholders on IT strategy and budget planning
+- Manages risk assessment for major system changes and ensures compliance with enterprise governance policies
+- Has emergency override authority for all production systems during business-critical incidents
+- Responsible for disaster recovery execution and business continuity decisions
+- Supervises all DevOps, Database, and Infrastructure teams with authority to escalate or de-escalate situations
+- Interfaces with external vendors, cloud providers, and enterprise security teams
+- Required approver for any changes that could impact business operations or customer-facing services
+- Maintains awareness of all production systems but delegates day-to-day operations to specialized teams
+
+**GitHub Access (Expected)**:
+- Repository: Owner-level access with emergency override capabilities
+- Branch permissions: Can override branch protection rules during emergencies
+- Actions: Full access to modify workflows and approve emergency deployments
+- Admin: Complete repository administration including security settings
+- Audit: Reviews all production-related changes and maintains approval audit trail
+
+**AWS Access (Expected)**:
+- **Executive Operations Access**: 
+  - Full administrative access to all AWS resources across all environments with comprehensive audit logging
+  - Emergency break-glass access to bypass normal approval workflows during critical incidents
+  - CloudTrail: Full access to review all AWS actions and maintain security audit trails
+  - Organizations: Can manage cross-account policies and emergency access procedures
+  - Cost Management: Full access to budgets, cost allocation, and spending controls across all environments
+  - Service Health Dashboard: Full access to monitor AWS service status and plan for service disruptions
+- **Governance & Compliance**:
+  - Config: Full access to compliance monitoring and configuration drift detection
+  - Security Hub: Full access to security findings and compliance posture across all accounts
+  - IAM: Can create emergency access policies and review all permission changes
+- **Emergency Authority**: Can temporarily grant elevated access during confirmed business emergencies with full audit requirements
+
+#### 2. **Alannah Rye - Junior Developer**
 **Job Responsibilities**:
 - Develops new features for the Easy ERP application under senior developer supervision
 - Fixes minor bugs and implements code changes based on detailed specifications
@@ -13,14 +48,14 @@
 - Reports to Senior Developer and requires approval for all production-related activities
 - Focuses on frontend user interface development and basic backend API endpoints
 
-**GitHub Access (Appropriate)**:
+**GitHub Access (Expected)**:
 - Repository: Read access to main repository
 - Branch permissions: Can create feature branches, cannot push to `main` or `stage`
 - Pull requests: Can create PRs, cannot approve own PRs
 - Actions: Can view workflow runs, cannot modify workflow files
 - Settings: No access to repository settings
 
-**AWS Access (Appropriate)**:
+**AWS Access (Expected)**:
 - **Development Environment Only**:
   - ECS: Read-only access to resources tagged `Environment=dev` only
   - ECR: Pull images from repositories tagged `Environment=dev` 
@@ -28,7 +63,7 @@
   - S3: Read/write access to buckets tagged `Environment=dev` only
 - **No Access**: Resources tagged `Environment=stage` or `Environment=prod`, IAM management, database credentials
 
-#### 2. **Lorin Richards - Senior Developer**
+#### 3. **Lorin Richards - Senior Developer**
 **Job Responsibilities**:
 - Leads development of complex features and system integrations for Easy ERP
 - Mentors junior developers and conducts code reviews for quality assurance

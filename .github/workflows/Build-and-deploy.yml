@@ -12,7 +12,7 @@ on:
 jobs:
   determine-environment:
     name: Determine Environment
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     outputs:
       environment: ${{ steps.env.outputs.environment }}
@@ -44,7 +44,7 @@ jobs:
 
   build:
     name: Docker image generation
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: determine-environment
     permissions:
       packages: write
@@ -95,7 +95,7 @@ jobs:
     needs: [determine-environment, build]
     environment: 
       name: ${{ needs.determine-environment.outputs.environment }}
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
