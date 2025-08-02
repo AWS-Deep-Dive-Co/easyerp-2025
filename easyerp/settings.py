@@ -61,7 +61,9 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'easyerp.urls'
 
-CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', 'http://*.awsdd.xyz,https://*.awsdd.xyz,http://*.amazonaws.com,https://*.amazonaws.com').split(',')
+# Parse CSRF trusted origins and ensure proper formatting for Django
+csrf_origins_raw = os.getenv('CSRF_TRUSTED_ORIGINS', 'http://*.aws-deep-dive.com,https://*.aws-deep-dive.com,http://*.awsdd.xyz,https://*.awsdd.xyz,http://*.amazonaws.com,https://*.amazonaws.com')
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_origins_raw.split(',') if origin.strip()]
 
 # Custom User Model
 AUTH_USER_MODEL = 'default.User'

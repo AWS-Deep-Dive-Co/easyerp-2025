@@ -186,7 +186,7 @@ Parameters:
     Type: String
     Description: Comma-separated list of trusted origins for Django CSRF protection.
       Include your domain names and load balancer DNS names.
-    Default: 'http://*.awsdd.xyz,https://*.awsdd.xyz,http://*.amazonaws.com,https://*.amazonaws.com'
+    Default: 'http://*.aws-deep-dive.com,https://*.aws-deep-dive.com,http://*.awsdd.xyz,https://*.awsdd.xyz,http://*.amazonaws.com,https://*.amazonaws.com'
   BastionAMIOS:
     Type: String
     Description: The Linux distribution for the AMI to be used for the bastion host
