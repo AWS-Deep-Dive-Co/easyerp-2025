@@ -7,6 +7,6 @@ set -o nounset
 python3 manage.py migrate
 python3 manage.py collectstatic --noinput
 
-echo "from django.contrib.auth.models import User; User.objects.filter(username='admin').exists() or User.objects.create_superuser('admin', 'jkuhnsman@deloitte.com', 'password')" | python3 manage.py shell
+echo "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.filter(username='admin').exists() or User.objects.create_superuser('admin', 'jkuhnsman@deloitte.com', 'password')" | python3 manage.py shell
 
 gunicorn --workers=1 --bind 0.0.0.0:80 easyerp.wsgi:application
