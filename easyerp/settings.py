@@ -61,7 +61,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'easyerp.urls'
 
-CSRF_TRUSTED_ORIGINS = ['http://*.awsdd.xyz','https://*.awsdd.xyz','http://*.amazonaws.com','https://*.amazonaws.com']
+CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', 'http://*.awsdd.xyz,https://*.awsdd.xyz,http://*.amazonaws.com,https://*.amazonaws.com').split(',')
 
 # Custom User Model
 AUTH_USER_MODEL = 'default.User'

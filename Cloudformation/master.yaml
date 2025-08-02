@@ -15,6 +15,7 @@ Metadata:
           - DockerImage
           - S3BUCKET
           - CertificateSecretName
+          - CSRFTrustedOrigins
       - Label:
           default: Network configuration
         Parameters:
@@ -82,6 +83,8 @@ Metadata:
         default: S3 bucket name containing CloudFormation templates
       CertificateSecretName:
         default: Certificate secret name in SecretsManager
+      CSRFTrustedOrigins:
+        default: CSRF trusted origins for Django security
       DBAllocatedStorage:
         default: Amount of storage (in gigabytes)
       DBMaxAllocatedStorage:
@@ -179,6 +182,11 @@ Parameters:
     Type: String
     Description: The name of the secret in Secrets Manager that contains the certificate
       for the load balancer.
+  CSRFTrustedOrigins:
+    Type: String
+    Description: Comma-separated list of trusted origins for Django CSRF protection.
+      Include your domain names and load balancer DNS names.
+    Default: 'http://*.awsdd.xyz,https://*.awsdd.xyz,http://*.amazonaws.com,https://*.amazonaws.com'
   BastionAMIOS:
     Type: String
     Description: The Linux distribution for the AMI to be used for the bastion host
@@ -636,6 +644,7 @@ Resources:
         DBHOST: !GetAtt RDS.Outputs.RDSEndPointAddress
         DBPORT: !GetAtt RDS.Outputs.RDSEndPointPort
         DBSECRETARN: !GetAtt RDS.Outputs.RDSSecretArn
+        CSRFTrustedOrigins: !Ref CSRFTrustedOrigins
         # S3BUCKET: !GetAtt S3.Outputs.EasyERPAppBucket
         SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
         Subnets: !GetAtt VPC.Outputs.PrivateSubnets
