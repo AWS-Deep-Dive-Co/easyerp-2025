@@ -1,4 +1,4 @@
-# easyerp
+# easyerp 2.0
 
 Enterprise Resource Planning System with Django and AWS deployment.
 
