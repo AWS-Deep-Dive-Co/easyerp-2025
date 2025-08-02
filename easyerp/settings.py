@@ -63,7 +63,26 @@ ROOT_URLCONF = 'easyerp.urls'
 
 # Parse CSRF trusted origins and ensure proper formatting for Django
 csrf_origins_raw = os.getenv('CSRF_TRUSTED_ORIGINS', 'http://*.aws-deep-dive.com,https://*.aws-deep-dive.com,http://*.awsdd.xyz,https://*.awsdd.xyz,http://*.amazonaws.com,https://*.amazonaws.com')
-CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_origins_raw.split(',') if origin.strip()]
+csrf_origins_list = [origin.strip() for origin in csrf_origins_raw.split(',') if origin.strip()]
+
+# Add explicit staging and production domains to ensure they work
+additional_origins = [
+    'https://easyerp-stage.aws-deep-dive.com',
+    'http://easyerp-stage.aws-deep-dive.com',
+    'https://easyerp-prod.aws-deep-dive.com',
+    'http://easyerp-prod.aws-deep-dive.com',
+    'https://easyerp.aws-deep-dive.com',
+    'http://easyerp.aws-deep-dive.com',
+]
+
+# Combine and deduplicate
+CSRF_TRUSTED_ORIGINS = list(set(csrf_origins_list + additional_origins))
+
+# Additional CSRF settings for better compatibility
+CSRF_COOKIE_SECURE = False  # Set to True in production with HTTPS
+CSRF_COOKIE_HTTPONLY = False
+CSRF_USE_SESSIONS = False
+CSRF_COOKIE_SAMESITE = 'Lax'
 
 # Custom User Model
 AUTH_USER_MODEL = 'default.User'
