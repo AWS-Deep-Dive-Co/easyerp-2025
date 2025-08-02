@@ -117,11 +117,11 @@ aws ecs execute-command --region $env:REGION --cluster $env:CLUSTER_NAME --task 
 # Enable execute command
 aws ecs update-service --cluster %CLUSTER_NAME% --service %SERVICE_NAME% --region %REGION% --enable-execute-command --force-new-deployment
 
-# Get task ARN (Note: You'll need to manually copy the ARN from the output)
-aws ecs list-tasks --cluster %CLUSTER_NAME% --service %SERVICE_NAME% --region %REGION% --output text --query "taskArns[0]"
+# Get task ARN and set as environment variable
+for /f "tokens=*" %i in ('aws ecs list-tasks --cluster %CLUSTER_NAME% --service %SERVICE_NAME% --region %REGION% --output text --query "taskArns[0]"') do set TASK_ARN=%i
 
-# Execute command (replace TASK_ARN_HERE with the actual ARN from above)
-aws ecs execute-command --region %REGION% --cluster %CLUSTER_NAME% --task TASK_ARN_HERE --container %CONTAINER_NAME% --command "sh" --interactive
+# Execute command
+aws ecs execute-command --region %REGION% --cluster %CLUSTER_NAME% --task %TASK_ARN% --container %CONTAINER_NAME% --command "bash" --interactive
 ```
 
 ### Troubleshooting

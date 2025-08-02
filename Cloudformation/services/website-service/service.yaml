@@ -60,6 +60,10 @@ Parameters:
     Description: ARN of the Secrets Manager secret containing database credentials
     Type: String
 
+  CSRFTrustedOrigins:
+    Description: Comma-separated list of trusted origins for Django CSRF protection
+    Type: String
+
   SecurityGroup:
     Description: Select the Security Group to use for the ECS cluster hosts
     Type: AWS::EC2::SecurityGroup::Id
@@ -90,6 +94,8 @@ Resources:
               Value: !Ref DBPORT
             - Name: DEVENV
               Value: 'no'
+            - Name: CSRF_TRUSTED_ORIGINS
+              Value: !Ref CSRFTrustedOrigins
             # - Name: AWS_S3_BUCKET_NAME
             #   Value: !Ref S3BUCKET
           Secrets:
