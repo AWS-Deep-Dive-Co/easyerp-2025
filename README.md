@@ -1,3 +1,4 @@
+Changed by JK 8/6
 # easyerp 2.0
 
 Enterprise Resource Planning System with Django and AWS deployment.
