@@ -1,58 +1,49 @@
-"""
-Mock tests for demonstration purposes.
-These tests are designed to always pass for demo environments.
-"""
+"""Real tests for the default app (see root CLAUDE.md for why this replaces the old mock tests)."""
+import pytest
+from mixer.backend.django import mixer
 
-# Only import Django components when needed
-try:
-    from django.test import TestCase
-    DJANGO_AVAILABLE = True
-except ImportError:
-    DJANGO_AVAILABLE = False
-    # Create a mock TestCase for when Django isn't available
-    class TestCase:
-        pass
+from default.models import User, Company
+
+pytestmark = pytest.mark.django_db
 
 
-class MockDefaultTests(TestCase):
-    """Mock tests for default module"""
-    
-    def test_application_ready(self):
-        """Test that the application is ready"""
-        assert True
-        
-    def test_user_authentication_mock(self):
-        """Mock user authentication test"""
-        # Simulate successful authentication
-        user_authenticated = True
-        assert user_authenticated
-        
-    def test_basic_functionality(self):
-        """Test basic application functionality"""
-        assert "EasyERP" == "EasyERP"
-        
-    def test_environment_setup(self):
-        """Test environment setup"""
-        # Mock environment validation
-        environment_ready = True
-        assert environment_ready
+class TestUserModel:
+    def test_str_format(self):
+        user = mixer.blend(User, first_name="Ada", last_name="Lovelace", username="ada")
+        assert str(user) == "Ada Lovelace (ada)"
+
+    def test_is_manager_defaults_to_false(self):
+        user = mixer.blend(User)
+        assert user.is_manager is False
+
+    def test_employee_id_uniqueness_enforced(self):
+        mixer.blend(User, employee_id="EMP-001")
+        with pytest.raises(Exception):
+            mixer.blend(User, employee_id="EMP-001")
 
 
-def test_standalone_calculations():
-    """Standalone test that doesn't require Django"""
-    result = 5 + 3
-    assert result == 8
+class TestCompanyModel:
+    def test_str_returns_name(self):
+        company = mixer.blend(Company, name="Acme Corp")
+        assert str(company) == "Acme Corp"
 
 
-def test_string_manipulation():
-    """Test string operations"""
-    test_string = "EasyERP System"
-    assert test_string.startswith("Easy")
-    assert "ERP" in test_string
+class TestHealthAndDashboardViews:
+    def test_health_prefix_index_is_reachable(self, client):
+        response = client.get("/health/")
+        assert response.status_code == 200
 
+    def test_dashboard_requires_login(self, client):
+        response = client.get("/")
+        assert response.status_code == 302
 
-def test_list_operations():
-    """Test basic list operations"""
-    modules = ["GL", "Sales", "Purchasing", "Inventory"]
-    assert len(modules) == 4
-    assert "GL" in modules
+    def test_dashboard_renders_stats_for_logged_in_user(self, client):
+        user = mixer.blend(User)
+        client.force_login(user)
+
+        response = client.get("/")
+
+        assert response.status_code == 200
+        assert response.context["modules_available"] is True
+        assert "sales_stats" in response.context
+        assert "gl_stats" in response.context
