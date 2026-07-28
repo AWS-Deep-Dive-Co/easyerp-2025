@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pytest*)",
+      "Bash(python manage.py*)",
+      "Bash(python3 manage.py*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)"
+    ],
+    "ask": [
+      "Bash(aws ecs*)",
+      "Bash(aws cloudformation*)",
+      "Bash(docker push*)",
+      "Bash(git push --force*)",
+      "Edit(.github/workflows/**)",
+      "Edit(Cloudformation/**)"
+    ]
+  }
+}
