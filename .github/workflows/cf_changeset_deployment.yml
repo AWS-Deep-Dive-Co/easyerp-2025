@@ -11,10 +11,38 @@ on:
   workflow_dispatch:
 
 jobs:
+  detect-changes:
+    name: Detect Changed Files
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_run' }}
+    outputs:
+      cloudformation: ${{ steps.filter.outputs.cloudformation }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Filter changed paths
+        uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          base: ${{ github.event.workflow_run.head_branch }}
+          ref: ${{ github.event.workflow_run.head_sha }}
+          filters: |
+            cloudformation:
+              - 'Cloudformation/**'
+
   determine-environment:
     name: Determine Environment
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    needs: detect-changes
+    if: >-
+      always() &&
+      (
+        github.event_name == 'workflow_dispatch' ||
+        (github.event.workflow_run.conclusion == 'success' && needs.detect-changes.outputs.cloudformation == 'true')
+      )
     outputs:
       environment: ${{ steps.env.outputs.environment }}
       branch: ${{ steps.env.outputs.branch }}
