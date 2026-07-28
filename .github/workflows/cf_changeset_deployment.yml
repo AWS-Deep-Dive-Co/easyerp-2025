@@ -126,7 +126,7 @@ jobs:
           
           echo "DEBUG: Building new parameter array with overrides..."
           echo "DEBUG: Variables to override:"
-          echo "  - DockerImage will be set to: ${{ vars.IMAGE_NAME }}-latest"
+          echo "  - DockerImage will be set to: ${{ vars.IMAGE_NAME }}"
           echo "  - S3BUCKET will be set to: ${{ vars.AWS_S3_BUCKET }}"
           echo "  - CertificateSecretName will be set to: null"
           
@@ -135,7 +135,7 @@ jobs:
           PARAMETERS=$(jq -c '
             map(
               if .ParameterKey == "DockerImage" then
-                {ParameterKey: .ParameterKey, ParameterValue: "${{ vars.IMAGE_NAME }}-latest"}
+                {ParameterKey: .ParameterKey, ParameterValue: "${{ vars.IMAGE_NAME }}"}
               elif .ParameterKey == "S3BUCKET" then
                 {ParameterKey: .ParameterKey, ParameterValue: "${{ vars.AWS_S3_BUCKET }}"}
               elif .ParameterKey == "CertificateSecretName" then
