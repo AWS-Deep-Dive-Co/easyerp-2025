@@ -34,6 +34,16 @@ environments.
 Every app currently has exactly one migration (`0001_initial`) — schema is still fluid, not yet
 production-hardened.
 
+## Planning docs
+
+`docs/` holds working documents for anything bigger than a one-off change — implementation plans,
+multi-session task trackers, feature write-ups. When starting a plan, task list, or feature design
+that should be checked into the repo (not just the ephemeral plan-mode file under
+`~/.claude/plans/`), write/update a file under `docs/` rather than a top-level scratch file. Check
+`docs/` first when picking up ongoing or multi-day work — e.g. `docs/training-activity-plan.md`
+tracks the in-progress simulated multi-developer PR/deploy activity for the EasyCo training
+personas.
+
 ## Commands
 
 ```bash
@@ -56,14 +66,17 @@ DEVENV=dev pytest <app> -v          # run one app's tests, e.g. `DEVENV=dev pyte
 - `admin.py` customization is minimal/absent — only `GL/admin.py` registers models, with no
   `ModelAdmin` customization. `inventory`, `sales`, `purchasing` have no admin registration at all.
 
-## Tests: placeholder warning
+## Tests
 
-`default/tests.py` and `GL/test_file.py` are explicitly fake — comments in those files say they're
-"mock tests for demonstration purposes" designed to always pass (`assert True`, `1 + 1 == 2`, etc).
-**Their presence is not real coverage.** Don't extend them in that style; when adding tests, write
-ones that actually exercise model/view behavior (see the business-logic properties in GL/sales/
-purchasing/inventory models above — `is_balanced`, `line_total`, `current_stock`, `balance_due`,
-`quantity_pending` — as the highest-value targets).
+The old placeholder tests (`GL/test_file.py` with `assert True`-style fakes) have been removed and
+replaced with real coverage: `GL/test_journal_entries.py`, `sales/test_models.py`,
+`sales/test_views.py`, `purchasing/test_models.py`, `inventory/test_models.py`. The core
+business-logic properties (`is_balanced`, `line_total`, `current_stock`, `balance_due`,
+`quantity_pending`) are already exercised there — don't re-add tests for those; look for genuinely
+uncovered behavior instead. Follow the existing per-app conventions: module docstring, module-level
+`pytestmark = pytest.mark.django_db`, `mixer.blend(...)` for model creation, shared fixtures from the
+root `conftest.py` (`make_product`, `make_customer`, `make_sales_order`, etc.) plus per-app
+`conftest.py` where present (GL, purchasing), one `TestXxx` class per behavior.
 
 ## Deployment boundary — do not cross without confirmation
 
