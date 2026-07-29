@@ -5,6 +5,21 @@ on:
     branches:
       - main
       - stage
+    paths:
+      - 'default/**'
+      - 'GL/**'
+      - 'inventory/**'
+      - 'sales/**'
+      - 'purchasing/**'
+      - 'easyerp/**'
+      - 'manage.py'
+      - 'requirements.txt'
+      - 'Dockerfile'
+      - 'django_start'
+      - 'celery_start'
+      - 'static/**'
+      - 'templates/**'
+      - 'Cloudformation/**'
   workflow_dispatch:
 
 jobs:
