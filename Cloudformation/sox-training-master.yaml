@@ -1,4 +1,5 @@
 # Master template for the SOX/audit training monitoring stack.
+# Verifying end-to-end CI/CD trigger scoping for Cloudformation/** changes.
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'SOX Auditor Training - Master Template for Deploying All Monitoring Examples'
 
