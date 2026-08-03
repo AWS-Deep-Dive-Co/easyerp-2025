@@ -9,6 +9,45 @@ from sales.models import SalesOrderLine, Invoice
 pytestmark = pytest.mark.django_db
 
 
+class TestSalesOrderCalculatedSubtotal:
+    def test_calculated_subtotal_with_no_lines(self, make_sales_order):
+        order = make_sales_order()
+        assert order.calculated_subtotal == Decimal("0")
+
+    def test_calculated_subtotal_sums_line_totals(self, make_product, make_sales_order):
+        order = make_sales_order()
+        mixer.blend(
+            SalesOrderLine,
+            sales_order=order,
+            product=make_product(),
+            quantity=3,
+            unit_price=Decimal("20.00"),
+            discount_percent=Decimal("0"),
+        )
+        mixer.blend(
+            SalesOrderLine,
+            sales_order=order,
+            product=make_product(),
+            quantity=10,
+            unit_price=Decimal("50.00"),
+            discount_percent=Decimal("20"),
+        )
+        # 60.00 + 400.00
+        assert order.calculated_subtotal == Decimal("460.00")
+
+    def test_calculated_subtotal_ignores_stored_subtotal_field(self, make_product, make_sales_order):
+        order = make_sales_order(subtotal=Decimal("999.99"))
+        mixer.blend(
+            SalesOrderLine,
+            sales_order=order,
+            product=make_product(),
+            quantity=1,
+            unit_price=Decimal("10.00"),
+            discount_percent=Decimal("0"),
+        )
+        assert order.calculated_subtotal == Decimal("10.00")
+
+
 class TestSalesOrderLineTotal:
     def test_line_total_with_no_discount(self, make_product, make_sales_order):
         product = make_product()
