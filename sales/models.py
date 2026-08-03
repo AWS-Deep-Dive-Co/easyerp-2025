@@ -1,4 +1,6 @@
 # Sales Management Models
+from decimal import Decimal
+
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils import timezone
@@ -55,6 +57,10 @@ class SalesOrder(models.Model):
 
     def __str__(self):
         return f"{self.order_number} - {self.customer.company_name}"
+
+    @property
+    def calculated_subtotal(self):
+        return sum((line.line_total for line in self.lines.all()), Decimal('0'))
 
     class Meta:
         ordering = ['-created_at']
